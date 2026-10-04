@@ -4,7 +4,6 @@ using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.FileService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.EquipementDocumentService;
 
@@ -31,47 +30,11 @@ public class EquipementDocumentService : IEquipementDocumentService
             throw new KeyNotFoundException($"Equipement with id '{equipementId}' not found");
         }
         var query = _context.EquipementsDocuments.AsQueryable();
-        var filterResult = default(Expression<Func<EquipementsDocuments, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_equipement", search_type = "eq", value = equipementId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<EquipementsDocuments>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<EquipementsDocuments>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_equipement_document", order = "asc" };
-                query = query.OrderBy(ed => ed.id_equipement_document);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(ed => ed.id_equipement_document);
-        }
-        query = query.Skip(offset).Take(limit);
-        var equipementDocument = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadEquipementDocumentDto>
-        {
-            data = _mapper.Map<List<ReadEquipementDocumentDto>>(equipementDocument),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.EquipementsDocuments.CountAsync(filterResult ?? (ed => ed.id_equipement == equipementId)),
-                next_offset = offset + limit,
-                has_more = await _context.EquipementsDocuments.Skip(offset + limit).AnyAsync(filterResult ?? (ed => ed.id_equipement == equipementId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_equipement_document", order = "asc" })
+            .ToResponseAsync(equipementDocument => _mapper.Map<List<ReadEquipementDocumentDto>>(equipementDocument));
     }
 
     public async Task<ReadEquipementDocumentDto> GetEquipementDocumentById(int id, int? equipementId = null)

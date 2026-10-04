@@ -28,45 +28,9 @@ public class EquipementStatusService : IEquipementStatusService
         var query = _context.EquipementsStatus.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_equipement", search_type = "eq", value = equipementId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<EquipementsStatus>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<EquipementsStatus>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "created_at", order = "desc" };
-                query = query.OrderByDescending(es => es.created_at);
-            }
-        }
-        else
-        {
-            query = query.OrderByDescending(es => es.created_at);
-        }
-        query = query.Skip(offset).Take(limit);
-        var equipementStatus = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedEquipementStatusDto>
-        {
-            data = _mapper.Map<List<ReadExtendedEquipementStatusDto>>(equipementStatus),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.EquipementsStatus.CountAsync(es => es.id_equipement == equipementId),
-                next_offset = offset + limit,
-                has_more = await _context.EquipementsStatus.Skip(offset + limit).AnyAsync(es => es.id_equipement == equipementId)
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "created_at", order = "desc" })
+            .ToResponseAsync(equipementStatus => _mapper.Map<List<ReadExtendedEquipementStatusDto>>(equipementStatus));
     }
 
     public async Task<ReadExtendedEquipementStatusDto> GetEquipementStatusById(int id, int? equipementId = null)

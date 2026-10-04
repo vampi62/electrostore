@@ -3,7 +3,6 @@ using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.ItemTagService;
 
@@ -27,32 +26,8 @@ public class ItemTagService : IItemTagService
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.ItemsTags.AsQueryable();
-        var filterResult = default(Expression<Func<ItemsTags, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_item", search_type = "eq", value = itemId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ItemsTags>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<ItemsTags>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_tag", order = "asc" };
-                query = query.OrderBy(it => it.id_tag);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(it => it.id_tag);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("tag"))
         {
             query = query.Include(it => it.Tag);
@@ -61,21 +36,9 @@ public class ItemTagService : IItemTagService
         {
             query = query.Include(it => it.Item);
         }
-        var itemTag = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedItemTagDto>
-        {
-            data = _mapper.Map<List<ReadExtendedItemTagDto>>(itemTag),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.ItemsTags.CountAsync(filterResult ?? (it => it.id_item == itemId)),
-                next_offset = offset + limit,
-                has_more = await _context.ItemsTags.Skip(offset + limit).AnyAsync(filterResult ?? (it => it.id_item == itemId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_tag", order = "asc" })
+            .ToResponseAsync(itemTag => _mapper.Map<List<ReadExtendedItemTagDto>>(itemTag));
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedItemTagDto>> GetItemsTagsByTagId(int tagId, int limit = 100, int offset = 0,
@@ -87,32 +50,8 @@ public class ItemTagService : IItemTagService
             throw new KeyNotFoundException($"Tag with id '{tagId}' not found");
         }
         var query = _context.ItemsTags.AsQueryable();
-        var filterResult = default(Expression<Func<ItemsTags, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_tag", search_type = "eq", value = tagId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ItemsTags>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<ItemsTags>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_item", order = "asc" };
-                query = query.OrderBy(it => it.id_item);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(it => it.id_item);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("tag"))
         {
             query = query.Include(it => it.Tag);
@@ -121,21 +60,9 @@ public class ItemTagService : IItemTagService
         {
             query = query.Include(it => it.Item);
         }
-        var itemTag = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedItemTagDto>
-        {
-            data = _mapper.Map<List<ReadExtendedItemTagDto>>(itemTag),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.ItemsTags.CountAsync(filterResult ?? (it => it.id_tag == tagId)),
-                next_offset = offset + limit,
-                has_more = await _context.ItemsTags.Skip(offset + limit).AnyAsync(filterResult ?? (it => it.id_tag == tagId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_item", order = "asc" })
+            .ToResponseAsync(itemTag => _mapper.Map<List<ReadExtendedItemTagDto>>(itemTag));
     }
 
     public async Task<ReadExtendedItemTagDto> GetItemTagById(int itemId, int tagId, List<string>? expand = null)

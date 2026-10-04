@@ -28,45 +28,9 @@ public class ProjectStatusService : IProjectStatusService
         var query = _context.ProjectsStatus.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_project", search_type = "eq", value = projectId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<ProjectsStatus>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<ProjectsStatus>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "created_at", order = "desc" };
-                query = query.OrderByDescending(p => p.created_at);
-            }
-        }
-        else
-        {
-            query = query.OrderByDescending(p => p.created_at);
-        }
-        query = query.Skip(offset).Take(limit);
-        var projectStatus = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedProjectStatusDto>
-        {
-            data = _mapper.Map<List<ReadExtendedProjectStatusDto>>(projectStatus),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.ProjectsStatus.CountAsync(p => p.id_project == projectId),
-                next_offset = offset + limit,
-                has_more = await _context.ProjectsStatus.Skip(offset + limit).AnyAsync(p => p.id_project == projectId)
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "created_at", order = "desc" })
+            .ToResponseAsync(projectStatus => _mapper.Map<List<ReadExtendedProjectStatusDto>>(projectStatus));
     }
 
     public async Task<ReadExtendedProjectStatusDto> GetProjectStatusById(int id, int? projectId = null)

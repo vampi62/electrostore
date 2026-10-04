@@ -7,7 +7,6 @@ using ElectrostoreAPI.Kafka.Producer;
 using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.CronJobService;
 
@@ -29,52 +28,15 @@ public class CronJobService : ICronJobService
         List<FilterDto>? rsql = null, SorterDto? sort = null, List<int>? idResearch = null)
     {
         var query = _context.CronJobs.AsQueryable();
-        var filterResult = default(Expression<Func<CronJobs, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(c => idResearch.Contains(c.id_cronjob));
+            rsql = null;
+            sort = null;
         }
-        else
-        {
-            if (rsql != null && rsql.Count > 0)
-            {
-                (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CronJobs>(rsql);
-                query = query.Where(filterResult);
-            }
-            if (!string.IsNullOrEmpty(sort?.field))
-            {
-                var sortResult = RsqlParserExtensions.ToSortExpression<CronJobs>(sort);
-                if (sortResult.Item1 != null)
-                {
-                    query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-                }
-                else
-                {
-                    query = query.OrderBy(c => c.id_cronjob);
-                }
-            }
-            else
-            {
-                query = query.OrderBy(c => c.id_cronjob);
-            }
-        }
-        var total = await _context.CronJobs.CountAsync(filterResult ?? (c => true));
-        query = query.Skip(offset).Take(limit);
-        var cronJobs = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadCronJobDto>
-        {
-            data = _mapper.Map<IEnumerable<ReadCronJobDto>>(cronJobs),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = total,
-                next_offset = offset + limit,
-                has_more = await _context.CronJobs.Skip(offset + limit).AnyAsync(filterResult ?? (c => true))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_cronjob", order = "asc" })
+            .ToResponseAsync(cronJobs => _mapper.Map<IEnumerable<ReadCronJobDto>>(cronJobs));
     }
 
     public async Task<ReadCronJobDto> GetCronJobById(int id)

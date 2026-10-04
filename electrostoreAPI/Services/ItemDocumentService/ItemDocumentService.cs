@@ -4,7 +4,6 @@ using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.FileService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.ItemDocumentService;
 
@@ -31,47 +30,11 @@ public class ItemDocumentService : IItemDocumentService
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.ItemsDocuments.AsQueryable();
-        var filterResult = default(Expression<Func<ItemsDocuments, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_item", search_type = "eq", value = itemId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ItemsDocuments>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<ItemsDocuments>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_item_document", order = "asc" };
-                query = query.OrderBy(id => id.id_item_document);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(id => id.id_item_document);
-        }
-        query = query.Skip(offset).Take(limit);
-        var itemDocument = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadItemDocumentDto>
-        {
-            data = _mapper.Map<List<ReadItemDocumentDto>>(itemDocument),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.ItemsDocuments.CountAsync(filterResult ?? (id => id.id_item == itemId)),
-                next_offset = offset + limit,
-                has_more = await _context.ItemsDocuments.Skip(offset + limit).AnyAsync(filterResult ?? (id => id.id_item == itemId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_item_document", order = "asc" })
+            .ToResponseAsync(itemDocument => _mapper.Map<List<ReadItemDocumentDto>>(itemDocument));
     }
 
     public async Task<ReadItemDocumentDto> GetItemDocumentById(int id, int? itemId = null)

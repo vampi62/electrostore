@@ -5,7 +5,6 @@ using ElectrostoreAPI.Kafka.Messages;
 using ElectrostoreAPI.Kafka.Producer;
 using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 using System.Text.Json;
 
 
@@ -32,47 +31,11 @@ public class UserPushSubscriptionService : IUserPushSubscriptionService
     {
         _ = await _context.Users.FindAsync(userId) ?? throw new KeyNotFoundException($"User with id {userId} not found");
         var query = _context.UserPushSubscriptions.AsQueryable();
-        var filterResult = default(Expression<Func<UserPushSubscriptions, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_user", search_type = "eq", value = userId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<UserPushSubscriptions>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<UserPushSubscriptions>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "created_at", order = "desc" };
-                query = query.OrderByDescending(s => s.created_at);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(s => s.created_at);
-        }
-        query = query.Skip(offset).Take(limit);
-        var subscriptions = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadUserPushSubscriptionDto>
-        {
-            data = _mapper.Map<List<ReadUserPushSubscriptionDto>>(subscriptions),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.UserPushSubscriptions.CountAsync(filterResult ?? (us => us.id_user == userId)),
-                next_offset = offset + limit,
-                has_more = await _context.UserPushSubscriptions.Skip(offset + limit).AnyAsync(filterResult ?? (us => us.id_user == userId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "created_at", order = "desc" })
+            .ToResponseAsync(subscriptions => _mapper.Map<List<ReadUserPushSubscriptionDto>>(subscriptions));
     }
 
     public async Task<ReadUserPushSubscriptionDto> GetPushSubscriptionById(int id, int? userId = null)
