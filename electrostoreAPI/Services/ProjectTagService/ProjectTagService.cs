@@ -3,7 +3,6 @@ using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.ProjectTagService;
 
@@ -22,63 +21,26 @@ public class ProjectTagService : IProjectTagService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.ProjectTags.AsQueryable();
-        var filterResult = default(Expression<Func<ProjectTags, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(t => idResearch.Contains(t.id_project_tag));
+            rsql = null;
+            sort = null;
         }
-        else
-        {
-            if (rsql != null && rsql.Count > 0)
-            {
-                (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjectTags>(rsql);
-                query = query.Where(filterResult);
-            }
-            if (!string.IsNullOrEmpty(sort?.field))
-            {
-                var sortResult = RsqlParserExtensions.ToSortExpression<ProjectTags>(sort);
-                if (sortResult.Item1 != null)
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_project_tag", order = "asc" })
+            .ToProjectedResponseAsync(
+                t => new
                 {
-                    query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-                }
-                else
+                    ProjectTags = t,
+                    ProjectsProjectTagsCount = t.ProjectsProjectTags.Count,
+                    ProjectsProjectTags = expand != null && expand.Contains("project_tags") ? t.ProjectsProjectTags.Take(20).ToList() : null
+                },
+                projectTag => projectTag.Select(t => _mapper.Map<ReadExtendedProjectTagDto>(t.ProjectTags) with
                 {
-                    sort = new SorterDto { field = "id_project_tag", order = "asc" };
-                    query = query.OrderBy(t => t.id_project_tag);
-                }
-            }
-            else
-            {
-                query = query.OrderBy(t => t.id_project_tag);
-            }
-        }
-        query = query.Skip(offset).Take(limit);
-        var projectTag = await query
-            .Select(t => new
-            {
-                ProjectTags = t,
-                ProjectsProjectTagsCount = t.ProjectsProjectTags.Count,
-                ProjectsProjectTags = expand != null && expand.Contains("project_tags") ? t.ProjectsProjectTags.Take(20).ToList() : null
-            })
-            .ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedProjectTagDto>
-        {
-            data = projectTag.Select(t => _mapper.Map<ReadExtendedProjectTagDto>(t.ProjectTags) with
-            {
-                project_tags_count = t.ProjectsProjectTagsCount,
-                project_tags = _mapper.Map<IEnumerable<ReadProjectProjectTagDto>>(t.ProjectsProjectTags)
-            }).ToList(),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.ProjectTags.CountAsync(filterResult ?? (t => true)),
-                next_offset = offset + limit,
-                has_more = await _context.ProjectTags.Skip(offset + limit).AnyAsync(filterResult ?? (t => true))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+                    project_tags_count = t.ProjectsProjectTagsCount,
+                    project_tags = _mapper.Map<IEnumerable<ReadProjectProjectTagDto>>(t.ProjectsProjectTags)
+                }).ToList());
     }
 
     public async Task<ReadExtendedProjectTagDto> GetProjectTagById(int id, List<string>? expand = null)

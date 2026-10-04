@@ -5,7 +5,6 @@ using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.SessionService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.ItemHistoryService;
 
@@ -30,62 +29,26 @@ public class ItemHistoryService : IItemHistoryService
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.ItemsHistory.AsQueryable();
-        var filterResult = default(Expression<Func<ItemsHistory, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_item", search_type = "eq", value = itemId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ItemsHistory>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<ItemsHistory>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_item_history", order = "desc" };
-                query = query.OrderByDescending(h => h.id_item_history);
-            }
-        }
-        else
-        {
-            query = query.OrderByDescending(h => h.id_item_history);
-        }
-        query = query.Skip(offset).Take(limit);
-        var history = await query
-            .Select(h => new
-            {
-                ItemHistory = h,
-                Item = expand != null && expand.Contains("item") ? h.Item : null,
-                Box = expand != null && expand.Contains("box") ? h.Box : null,
-                User = expand != null && expand.Contains("user") ? h.User : null
-            })
-            .ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedItemHistoryDto>
-        {
-            data = history.Select(h => {
-                return _mapper.Map<ReadExtendedItemHistoryDto>(h.ItemHistory) with
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_item_history", order = "desc" })
+            .ToProjectedResponseAsync(
+                h => new
                 {
-                    item = _mapper.Map<ReadExtendedItemDto>(h.Item),
-                    box = _mapper.Map<ReadBoxDto>(h.Box),
-                    user = _mapper.Map<ReadUserDto>(h.User),
-                };
-            }).ToList(),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.ItemsHistory.CountAsync(filterResult ?? (h => h.id_item == itemId)),
-                next_offset = offset + limit,
-                has_more = await _context.ItemsHistory.Skip(offset + limit).AnyAsync(filterResult ?? (h => h.id_item == itemId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+                    ItemHistory = h,
+                    Item = expand != null && expand.Contains("item") ? h.Item : null,
+                    Box = expand != null && expand.Contains("box") ? h.Box : null,
+                    User = expand != null && expand.Contains("user") ? h.User : null
+                },
+                history => history.Select(h => {
+                    return _mapper.Map<ReadExtendedItemHistoryDto>(h.ItemHistory) with
+                    {
+                        item = _mapper.Map<ReadExtendedItemDto>(h.Item),
+                        box = _mapper.Map<ReadBoxDto>(h.Box),
+                        user = _mapper.Map<ReadUserDto>(h.User),
+                    };
+                }).ToList());
     }
 
     public async Task<ReadExtendedItemHistoryDto> GetItemHistoryById(int id, int itemId, List<string>? expand = null)
@@ -114,60 +77,24 @@ public class ItemHistoryService : IItemHistoryService
         List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         var query = _context.ItemsHistory.AsQueryable();
-        var filterResult = default(Expression<Func<ItemsHistory, bool>>);
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ItemsHistory>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<ItemsHistory>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_item_history", order = "desc" };
-                query = query.OrderByDescending(h => h.id_item_history);
-            }
-        }
-        else
-        {
-            query = query.OrderByDescending(h => h.id_item_history);
-        }
-        query = query.Skip(offset).Take(limit);
-        var history = await query
-            .Select(h => new
-            {
-                ItemHistory = h,
-                Item = expand != null && expand.Contains("item") ? h.Item : null,
-                Box = expand != null && expand.Contains("box") ? h.Box : null,
-                User = expand != null && expand.Contains("user") ? h.User : null
-            })
-            .ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedItemHistoryDto>
-        {
-            data = history.Select(h => {
-                return _mapper.Map<ReadExtendedItemHistoryDto>(h.ItemHistory) with
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_item_history", order = "desc" })
+            .ToProjectedResponseAsync(
+                h => new
                 {
-                    item = _mapper.Map<ReadExtendedItemDto>(h.Item),
-                    box = _mapper.Map<ReadBoxDto>(h.Box),
-                    user = _mapper.Map<ReadUserDto>(h.User),
-                };
-            }).ToList(),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.ItemsHistory.CountAsync(filterResult ?? (h => true)),
-                next_offset = offset + limit,
-                has_more = await _context.ItemsHistory.Skip(offset + limit).AnyAsync(filterResult ?? (h => true))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+                    ItemHistory = h,
+                    Item = expand != null && expand.Contains("item") ? h.Item : null,
+                    Box = expand != null && expand.Contains("box") ? h.Box : null,
+                    User = expand != null && expand.Contains("user") ? h.User : null
+                },
+                history => history.Select(h => {
+                    return _mapper.Map<ReadExtendedItemHistoryDto>(h.ItemHistory) with
+                    {
+                        item = _mapper.Map<ReadExtendedItemDto>(h.Item),
+                        box = _mapper.Map<ReadBoxDto>(h.Box),
+                        user = _mapper.Map<ReadUserDto>(h.User),
+                    };
+                }).ToList());
     }
 
     public async Task<IEnumerable<ReadExtendedItemHistoryDto>> GetItemsHistoryByPeriodAsync(DateTime fromDate, DateTime toDate,

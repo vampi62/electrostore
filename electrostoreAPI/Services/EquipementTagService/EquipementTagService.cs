@@ -3,7 +3,6 @@ using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.EquipementTagService;
 
@@ -27,32 +26,8 @@ public class EquipementTagService : IEquipementTagService
             throw new KeyNotFoundException($"Equipement with id '{equipementId}' not found");
         }
         var query = _context.EquipementsTags.AsQueryable();
-        var filterResult = default(Expression<Func<EquipementsTags, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_equipement", search_type = "eq", value = equipementId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<EquipementsTags>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<EquipementsTags>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_tag", order = "asc" };
-                query = query.OrderBy(et => et.id_tag);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(et => et.id_tag);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("tag"))
         {
             query = query.Include(et => et.Tag);
@@ -61,21 +36,9 @@ public class EquipementTagService : IEquipementTagService
         {
             query = query.Include(et => et.Equipement);
         }
-        var equipementTag = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedEquipementTagDto>
-        {
-            data = _mapper.Map<List<ReadExtendedEquipementTagDto>>(equipementTag),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.EquipementsTags.CountAsync(filterResult ?? (et => et.id_equipement == equipementId)),
-                next_offset = offset + limit,
-                has_more = await _context.EquipementsTags.Skip(offset + limit).AnyAsync(filterResult ?? (et => et.id_equipement == equipementId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_tag", order = "asc" })
+            .ToResponseAsync(equipementTag => _mapper.Map<List<ReadExtendedEquipementTagDto>>(equipementTag));
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedEquipementTagDto>> GetEquipementsTagsByTagId(int tagId, int limit = 100, int offset = 0,
@@ -87,32 +50,8 @@ public class EquipementTagService : IEquipementTagService
             throw new KeyNotFoundException($"Tag with id '{tagId}' not found");
         }
         var query = _context.EquipementsTags.AsQueryable();
-        var filterResult = default(Expression<Func<EquipementsTags, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_tag", search_type = "eq", value = tagId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<EquipementsTags>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<EquipementsTags>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_equipement", order = "asc" };
-                query = query.OrderBy(et => et.id_equipement);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(et => et.id_equipement);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("tag"))
         {
             query = query.Include(et => et.Tag);
@@ -121,21 +60,9 @@ public class EquipementTagService : IEquipementTagService
         {
             query = query.Include(et => et.Equipement);
         }
-        var equipementTag = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedEquipementTagDto>
-        {
-            data = _mapper.Map<List<ReadExtendedEquipementTagDto>>(equipementTag),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.EquipementsTags.CountAsync(filterResult ?? (et => et.id_tag == tagId)),
-                next_offset = offset + limit,
-                has_more = await _context.EquipementsTags.Skip(offset + limit).AnyAsync(filterResult ?? (et => et.id_tag == tagId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_equipement", order = "asc" })
+            .ToResponseAsync(equipementTag => _mapper.Map<List<ReadExtendedEquipementTagDto>>(equipementTag));
     }
 
     public async Task<ReadExtendedEquipementTagDto> GetEquipementTagById(int equipementId, int tagId, List<string>? expand = null)

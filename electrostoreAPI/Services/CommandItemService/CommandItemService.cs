@@ -3,7 +3,6 @@ using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.CommandItemService;
 
@@ -27,32 +26,8 @@ public class CommandItemService : ICommandItemService
             throw new KeyNotFoundException($"Command with id '{commandId}' not found");
         }
         var query = _context.CommandsItems.AsQueryable();
-        var filterResult = default(Expression<Func<CommandsItems, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_command", search_type = "eq", value = commandId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CommandsItems>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<CommandsItems>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_item", order = "asc" };
-                query = query.OrderBy(ci => ci.id_item);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(ci => ci.id_item);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("item"))
         {
             query = query.Include(ci => ci.Item);
@@ -61,21 +36,9 @@ public class CommandItemService : ICommandItemService
         {
             query = query.Include(ci => ci.Command);
         }
-        var commandItem = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedCommandItemDto>
-        {
-            data = _mapper.Map<List<ReadExtendedCommandItemDto>>(commandItem),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.CommandsItems.CountAsync(filterResult ?? (ci => ci.id_command == commandId)),
-                next_offset = offset + limit,
-                has_more = await _context.CommandsItems.Skip(offset + limit).AnyAsync(filterResult ?? (ci => ci.id_command == commandId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_item", order = "asc" })
+            .ToResponseAsync(commandItem => _mapper.Map<List<ReadExtendedCommandItemDto>>(commandItem));
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedCommandItemDto>> GetCommandsItemsByItemId(int itemId, int limit = 100, int offset = 0,
@@ -87,32 +50,8 @@ public class CommandItemService : ICommandItemService
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.CommandsItems.AsQueryable();
-        var filterResult = default(Expression<Func<CommandsItems, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_item", search_type = "eq", value = itemId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CommandsItems>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<CommandsItems>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_command", order = "asc" };
-                query = query.OrderBy(ci => ci.id_command);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(ci => ci.id_command);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("item"))
         {
             query = query.Include(ci => ci.Item);
@@ -121,21 +60,9 @@ public class CommandItemService : ICommandItemService
         {
             query = query.Include(ci => ci.Command);
         }
-        var commandItem = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedCommandItemDto>
-        {
-            data = _mapper.Map<List<ReadExtendedCommandItemDto>>(commandItem),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.CommandsItems.CountAsync(filterResult ?? (ci => ci.id_item == itemId)),
-                next_offset = offset + limit,
-                has_more = await _context.CommandsItems.Skip(offset + limit).AnyAsync(filterResult ?? (ci => ci.id_item == itemId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_command", order = "asc" })
+            .ToResponseAsync(commandItem => _mapper.Map<List<ReadExtendedCommandItemDto>>(commandItem));
     }
 
     public async Task<ReadExtendedCommandItemDto> GetCommandItemById(int commandId, int itemId, List<string>? expand = null)

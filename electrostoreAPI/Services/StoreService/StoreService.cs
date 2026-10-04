@@ -9,7 +9,6 @@ using ElectrostoreAPI.Services.EncryptionService;
 using ElectrostoreAPI.Services.SessionService;
 using ElectrostoreAPI.Services.ValidateStoreService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 using System.Text.Json;
 
 namespace ElectrostoreAPI.Services.StoreService;
@@ -41,78 +40,40 @@ public class StoreService : IStoreService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Stores.AsQueryable();
-        var filterResult = default(Expression<Func<Stores, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(s => idResearch.Contains(s.id_store));
+            rsql = null;
+            sort = null;
         }
-        else
-        {
-            if (rsql != null && rsql.Count > 0)
-            {
-                (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Stores>(rsql);
-                query = query.Where(filterResult);
-            }
-            if (!string.IsNullOrEmpty(sort?.field))
-            {
-                var sortResult = RsqlParserExtensions.ToSortExpression<Stores>(sort);
-                if (sortResult.Item1 != null)
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_store", order = "asc" })
+            .ToProjectedResponseAsync(
+                s => new
                 {
-                    query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-                }
-                else
+                    Store = s,
+                    BoxsCount = s.Boxs.Count,
+                    LedsCount = s.Leds.Count,
+                    StoresTagsCount = s.StoresTags.Count,
+                    Boxs = expand != null && expand.Contains("boxs") ? s.Boxs.Take(20).ToList() : null,
+                    Leds = expand != null && expand.Contains("leds") ? s.Leds.Take(20).ToList() : null,
+                    StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null,
+                    Zone = expand != null && expand.Contains("zone") ? s.Zone : null
+                },
+                store => store.Select(s =>
                 {
-                    sort = new SorterDto { field = "id_store", order = "asc" };
-                    query = query.OrderBy(s => s.id_store);
-                }
-            }
-            else
-            {
-                query = query.OrderBy(s => s.id_store);
-            }
-        }
-        query = query.Skip(offset).Take(limit);
-        var store = await query
-            .OrderBy(s => s.id_store)
-            .Select(s => new
-            {
-                Store = s,
-                BoxsCount = s.Boxs.Count,
-                LedsCount = s.Leds.Count,
-                StoresTagsCount = s.StoresTags.Count,
-                Boxs = expand != null && expand.Contains("boxs") ? s.Boxs.Take(20).ToList() : null,
-                Leds = expand != null && expand.Contains("leds") ? s.Leds.Take(20).ToList() : null,
-                StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null,
-                Zone = expand != null && expand.Contains("zone") ? s.Zone : null
-            })
-            .ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedStoreDto>
-        {
-            data = store.Select(s =>
-            {
-                return _mapper.Map<ReadExtendedStoreDto>(s.Store) with
-                {
-                    mqtt_password_store = string.Empty, // Do not return the password in the list view
-                    boxs_count = s.BoxsCount,
-                    leds_count = s.LedsCount,
-                    stores_tags_count = s.StoresTagsCount,
-                    boxs = _mapper.Map<IEnumerable<ReadBoxDto>>(s.Boxs),
-                    leds = _mapper.Map<IEnumerable<ReadLedDto>>(s.Leds),
-                    stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(s.StoresTags),
-                    zone = _mapper.Map<ReadZoneDto?>(s.Zone)
-                };
-            }).ToList(),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.Stores.CountAsync(filterResult ?? (s => true)),
-                next_offset = offset + limit,
-                has_more = await _context.Stores.Skip(offset + limit).AnyAsync(filterResult ?? (s => true))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+                    return _mapper.Map<ReadExtendedStoreDto>(s.Store) with
+                    {
+                        mqtt_password_store = string.Empty, // Do not return the password in the list view
+                        boxs_count = s.BoxsCount,
+                        leds_count = s.LedsCount,
+                        stores_tags_count = s.StoresTagsCount,
+                        boxs = _mapper.Map<IEnumerable<ReadBoxDto>>(s.Boxs),
+                        leds = _mapper.Map<IEnumerable<ReadLedDto>>(s.Leds),
+                        stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(s.StoresTags),
+                        zone = _mapper.Map<ReadZoneDto?>(s.Zone)
+                    };
+                }).ToList());
     }
 
     public async Task<ReadExtendedStoreDto> GetStoreById(int id, List<string>? expand = null)

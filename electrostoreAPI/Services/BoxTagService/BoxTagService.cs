@@ -5,7 +5,6 @@ using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.SessionService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.BoxTagService;
 
@@ -33,30 +32,6 @@ public class BoxTagService : IBoxTagService
         var query = _context.BoxsTags.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_box", search_type = "eq", value = boxId.ToString() });
-        var filterResult = default(Expression<Func<BoxsTags, bool>>);
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<BoxsTags>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<BoxsTags>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_tag", order = "asc" };
-                query = query.OrderBy(bt => bt.id_tag);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(bt => bt.id_tag);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("tag"))
         {
             query = query.Include(bt => bt.Tag);
@@ -65,21 +40,9 @@ public class BoxTagService : IBoxTagService
         {
             query = query.Include(bt => bt.Box);
         }
-        var boxTag = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedBoxTagDto>
-        {
-            data = _mapper.Map<IEnumerable<ReadExtendedBoxTagDto>>(boxTag),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.BoxsTags.CountAsync(filterResult ?? (bt => true)),
-                next_offset = offset + limit,
-                has_more = await _context.BoxsTags.Skip(offset + limit).AnyAsync(filterResult ?? (bt => true))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_tag", order = "asc" })
+            .ToResponseAsync(boxTag => _mapper.Map<IEnumerable<ReadExtendedBoxTagDto>>(boxTag));
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedBoxTagDto>> GetBoxsTagsByTagId(int tagId, int limit = 100, int offset = 0,
@@ -93,30 +56,6 @@ public class BoxTagService : IBoxTagService
         var query = _context.BoxsTags.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_tag", search_type = "eq", value = tagId.ToString() });
-        var filterResult = default(Expression<Func<BoxsTags, bool>>);
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<BoxsTags>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<BoxsTags>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_box", order = "asc" };
-                query = query.OrderBy(bt => bt.id_box);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(bt => bt.id_box);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("tag"))
         {
             query = query.Include(bt => bt.Tag);
@@ -125,21 +64,9 @@ public class BoxTagService : IBoxTagService
         {
             query = query.Include(bt => bt.Box);
         }
-        var boxTag = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedBoxTagDto>
-        {
-            data = _mapper.Map<IEnumerable<ReadExtendedBoxTagDto>>(boxTag),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.BoxsTags.CountAsync(filterResult ?? (bt => true)),
-                next_offset = offset + limit,
-                has_more = await _context.BoxsTags.Skip(offset + limit).AnyAsync(filterResult ?? (bt => true))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_box", order = "asc" })
+            .ToResponseAsync(boxTag => _mapper.Map<IEnumerable<ReadExtendedBoxTagDto>>(boxTag));
     }
 
     public async Task<ReadExtendedBoxTagDto> GetBoxTagById(int boxId, int tagId, List<string>? expand = null)

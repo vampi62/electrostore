@@ -5,7 +5,6 @@ using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.SessionService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.CarrierService;
 
@@ -27,52 +26,15 @@ public class CarrierService : ICarrierService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<int>? idResearch = null)
     {
         var query = _context.Carriers.AsQueryable();
-        var filterResult = default(Expression<Func<Carriers, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(c => idResearch.Contains(c.id_carrier));
+            rsql = null;
+            sort = null;
         }
-        else
-        {
-            if (rsql != null && rsql.Count > 0)
-            {
-                (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Carriers>(rsql);
-                query = query.Where(filterResult);
-            }
-            if (!string.IsNullOrEmpty(sort?.field))
-            {
-                var sortResult = RsqlParserExtensions.ToSortExpression<Carriers>(sort);
-                if (sortResult.Item1 != null)
-                {
-                    query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-                }
-                else
-                {
-                    sort = new SorterDto { field = "id_carrier", order = "asc" };
-                    query = query.OrderBy(c => c.id_carrier);
-                }
-            }
-            else
-            {
-                query = query.OrderBy(c => c.id_carrier);
-            }
-        }
-        query = query.Skip(offset).Take(limit);
-        var carrier = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadCarrierDto>
-        {
-            data = _mapper.Map<IEnumerable<ReadCarrierDto>>(carrier),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.Carriers.CountAsync(filterResult ?? (c => true)),
-                next_offset = offset + limit,
-                has_more = await _context.Carriers.Skip(offset + limit).AnyAsync(filterResult ?? (c => true))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_carrier", order = "asc" })
+            .ToResponseAsync(carrier => _mapper.Map<IEnumerable<ReadCarrierDto>>(carrier));
     }
 
     public async Task<ReadCarrierDto> GetCarrierById(int id)

@@ -4,7 +4,6 @@ using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.FileService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.ProjectDocumentService;
 
@@ -31,47 +30,11 @@ public class ProjectDocumentService : IProjectDocumentService
             throw new KeyNotFoundException($"Project with id '{projectId}' not found");
         }
         var query = _context.ProjectsDocuments.AsQueryable();
-        var filterResult = default(Expression<Func<ProjectsDocuments, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_project", search_type = "eq", value = projectId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjectsDocuments>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<ProjectsDocuments>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_project_document", order = "asc" };
-                query = query.OrderBy(pd => pd.id_project_document);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(pd => pd.id_project_document);
-        }
-        query = query.Skip(offset).Take(limit);
-        var projectDocument = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadProjectDocumentDto>
-        {
-            data = _mapper.Map<List<ReadProjectDocumentDto>>(projectDocument),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.ProjectsDocuments.CountAsync(filterResult ?? (pd => pd.id_project == projectId)),
-                next_offset = offset + limit,
-                has_more = await _context.ProjectsDocuments.Skip(offset + limit).AnyAsync(filterResult ?? (pd => pd.id_project == projectId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_project_document", order = "asc" })
+            .ToResponseAsync(projectDocument => _mapper.Map<List<ReadProjectDocumentDto>>(projectDocument));
     }
 
     public async Task<ReadProjectDocumentDto> GetProjectDocumentById(int id, int? projectId = null)

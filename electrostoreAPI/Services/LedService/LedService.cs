@@ -8,7 +8,6 @@ using ElectrostoreAPI.Services.ValidateStoreService;
 using Microsoft.EntityFrameworkCore;
 using MQTTnet;
 using MQTTnet.Protocol;
-using System.Linq.Expressions;
 using System.Text.Json;
 
 namespace ElectrostoreAPI.Services.LedService;
@@ -40,47 +39,11 @@ public class LedService : ILedService
             throw new KeyNotFoundException($"Store with id '{storeId}' not found");
         }
         var query = _context.Leds.AsQueryable();
-        var filterResult = default(Expression<Func<Leds, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_store", search_type = "eq", value = storeId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Leds>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<Leds>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_led", order = "asc" };
-                query = query.OrderBy(l => l.id_led);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(l => l.id_led);
-        }
-        query = query.Skip(offset).Take(limit);
-        var led = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadLedDto>
-        {
-            data = _mapper.Map<List<ReadLedDto>>(led),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.Leds.CountAsync(filterResult ?? (l => l.id_store == storeId)),
-                next_offset = offset + limit,
-                has_more = await _context.Leds.Skip(offset + limit).AnyAsync(filterResult ?? (l => l.id_store == storeId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_led", order = "asc" })
+            .ToResponseAsync(led => _mapper.Map<List<ReadLedDto>>(led));
     }
 
     public async Task<ReadLedDto> GetLedById(int id, int? storeId = null)
