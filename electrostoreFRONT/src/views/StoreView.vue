@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
-import { useViewScroll } from "@/composables";
+import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
 import { isNewId } from "@/utils";
 import { StorePositionMode } from "@/enums";
@@ -350,6 +350,7 @@ const labelTableauBoxItem = ref<TableauLabel[]>([
 const metaTableauBoxItem = ref<TableauMeta>({
 	key: "id_item",
 	path: "/inventory/",
+	newTab: true,
 	expand: ["item"],
 });
 const labelTableauModalItem = ref<TableauLabel[]>([
@@ -424,6 +425,7 @@ const labelTableauBoxEquipement = ref<TableauLabel[]>([
 const metaTableauBoxEquipement = ref<TableauMeta>({
 	key: "id_equipement",
 	path: "/equipements/",
+	newTab: true,
 	expand: ["equipement"],
 });
 const labelTableauModalEquipement = ref<TableauLabel[]>([
@@ -493,6 +495,7 @@ const labelTableauModalTag = ref<TableauLabel[]>([
 	] },
 ]);
 useViewScroll(true);
+useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores");
 </script>
 <template>
 	<div class="flex items-center justify-between mb-4">

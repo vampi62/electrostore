@@ -38,6 +38,13 @@ watch((): [boolean, string] => [isTabsView.value, route.fullPath], ([tabsView, f
 		tabsStore.open(fullPath);
 	}
 }, { immediate: true });
+// the unsaved changes of the tabs are kept in a draft when the page is closed (or hidden, the only reliable event on mobile)
+window.addEventListener("pagehide", () => tabsStore.saveDrafts());
+document.addEventListener("visibilitychange", () => {
+	if (document.visibilityState === "hidden") {
+		tabsStore.saveDrafts();
+	}
+});
 // tabs are not kept from a user to another
 watch(() => authStore.user, (user) => {
 	if (!user) {
@@ -80,7 +87,7 @@ const showAboutModal = ref(false);
 	</div>
 	<NotificationContainer />
 	<NotificationAppUpdate />
-	<div v-if="showAboutModal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-20" @click="showAboutModal = false">
+	<div v-if="showAboutModal" class="fixed inset-0 bg-gray-800bg-opacity-50 flex items-center justify-center z-20" @click="showAboutModal = false">
 		<div class="bg-white rounded-lg shadow-lg w-3/4 h-3/4 p-6" @click.stop>
 		</div>
 	</div>

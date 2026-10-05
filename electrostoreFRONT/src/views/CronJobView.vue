@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
-import { useViewScroll } from "@/composables";
+import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
 import { isNewId } from "@/utils";
 import { CronJobStatus } from "@/enums";
@@ -173,6 +173,7 @@ const labelForm = [
 	{ key: "last_error_cronjob", label: "cronJob.LastError", type: "computed", value: cronJobLastError, showCondition: "edition?.last_error_cronjob" },
 ];
 useViewScroll(true);
+useTabGuard(cronJobsStore, () => cronJobId.value, "cronJobEdition", "cronJobs");
 </script>
 
 <template>

@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
-import { useViewScroll } from "@/composables";
+import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
 import { downloadFile, viewFile, isNewId } from "@/utils";
 import CommandStatus from "@/enums/CommandStatus";
@@ -715,6 +715,7 @@ const labelTableauModalItem = ref<TableauLabel[]>([
 	] },
 ]);
 useViewScroll(true);
+useTabGuard(commandsStore, () => commandId.value, "commandEdition", "commands");
 </script>
 <template>
 	<div class="flex items-center justify-between mb-4">

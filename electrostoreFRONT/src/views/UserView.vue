@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
-import { useViewScroll } from "@/composables";
+import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
 import { isNewId } from "@/utils";
 import { UserRole } from "@/enums";
@@ -224,6 +224,7 @@ const labelTableauSession = ref<TableauLabel[]>([
 	] },
 ]);
 useViewScroll(true);
+useTabGuard(usersStore, () => userId.value, "userEdition", "users");
 
 // --- Push Notifications ---
 const pushSupported = typeof window !== "undefined" && "PushManager" in window && "serviceWorker" in navigator && typeof Notification !== "undefined";

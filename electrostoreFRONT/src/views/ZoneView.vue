@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
-import { useViewScroll } from "@/composables";
+import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
 import { isNewId } from "@/utils";
 import { useConfigsStore, useZonesStore, useAuthStore } from "@/stores";
@@ -186,6 +186,7 @@ const labelTableauStore = ref<TableauLabel[]>([
 	{ label: "zone.StoreYMax", sortable: false, key: "ymax_store", valueKey: "ymax_store", type: "number" },
 ]);
 useViewScroll(true);
+useTabGuard(zonesStore, () => zoneId.value, "zoneEdition", "zones");
 </script>
 
 <template>
