@@ -15,7 +15,7 @@ export interface EditionDraft {
 const IGNORED_FIELDS = new Set(["loading", "isFormData", "pushChange"]);
 
 // never written in the localStorage
-const SENSITIVE_FIELDS = /password|mdp/i;
+const SENSITIVE_FIELDS = /password/i;
 
 const isEmpty = (value: unknown) => value === undefined || value === null || value === "";
 

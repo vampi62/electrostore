@@ -34,7 +34,7 @@ export interface TabDraft {
 
 function readDrafts(): Record<string, TabDraft> {
 	try {
-		return JSON.parse(localStorage.getItem(draftsKey)) ?? {};
+		return JSON.parse(localStorage.getItem(draftsKey) ?? "{}") ?? {};
 	} catch {
 		return {};
 	}
@@ -99,11 +99,21 @@ function newTabId() {
 	return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
+interface TabData {
+	id: string;
+	fullPath: string;
+}
+
+interface SavedTabsData {
+	tabs: TabData[];
+	activeId: string;
+}
+
 function loadSavedTabs() {
 	try {
-		const saved = JSON.parse(localStorage.getItem(storageKey));
-		const tabs = saved.tabs.filter((tab) => typeof tab.id === "string" && typeof tab.fullPath === "string")
-			.map((tab) => ({ id: tab.id, fullPath: resolveTab(tab.fullPath).fullPath }));
+		const saved: Partial<SavedTabsData> = JSON.parse(localStorage.getItem(storageKey) ?? "{}");
+		const tabs = (saved.tabs ?? []).filter((tab: TabData) => typeof tab.id === "string" && typeof tab.fullPath === "string")
+			.map((tab: TabData) => ({ id: tab.id, fullPath: resolveTab(tab.fullPath).fullPath }));
 		if (tabs.length) {
 			return { tabs, activeId: tabs.some((tab) => tab.id === saved.activeId) ? saved.activeId : tabs[0].id };
 		}
@@ -137,6 +147,9 @@ export const useTabsStore = defineStore("tabs", {
 		getRouter(tabId: string) {
 			if (!tabRouters.has(tabId)) {
 				const tab = this.tabs.find((t) => t.id === tabId);
+				if (!tab) {
+					return;
+				}
 				tabRouters.set(tabId, createTabRouter(this, tabId, tab.fullPath));
 			}
 			return tabRouters.get(tabId);
@@ -168,7 +181,10 @@ export const useTabsStore = defineStore("tabs", {
 		},
 		// display a view in the selected tab
 		navigate(path: string) {
-			return this.getRouter(this.activeId).push(path);
+			if (!this.activeId) {
+				return;
+			}
+			return this.getRouter(this.activeId)?.push(path);
 		},
 		registerGuard(tabId: string, guard: TabGuard) {
 			tabGuards.set(tabId, guard);

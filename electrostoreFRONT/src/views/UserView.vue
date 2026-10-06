@@ -106,7 +106,7 @@ const userSave = async() => {
 			const data = { ...usersStore.userEdition[userId.value] };
 			if (!data.password_user) {
 				delete data.password_user;
-				delete data.confirm_mdp_user;
+				delete data.confirm_password_user;
 			}
 			if (authStore.user?.isSSOUser) {
 				delete data.current_password_user;
@@ -116,7 +116,7 @@ const userSave = async() => {
 			addNotification({ message: t("user.Updated"), type: "success" });
 		}
 		usersStore.userEdition[userId.value].password_user = "";
-		usersStore.userEdition[userId.value].confirm_mdp_user = "";
+		usersStore.userEdition[userId.value].confirm_password_user = "";
 		usersStore.userEdition[userId.value].current_password_user = "";
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -167,14 +167,14 @@ const createSchema = () => {
 				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
 				t("user.PasswordComplexity"),
 			);
-		shape.confirm_mdp_user = Yup.string()
+		shape.confirm_password_user = Yup.string()
 			.required(t("user.ConfirmPasswordRequired")).oneOf([Yup.ref("password_user")], t("user.ConfirmPasswordMatch")).matches(
 				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
 				t("user.PasswordComplexity"),
 			);
 	} else {
 		shape.password_user = Yup.string().nullable();
-		shape.confirm_mdp_user = Yup.string().nullable();
+		shape.confirm_password_user = Yup.string().nullable();
 	}
 	if (authStore.user?.isSSOUser === false) {
 		shape.current_password_user = Yup.string()
@@ -192,7 +192,7 @@ const labelForm = ref<FormLabel[]>([
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
 	{ key: "password_user", label: "user.Password", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && edition?._check",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
-	{ key: "confirm_mdp_user", label: "user.ConfirmPassword", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && edition?._check",
+	{ key: "confirm_password_user", label: "user.ConfirmPassword", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && edition?._check",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
 	{ key: "current_password_user", label: "user.CurrentPassword", type: "password", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
