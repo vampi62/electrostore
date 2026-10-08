@@ -1,3 +1,4 @@
+export { default as AiChatModal } from "./AiChatModal.vue";
 export { default as CollapsibleSection } from "./CollapsibleSection.vue";
 export { default as Comment } from "./Comment.vue";
 export { default as Filter } from "./Filter.vue";

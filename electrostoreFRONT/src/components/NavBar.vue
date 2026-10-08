@@ -29,10 +29,20 @@
 						<span>{{ $t('common.VAppInstall') }}</span>
 					</button>
 				</div>
+				<button v-if="aiAvailable" @click="$emit('showAiModal', true)"
+					class="cursor-pointer text-white hover:text-blue-400" :title="$t('common.VAppAi')">
+					<font-awesome-icon icon="fa-solid fa-wand-magic-sparkles" />
+					<span class="ml-2">{{ $t('common.VAppAi') }}</span>
+				</button>
 				<a :href="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400"
 					@click.prevent="openView($event, '/users/' + authStore.user?.id_user)"
 					@auxclick.middle.prevent="openView($event, '/users/' + authStore.user?.id_user)">
 					{{ $t('common.VAppProfile') }}
+				</a>
+				<a href="/health" class="text-white hover:text-blue-400"
+					@click.prevent="openView($event, '/health')"
+					@auxclick.middle.prevent="openView($event, '/health')">
+					{{ $t('common.VAppHealth') }}
 				</a>
 				<a v-if="authStore.hasPermission([1, 2])" href="/users"
 					class="text-white hover:text-blue-400" @click.prevent="openView($event, '/users')"
@@ -62,9 +72,19 @@
 					<span>{{ $t('common.VAppInstall') }}</span>
 				</button>
 			</div>
+			<button v-if="aiAvailable" @click="$emit('showAiModal', true); showTopBar = false"
+				class="cursor-pointer text-white hover:text-blue-400 text-left">
+				<font-awesome-icon icon="fa-solid fa-wand-magic-sparkles" />
+				<span class="ml-2">{{ $t('common.VAppAi') }}</span>
+			</button>
 			<a :href="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400"
 				@click.prevent="openView($event, '/users/' + authStore.user?.id_user)">
 				{{ $t('common.VAppProfile') }}
+			</a>
+			<a href="/health" class="text-white hover:text-blue-400"
+				@click.prevent="openView($event, '/health')"
+				@auxclick.middle.prevent="openView($event, '/health')">
+				{{ $t('common.VAppHealth') }}
 			</a>
 			<a v-if="authStore.hasPermission([1, 2])" href="/users"
 				class="text-white hover:text-blue-400" @click.prevent="openView($event, '/users')">
@@ -99,13 +119,6 @@
 			<div v-if="configsStore.getConfigByKey('demo_mode') === true" class="text-red-500 text-center">
 				{{ $t('common.VAppDemoMode') }}
 			</div>
-			<a href="https://github.com/vampi62/electrostore" class="text-white hover:text-blue-400"
-				target="_blank" rel="noopener noreferrer">
-				<p class="space-x-4">
-					<font-awesome-icon icon="fa-brands fa-github" size="lg" />
-					<span>ElectroStore</span>
-				</p>
-			</a>
 		</div>
 	</div>
 	<div :class="['hidden sm:flex flex-col justify-between p-4 bg-gray-800 fixed left-0 top-16 bottom-12',
@@ -137,15 +150,6 @@
 		<div v-if="configsStore.getConfigByKey('demo_mode') === true" class="text-red-500 text-center mt-4">
 			{{ $t('common.VAppDemoMode') }}
 		</div>
-		<a href="https://github.com/vampi62/electrostore" class="block text-white hover:text-blue-400"
-			target="_blank" rel="noopener noreferrer">
-			<div class="text-center mt-4">
-				<p class="space-x-4">
-					<font-awesome-icon icon="fa-brands fa-github" size="lg" />
-					<span v-if="!reduceLeftSideBar">ElectroStore</span>
-				</p>
-			</div>
-		</a>
 	</div>
 	<button :class="['hidden sm:flex justify-center p-4 bg-gray-700 text-white hover:text-blue-400 fixed left-0 bottom-0 h-12',
 		reduceLeftSideBar ? 'w-16' : 'w-64']" @click="reduceLeftSideBar = !reduceLeftSideBar; $emit('update:reduceLeftSideBar', reduceLeftSideBar)">
@@ -166,6 +170,10 @@ export default {
 		},
 	},
 	computed: {
+		// the assistant button is only shown when the api has an llm configured
+		aiAvailable(): boolean {
+			return this.configsStore.getStatusByKey("llm_status") === "healthy";
+		},
 		listNavShown() {
 			return this.listNav.filter((nav) => {
 				if (nav.showCondition === undefined) {
@@ -189,7 +197,7 @@ export default {
 		const tabsStore = useTabsStore();
 		return { authStore, configsStore, tabsStore };
 	},
-	emits: ["update:reduceLeftSideBar", "showAboutModal"],
+	emits: ["update:reduceLeftSideBar", "showAboutModal", "showAiModal"],
 	mounted() {
 		window.addEventListener("beforeinstallprompt", this.onBeforeInstallPrompt);
 		window.addEventListener("appinstalled", this.onAppInstalled);
