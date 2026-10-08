@@ -91,7 +91,22 @@
 							<span>{{ $t('store.MqttLedId') }}</span>
 							<input type="number" v-model="ledEdition[selectedElement.key.id_led].mqtt_id_led" class="w-16" :disabled="!canEdit" />
 						</div>
-						<!-- TODO : add color weel and select animation and light duration -->
+						<template v-if="ledEdition[selectedElement.key.id_led].status != 'new'">
+							<div class="flex items-center space-x-4">
+								<span>{{ $t('store.LedColor') }}</span>
+								<input type="color" v-model="ledShowOptions.color" class="w-16 h-8" />
+							</div>
+							<div class="flex items-center space-x-4">
+								<span>{{ $t('store.LedTimeShow') }}</span>
+								<input type="number" min="1" v-model.number="ledShowOptions.timeshow" class="w-16" />
+							</div>
+							<div class="flex items-center space-x-4">
+								<span>{{ $t('store.LedAnimation') }}</span>
+								<select v-model.number="ledShowOptions.animation">
+									<option v-for="anim in ledAnimations" :key="anim" :value="anim">{{ $t('store.LedAnimation' + anim) }}</option>
+								</select>
+							</div>
+						</template>
 					</template>
 					<template v-if="selectedElement.type == 'box'">
 						<button v-if="canEdit" @click="deleteElement" class="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600">
@@ -103,6 +118,22 @@
 						<button v-if="boxEdition[selectedElement.key.id_box].status != 'new'" @click="toggleBoxLed(selectedElement.key.id_box)" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
 							{{ $t('store.ToggleBoxLed') }}
 						</button>
+						<template v-if="boxEdition[selectedElement.key.id_box].status != 'new'">
+							<div class="flex items-center space-x-4">
+								<span>{{ $t('store.LedColor') }}</span>
+								<input type="color" v-model="ledShowOptions.color" class="w-16 h-8" />
+							</div>
+							<div class="flex items-center space-x-4">
+								<span>{{ $t('store.LedTimeShow') }}</span>
+								<input type="number" min="1" v-model.number="ledShowOptions.timeshow" class="w-16" />
+							</div>
+							<div class="flex items-center space-x-4">
+								<span>{{ $t('store.LedAnimation') }}</span>
+								<select v-model.number="ledShowOptions.animation">
+									<option v-for="anim in ledAnimations" :key="anim" :value="anim">{{ $t('store.LedAnimation' + anim) }}</option>
+								</select>
+							</div>
+						</template>
 						<button v-if="canEdit" @click="addLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
 							{{ $t('store.AddLed') }}
 						</button>
@@ -400,9 +431,19 @@ export default {
 			this.showMenu = false;
 			this.stopSelecting();
 		},
+		getShowParams() {
+			const hex = this.ledShowOptions.color.replace("#", "");
+			return {
+				red: Number.parseInt(hex.substring(0, 2), 16),
+				green: Number.parseInt(hex.substring(2, 4), 16),
+				blue: Number.parseInt(hex.substring(4, 6), 16),
+				timeshow: this.ledShowOptions.timeshow,
+				animation: this.ledShowOptions.animation,
+			};
+		},
 		async toggleLed(ledId: string) {
 			try {
-				await this.storeFunc.showLedById(ledId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
+				await this.storeFunc.showLedById(ledId, this.getShowParams());
 				this.addNotification({ message: this.t("store.LedShowSuccess"), type: "success" });
 			} catch (e) {
 				this.addNotification({ message: e, type: "error" });
@@ -410,7 +451,7 @@ export default {
 		},
 		async toggleBoxLed(boxId: string) {
 			try {
-				await this.storeFunc.showBoxById(boxId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
+				await this.storeFunc.showBoxById(boxId, this.getShowParams());
 				this.addNotification({ message: this.t("store.BoxShowSuccess"), type: "success" });
 			} catch (e) {
 				this.addNotification({ message: e, type: "error" });
@@ -605,6 +646,8 @@ export default {
 			mouseClick: { X: 0, Y: 0 },
 			gridSize: { cellSizeX: 40, cellSizeY: 40 },
 			showLedId: true,
+			ledShowOptions: { color: "#ffffff", timeshow: 30, animation: 1 },
+			ledAnimations: [1, 2, 3, 4, 5],
 			selectedElement: { type: null as string | null, key: null as any, temp: {} as any, status: null as string | null },
 			hasDragElement: false,
 		};
