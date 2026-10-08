@@ -9,9 +9,9 @@ const mainProjectRoot = path.resolve(__dirname, "../../electrostoreFRONT");
 const mainProjectSrc = path.resolve(mainProjectRoot, "src");
 const mainProjectNodeModules = path.resolve(mainProjectRoot, "node_modules");
 
-export default mergeConfig(
-	viteConfig,
-	defineConfig({
+export default defineConfig((env) => mergeConfig(
+	typeof viteConfig === "function" ? viteConfig(env) : viteConfig,
+	{
 		test: {
 			environment: "jsdom",
 			exclude: [...configDefaults.exclude, "e2e/*"],
@@ -32,5 +32,5 @@ export default mergeConfig(
 				"pinia": path.resolve(mainProjectNodeModules, "pinia"),
 			},
 		},
-	}),
-);
+	},
+));

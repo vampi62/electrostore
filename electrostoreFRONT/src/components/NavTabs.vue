@@ -20,6 +20,22 @@ function tabInfo(tab: Tab) {
 	return { title, icon: resolved.meta.icon };
 }
 
+// a tab holding unsaved changes asks for a confirmation before being closed
+const tabToClose = ref<string | null>(null);
+function closeTab(tabId: string) {
+	if (tabsStore.isDirty(tabId)) {
+		tabToClose.value = tabId;
+		return;
+	}
+	tabsStore.close(tabId);
+}
+function confirmCloseTab() {
+	if (tabToClose.value) {
+		tabsStore.close(tabToClose.value);
+	}
+	tabToClose.value = null;
+}
+
 function selectTab(tabId: string) {
 	tabsStore.activate(tabId);
 	showTabList.value = false;
@@ -34,13 +50,15 @@ function selectTab(tabId: string) {
 				:class="['flex items-center gap-2 h-9 pl-3 pr-2 rounded flex-shrink-0 max-w-[12rem] text-sm cursor-pointer select-none',
 					tab.id === tabsStore.activeId ? 'bg-gray-600 text-white border-b-2 border-blue-400' : 'text-gray-300 hover:bg-gray-700']"
 				@click="tabsStore.activate(tab.id)" @keydown.enter="tabsStore.activate(tab.id)"
-				@mousedown.middle.prevent @auxclick.middle.prevent="tabsStore.close(tab.id)">
+				@mousedown.middle.prevent @auxclick.middle.prevent="closeTab(tab.id)">
 				<font-awesome-icon v-if="tabInfo(tab).icon" :icon="tabInfo(tab).icon" class="flex-shrink-0" />
 				<span class="truncate">{{ tabInfo(tab).title }}</span>
+				<span v-if="tabsStore.isDirty(tab.id)" :title="$t('common.VAppTabUnsaved')"
+					class="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0"></span>
 				<button v-if="tabsStore.tabs.length > 1" type="button" :aria-label="$t('common.VAppTabClose')"
 					:title="$t('common.VAppTabClose')"
 					class="flex items-center justify-center w-5 h-5 rounded flex-shrink-0 hover:bg-gray-500"
-					@click.stop="tabsStore.close(tab.id)">
+					@click.stop="closeTab(tab.id)">
 					<font-awesome-icon icon="fa-solid fa-xmark" size="xs" />
 				</button>
 			</div>
@@ -66,7 +84,7 @@ function selectTab(tabId: string) {
 						<button v-if="tabsStore.tabs.length > 1" type="button" :aria-label="$t('common.VAppTabClose')"
 							:title="$t('common.VAppTabClose')"
 							class="flex items-center justify-center w-8 h-8 mr-1 rounded flex-shrink-0 text-white hover:bg-gray-600"
-							@click="tabsStore.close(tab.id)">
+							@click="closeTab(tab.id)">
 							<font-awesome-icon icon="fa-solid fa-xmark" size="xs" />
 						</button>
 					</li>
@@ -78,5 +96,28 @@ function selectTab(tabId: string) {
 			@click="tabsStore.openBlank()">
 			<font-awesome-icon icon="fa-solid fa-plus" />
 		</button>
+		<div v-if="tabsStore.pendingLeave" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+			@click="tabsStore.answerLeave('cancel')">
+			<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
+				<h2 class="text-xl mb-4">{{ $t('common.VAppTabLeaveTitle') }}</h2>
+				<p>{{ $t('common.VAppTabLeaveText') }}</p>
+				<div class="flex flex-col gap-2 mt-4">
+					<button type="button" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+						@click="tabsStore.answerLeave('newTab')">
+						{{ $t('common.VAppTabLeaveNewTab') }}
+					</button>
+					<button type="button" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+						@click="tabsStore.answerLeave('leave')">
+						{{ $t('common.VAppTabLeaveConfirm') }}
+					</button>
+					<button type="button" class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500"
+						@click="tabsStore.answerLeave('cancel')">
+						{{ $t('components.VModalDeleteCancel') }}
+					</button>
+				</div>
+			</div>
+		</div>
+		<ModalDeleteConfirm :show-modal="tabToClose !== null" text-title="common.VAppTabCloseConfirmTitle"
+			text-p="common.VAppTabCloseConfirmText" :delete-action="confirmCloseTab" @close-modal="tabToClose = null" />
 	</div>
 </template>

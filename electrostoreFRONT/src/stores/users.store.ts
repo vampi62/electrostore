@@ -171,7 +171,7 @@ export const useUsersStore = defineStore("users",{
 					role_user: this.users[id].role_user,
 					current_password_user: "",
 					password_user: "",
-					confirm_mdp_user: "",
+					confirm_password_user: "",
 				};
 			} else {
 				this.userEdition[id] = {

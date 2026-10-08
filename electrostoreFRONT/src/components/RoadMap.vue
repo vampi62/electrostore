@@ -20,7 +20,7 @@
 						</div>
 						<div 
 							v-if="index < steps.length - 1"
-							class="absolute bg-white opacity-30"
+							class="absolute bg-white bg-opacity-30"
 							:class="isHorizontal ? 'right-0 top-2 bottom-2 w-px' : 'bottom-0 left-2 right-2 h-px'"
 						></div>
 					</div>
@@ -141,7 +141,7 @@
 					</div>
 					<div 
 						v-if="index < steps.length - 1"
-						class="h-px bg-white opacity-30 mx-4"
+						class="h-px bg-white bg-opacity-30 mx-4"
 					></div>
 				</div>
 			</div>

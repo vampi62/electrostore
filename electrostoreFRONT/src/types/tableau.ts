@@ -40,6 +40,8 @@ export interface TableauLabel {
 export interface TableauMeta {
 	key: string;
 	path?: string;
+	// open the path of a row in a new tab instead of the current one
+	newTab?: boolean;
 	sort?: string;
 	sortOrder?: "asc" | "desc";
 	preventClear?: boolean;

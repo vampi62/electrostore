@@ -29,6 +29,7 @@ for (const key in START_LOCATION) {
 		enumerable: true,
 	});
 }
+provide("tabId", props.tabId);
 provide(routerKey, router);
 provide(routeLocationKey, shallowReactive(reactiveRoute));
 provide(routerViewLocationKey, router.currentRoute);

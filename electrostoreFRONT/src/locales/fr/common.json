@@ -81,6 +81,15 @@
 	"VAppTabClose": "Fermer l'onglet",
 	"VAppTabList": "Liste des onglets",
 	"VAppTabBlankHint": "Choisissez une vue dans le menu pour l'afficher dans cet onglet",
+	"VAppTabUnsaved": "Modifications non enregistrées",
+	"VAppTabCloseConfirmTitle": "Fermer l'onglet ?",
+	"VAppTabCloseConfirmText": "Cet onglet contient des modifications non enregistrées, elles seront perdues si vous le fermez.",
+	"VAppTabLeaveTitle": "Modifications non enregistrées",
+	"VAppTabLeaveText": "Cette page contient des modifications non enregistrées. Vous pouvez ouvrir la destination dans un nouvel onglet pour les conserver.",
+	"VAppTabLeaveNewTab": "Ouvrir dans un nouvel onglet",
+	"VAppTabLeaveConfirm": "Quitter sans enregistrer",
+	"VAppTabDraftRestored": "Vos modifications non enregistrées ont été restaurées.",
+	"VAppTabDraftLostFiles": "{count} fichier(s) sélectionné(s) n'ont pas pu être restaurés, veuillez les ajouter à nouveau.",
 	"VAllCaracters": "caractères",
 	"VALLMissingTranslateLink": "Traduction manquante"
 }

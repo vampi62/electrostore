@@ -15,80 +15,86 @@ const versionPlugin = () => ({
 	},
 });
 // https://vitejs.dev/config/
-export default defineConfig({
-	plugins: [vue(),
-		VitePWA({
-			registerType: "autoUpdate",
-			strategies: "injectManifest",
-			srcDir: "src",
-			filename: "sw.ts",
-			includeAssets: ["favicon.ico", "apple-touch-icon.png", "pwa-192x192.png", "pwa-512x512.png"],
-			manifest: {
-				name: "ElectroStore",
-				short_name: "ElectroStore",
-				description: "manage your electronic storage",
-				theme_color: "#ffffff",
-				background_color: "#ffffff",
-				display: "standalone",
-				start_url: "/",
-				icons: [
-					{
-						src: "pwa/android-192x192.png",
-						sizes: "192x192",
-						type: "image/png",
-					},
-					{
-						src: "pwa/android-512x512.png",
-						sizes: "512x512",
-						type: "image/png",
-					},
-					{
-						src: "pwa/android-512x512.png",
-						sizes: "512x512",
-						type: "image/png",
-						purpose: "any maskable",
-					},
-					{
-						src: "pwa/ios-180.png",
-						sizes: "180x180",
-						type: "image/png",
-					},
-				],
-			},
-			injectManifest: {
-				globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-			},
-			devOptions: {
-				enabled: true,
-				type: "module",
-			},
-		}),
-		versionPlugin(),
-	],
-	resolve: {
-		alias: {
-			"@": fileURLToPath(new URL("./src", import.meta.url)),
-		},
-	},
-	optimizeDeps: {
-		include: ["workbox-precaching"],
-	},
-	build: {
-		rollupOptions: {
-			output: {
-				manualChunks(id) {
-					if (id.includes("node_modules")) {
-						return id
-							.toString()
-							.split("node_modules/")[1]
-							.split("/")[0]
-							.toString();
-					}
+export default defineConfig(({ mode }) => {
+	const appPrefix = mode === "dev" ? "[DEV] " : "";
+
+	const appName = `${appPrefix}ElectroStore`;
+	const shortName = `${appPrefix}ElectroStore`;
+	return {
+		plugins: [vue(),
+			VitePWA({
+				registerType: "autoUpdate",
+				strategies: "injectManifest",
+				srcDir: "src",
+				filename: "sw.ts",
+				includeAssets: ["favicon.ico", "apple-touch-icon.png", "pwa-192x192.png", "pwa-512x512.png"],
+				manifest: {
+					name: appName,
+					short_name: shortName,
+					description: "manage your electronic storage",
+					theme_color: "#ffffff",
+					background_color: "#ffffff",
+					display: "standalone",
+					start_url: "/",
+					icons: [
+						{
+							src: "pwa/android-192x192.png",
+							sizes: "192x192",
+							type: "image/png",
+						},
+						{
+							src: "pwa/android-512x512.png",
+							sizes: "512x512",
+							type: "image/png",
+						},
+						{
+							src: "pwa/android-512x512.png",
+							sizes: "512x512",
+							type: "image/png",
+							purpose: "any maskable",
+						},
+						{
+							src: "pwa/ios-180.png",
+							sizes: "180x180",
+							type: "image/png",
+						},
+					],
 				},
-				entryFileNames: "assets/js/[name]-[hash].js",
-				chunkFileNames: "assets/js/[name]-[hash].js",
-				assetFileNames: "assets/[ext]/[name]-[hash].[ext]",
+				injectManifest: {
+					globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+				},
+				devOptions: {
+					enabled: true,
+					type: "module",
+				},
+			}),
+			versionPlugin(),
+		],
+		resolve: {
+			alias: {
+				"@": fileURLToPath(new URL("./src", import.meta.url)),
 			},
 		},
-	},
+		optimizeDeps: {
+			include: ["workbox-precaching"],
+		},
+		build: {
+			rollupOptions: {
+				output: {
+					manualChunks(id) {
+						if (id.includes("node_modules")) {
+							return id
+								.toString()
+								.split("node_modules/")[1]
+								.split("/")[0]
+								.toString();
+						}
+					},
+					entryFileNames: "assets/js/[name]-[hash].js",
+					chunkFileNames: "assets/js/[name]-[hash].js",
+					assetFileNames: "assets/[ext]/[name]-[hash].[ext]",
+				},
+			},
+		},
+	};
 });

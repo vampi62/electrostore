@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
-import { useViewScroll } from "@/composables";
+import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
 import { downloadFile, viewFile, isNewId } from "@/utils";
 import { ItemHistoryType } from "@/enums";
@@ -536,6 +536,7 @@ const labelTableauProject = ref<TableauLabel[]>([
 	{ label: "item.ProjectQuantity", sortable: true, key: "quantity_project_item", valueKey: "quantity_project_item", type: "number" },
 ]);
 useViewScroll(true);
+useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items");
 </script>
 
 <template>

@@ -29,7 +29,7 @@
 			<tbody :class="mergedCss.tbody">
 				<tr v-for="row in sortedData" :key="row[meta.key]" v-memo="[row, storeEdition[row[meta.key]], storeReady[row[meta.key]]]"
 					:class="trClass(row)"
-					@click="meta?.path && router.push(meta.path + row[meta.key])">
+					@click="openRow(row)">
 					<TableauRow :labels="labelsShown" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" :store-edition="storeEdition[row[meta.key]]" :store-ready="storeReady[row[meta.key]]" />
 				</tr>
 				<slot name="append-row"></slot>
@@ -51,6 +51,7 @@ import type { PropType } from "vue";
 import { useRouter } from "vue-router";
 import { debounce } from "lodash-es";
 import { toLowerCaseWithoutAccents } from "@/utils";
+import { useTabsStore } from "@/stores";
 import type { TableauLabel, TableauMeta, TableauCss } from "@/types/tableau";
 import type { FilterLabel } from "@/types/filter";
 
@@ -59,7 +60,8 @@ export default {
 	setup() {
 		// router of the tab displaying the table
 		const router = useRouter();
-		return { router };
+		const tabsStore = useTabsStore();
+		return { router, tabsStore };
 	},
 	props: {
 		labels: {
@@ -80,6 +82,7 @@ export default {
 			// meta object containing additional information like path for RouterLink
 			// e.g. { path: '/product/', key: 'id', sort: 'name', sortOrder: 'asc', preventClear: false, expand: ['category'], saveState: false, stateKey: 'productTable' }
 			// path is the path to navigate when clicking on a row, it will be concatenated with the value of the key in the row to get the final path
+			// newTab is a boolean, when true the path is opened in a new tab (or the tab already displaying it) instead of the current tab
 			// key is the key in the row to concatenate with the path for navigation
 			// sort is the default sort key
 			// sortOrder is the default sort order, can be 'asc' or 'desc'
@@ -295,6 +298,17 @@ export default {
 		},
 	},
 	methods: {
+		openRow(row: any) {
+			if (!this.meta?.path) {
+				return;
+			}
+			const path = this.meta.path + row[this.meta.key];
+			if (this.meta.newTab) {
+				this.tabsStore.open(path);
+			} else {
+				this.router.push(path);
+			}
+		},
 		_sessionStateKey() {
 			return `tableau_state_${this.$route?.path}_${this.meta?.stateKey || this.meta?.path + this.meta?.key || "default"}`;
 		},
