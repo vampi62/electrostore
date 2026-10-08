@@ -30,6 +30,9 @@ public record ReadConfig
     public string[]? allowed_image_extensions { get; init; }
     public string[]? allowed_document_mime_types { get; init; }
     public string[]? allowed_document_extensions { get; init; }
+    public int max_size_audio_in_mb { get; init; }
+    public string[]? allowed_audio_mime_types { get; init; }
+    public string[]? allowed_audio_extensions { get; init; }
 }
 
 public record SsoAvailableProvider

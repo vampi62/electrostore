@@ -74,23 +74,22 @@ const containerClasses = computed(() => [
 ]);
 
 const showAboutModal = ref(false);
+const showAiModal = ref(false);
 </script>
 
 <template>
 	<div v-show="authStore.user && !isIframe">
 		<NavBar :list-nav="listNav"
-			@update:reduce-left-side-bar="reduceLeftSideBar = $event" @show-about-modal="showAboutModal = true" />
+			@update:reduce-left-side-bar="reduceLeftSideBar = $event" @show-about-modal="showAboutModal = true" @show-ai-modal="showAiModal = true" />
 	</div>
 	<div id="view" :class="containerClasses">
 		<TabViews v-if="isTabsView" />
 		<RouterView v-else />
 	</div>
+	<AiChatModal v-if="authStore.user" :show-modal="showAiModal" @close-modal="showAiModal = false" />
 	<NotificationContainer />
 	<NotificationAppUpdate />
-	<div v-if="showAboutModal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-20" @click="showAboutModal = false">
-		<div class="bg-white rounded-lg shadow-lg w-3/4 h-3/4 p-6" @click.stop>
-		</div>
-	</div>
+	<AboutModal v-if="authStore.user" :show-modal="showAboutModal" @close-modal="showAboutModal = false" />
 </template>
 
 <style>
