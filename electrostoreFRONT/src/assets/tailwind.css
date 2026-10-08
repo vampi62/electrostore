@@ -13,4 +13,27 @@
 	::file-selector-button {
 		border-color: var(--color-gray-200, currentColor);
 	}
+
+	/* Tailwind v4 : buttons use cursor: default. This restores the v3 pointer cursor. */
+	button:not(:disabled),
+	[role="button"]:not(:disabled) {
+		cursor: pointer;
+	}
+}
+
+/*
+  Tailwind v4 removed bg-opacity-*. Restores the v3 behavior (bg-<color> bg-opacity-<n>)
+  for the colors used in the app. Add a color to the list below if you need another one.
+*/
+@utility bg-opacity-* {
+	--tw-bg-opacity: calc(--value(integer) * 1%);
+}
+
+@layer utilities {
+	.bg-black[class*="opacity-"] { background-color: color-mix(in srgb, var(--color-black) calc(var(--tw-bg-opacity, 100%)), transparent); }
+	.bg-white[class*="opacity-"] { background-color: color-mix(in srgb, var(--color-white) calc(var(--tw-bg-opacity, 100%)), transparent); }
+	.bg-gray-800[class*="opacity-"] { background-color: color-mix(in srgb, var(--color-gray-800) calc(var(--tw-bg-opacity, 100%)), transparent); }
+	.bg-blue-500[class*="opacity-"] { background-color: color-mix(in srgb, var(--color-blue-500) calc(var(--tw-bg-opacity, 100%)), transparent); }
+	.bg-red-500[class*="opacity-"] { background-color: color-mix(in srgb, var(--color-red-500) calc(var(--tw-bg-opacity, 100%)), transparent); }
+	.bg-green-500[class*="opacity-"] { background-color: color-mix(in srgb, var(--color-green-500) calc(var(--tw-bg-opacity, 100%)), transparent); }
 }

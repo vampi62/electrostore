@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
-import { useViewScroll } from "@/composables";
+import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
 import { downloadFile, viewFile, isNewId } from "@/utils";
 import { EquipementStatus, EquipementMaintenanceType } from "@/enums";
@@ -514,6 +514,7 @@ const labelTableauStatusHistory = ref<TableauLabel[]>([
 	{ label: "equipement.HistoryStatus", sortable: true, key: "status_equipement", valueKey: "status_equipement", type: "enum", options: equipementStatusOptions },
 ]);
 useViewScroll(true);
+useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "equipements");
 </script>
 
 <template>

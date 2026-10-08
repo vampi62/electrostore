@@ -81,6 +81,15 @@
 	"VAppTabClose": "Close tab",
 	"VAppTabList": "Tab list",
 	"VAppTabBlankHint": "Choose a view in the menu to display it in this tab",
+	"VAppTabUnsaved": "Unsaved changes",
+	"VAppTabCloseConfirmTitle": "Close the tab?",
+	"VAppTabCloseConfirmText": "This tab contains unsaved changes, they will be lost if you close it.",
+	"VAppTabLeaveTitle": "Unsaved changes",
+	"VAppTabLeaveText": "This page contains unsaved changes. You can open the destination in a new tab to keep them.",
+	"VAppTabLeaveNewTab": "Open in a new tab",
+	"VAppTabLeaveConfirm": "Leave without saving",
+	"VAppTabDraftRestored": "Your unsaved changes have been restored.",
+	"VAppTabDraftLostFiles": "{count} selected file(s) could not be restored, please add them again.",
 	"VAllCaracters": "characters",
 	"VALLMissingTranslateLink": "Missing translation"
 }
