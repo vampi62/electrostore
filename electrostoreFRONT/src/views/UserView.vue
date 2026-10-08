@@ -6,7 +6,7 @@ import * as Yup from "yup";
 
 import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
-import { isNewId } from "@/utils";
+import { isNewId, loadLedPreferences, saveLedPreferences, LED_ANIMATIONS } from "@/utils";
 import { UserRole } from "@/enums";
 import { useConfigsStore, useUsersStore, useCommandsStore, useProjectsStore, useEquipementsStore, useAuthStore } from "@/stores";
 
@@ -225,6 +225,18 @@ const labelTableauSession = ref<TableauLabel[]>([
 ]);
 useViewScroll(true);
 useTabGuard(usersStore, () => userId.value, "userEdition", "users");
+
+// --- LED preferences (stored in the browser, only editable on the own profile) ---
+const ledPreferences = ref(loadLedPreferences(authStore.user?.id_user));
+const isOwnProfile = () => authStore.user?.id_user === Number(userId.value);
+const ledPreferencesSave = () => {
+	try {
+		saveLedPreferences(authStore.user?.id_user, ledPreferences.value);
+		addNotification({ message: t("user.LedPreferencesSaved"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+};
 
 // --- Push Notifications ---
 const pushSupported = typeof window !== "undefined" && "PushManager" in window && "serviceWorker" in navigator && typeof Notification !== "undefined";
@@ -458,6 +470,25 @@ onMounted(() => {
 					:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => usersStore.getTokenByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'min-h-64 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
+			</template>
+		</CollapsibleSection>
+		<CollapsibleSection title="user.LedPreferences" :permission="!isNewId(userId)" v-if="isOwnProfile()">
+			<template #append-row>
+				<p class="text-sm text-gray-500 mb-2">{{ $t('user.LedPreferencesLocal') }}</p>
+				<div v-for="op in (['add', 'remove'] as const)" :key="op" class="flex items-center flex-wrap gap-4 mb-2">
+					<span class="w-64 font-medium">{{ $t(op === 'add' ? 'user.LedPreferencesAdd' : 'user.LedPreferencesRemove') }}</span>
+					<input type="color" v-model="ledPreferences[op].color" class="w-16 h-8" />
+					<label class="flex items-center space-x-2">
+						<span>{{ $t('store.LedTimeShow') }}</span>
+						<input type="number" min="1" v-model.number="ledPreferences[op].timeshow" class="w-20 border rounded px-2 py-1" />
+					</label>
+					<select v-model.number="ledPreferences[op].animation" class="border rounded px-2 py-1">
+						<option v-for="anim in LED_ANIMATIONS" :key="anim" :value="anim">{{ $t('store.LedAnimation' + anim) }}</option>
+					</select>
+				</div>
+				<button type="button" @click="ledPreferencesSave" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm">
+					{{ $t('user.LedPreferencesSave') }}
+				</button>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="user.PushNotifications"

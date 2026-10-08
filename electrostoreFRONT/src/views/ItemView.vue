@@ -6,7 +6,7 @@ import * as Yup from "yup";
 
 import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
-import { downloadFile, viewFile, isNewId } from "@/utils";
+import { downloadFile, viewFile, isNewId, loadLedPreferences, toShowQuery } from "@/utils";
 import { ItemHistoryType } from "@/enums";
 import { useConfigsStore, useItemsStore, useTagsStore, useStoresStore, useCommandsStore, useProjectsStore, useAuthStore, useUsersStore } from "@/stores";
 
@@ -67,12 +67,14 @@ const toggleBoxLed = async(boxId: string) => {
 	const itemBox: TableauRowData = itemsStore.itemBoxs[itemId.value][boxId];
 	const storeId = itemBox.box.id_store;
 	try {
-		await storesStore.showBoxById(storeId, boxId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
+		await storesStore.showBoxById(storeId, boxId, toShowQuery(loadLedPreferences(authStore.user?.id_user).remove));
 		addNotification({ message: t("item.BoxShowSuccess"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
 };
+
+const stockOperationModalShow = ref(false);
 
 // item
 const itemDeleteModalShow = ref(false);
@@ -542,6 +544,10 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items");
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('item.Title') }}</h2>
+		<button v-if="!isNewId(itemId) && authStore.hasPermission([0, 1, 2])" type="button" @click="stockOperationModalShow = true"
+			class="bg-blue-500 text-white px-4 py-2 rounded mb-4 mr-auto hover:bg-blue-600">
+			<i class="fa-solid fa-boxes-stacked mr-1"></i>{{ $t('item.StockOperationButton') }}
+		</button>
 		<TopButtonEditElement
 			:main-config="{ path: '/inventory',
 				create: { showCondition: isNewId(itemId) && authStore.hasPermission([0, 1, 2]), loading: itemsStore.itemEdition[itemId]?.loading },
@@ -667,6 +673,8 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items");
 	<ModalDeleteConfirm :show-modal="itemDeleteModalShow" @close-modal="itemDeleteModalShow = false"
 		:delete-action="itemDelete" :text-title="'item.DeleteTitle'"
 		:text-p="'item.DeleteText'"/>
+
+	<ModalStockOperation :show-modal="stockOperationModalShow" :item-id="itemId" @close-modal="stockOperationModalShow = false" />
 
 	<ModalMultipleFiles
 		:show-modal="documentAddModalShow"

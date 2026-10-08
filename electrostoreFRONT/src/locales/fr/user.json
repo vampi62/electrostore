@@ -1,4 +1,10 @@
 {
+	"LedPreferences": "Préférences des LED",
+	"LedPreferencesAdd": "Ajout d'article dans une boîte",
+	"LedPreferencesRemove": "Retrait d'article d'une boîte",
+	"LedPreferencesSaved": "Préférences LED enregistrées sur cet appareil",
+	"LedPreferencesSave": "Enregistrer",
+	"LedPreferencesLocal": "Ces préférences sont enregistrées dans le navigateur.",
 	"NoAccess": "Vous n'avez pas la permission d'accéder à cette page",
 	"NotFound": "Utilisateur introuvable",
 	"FilterRole0": "Utilisateur",

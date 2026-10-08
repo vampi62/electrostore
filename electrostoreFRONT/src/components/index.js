@@ -14,3 +14,4 @@ export { default as Store } from "./Store.vue";
 export { default as Tableau } from "./Tableau.vue";
 export { default as Tags } from "./Tags.vue";
 export { default as TopButtonEditElement } from "./TopButtonEditElement.vue";
+export { default as ModalStockOperation } from "./ModalStockOperation.vue";

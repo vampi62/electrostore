@@ -19,6 +19,18 @@
 	[role="button"]:not(:disabled) {
 		cursor: pointer;
 	}
+
+	a {
+		align-content: center;
+	}
+
+	input:disabled {
+		background-color: var(--color-gray-200, #e5e7eb);
+	}
+
+	input:not(:disabled) {
+		background-color: var(--color-white, #ffffff);
+	}
 }
 
 /*

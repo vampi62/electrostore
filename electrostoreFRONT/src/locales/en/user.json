@@ -1,4 +1,10 @@
 {
+	"LedPreferences": "LED preferences",
+	"LedPreferencesAdd": "Adding an item to a box",
+	"LedPreferencesRemove": "Removing an item from a box",
+	"LedPreferencesSaved": "LED preferences saved on this device",
+	"LedPreferencesSave": "Save",
+	"LedPreferencesLocal": "These preferences are stored in the browser.",
 	"NoAccess": "You don't have permission to access this page",
 	"NotFound": "User not found",
 	"FilterRole0": "User",
