@@ -45,7 +45,10 @@ public class ConfigService : IConfigService
             allowed_image_mime_types = GetAllowedImageMimeTypes(),
             allowed_image_extensions = GetAllowedImageExtensions(),
             allowed_document_mime_types = GetAllowedDocumentMimeTypes(),
-            allowed_document_extensions = GetAllowedDocumentExtensions()
+            allowed_document_extensions = GetAllowedDocumentExtensions(),
+            max_size_audio_in_mb = FieldLengths.MaxAudioSizeMB,
+            allowed_audio_mime_types = GetAllowedAudioMimeTypes(),
+            allowed_audio_extensions = GetAllowedAudioExtensions()
         };
     }
 
@@ -60,6 +63,11 @@ public class ConfigService : IConfigService
     private static string[] GetAllowedDocumentExtensions() => [.. FieldLengths.AllowedDocumentMimeTypes.Values];
 
     private static string[] GetAllowedDocumentMimeTypes() => [.. FieldLengths.AllowedDocumentMimeTypes.Keys];
+
+    // several mime types map to the same extension (audio/mpeg and audio/mp3)
+    private static string[] GetAllowedAudioExtensions() => [.. FieldLengths.AllowedAudioMimeTypes.Values.Distinct()];
+
+    private static string[] GetAllowedAudioMimeTypes() => [.. FieldLengths.AllowedAudioMimeTypes.Keys];
 
     private List<SsoAvailableProvider> GetSSOProviders() =>
         [.. _configuration.GetSection("OAuth").GetChildren().Select(provider => new SsoAvailableProvider

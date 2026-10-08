@@ -107,8 +107,8 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.True(result.db_connected);
             Assert.True(result.mqtt_connected);
             Assert.True(result.kafka_connected);
-            Assert.Equal("unknown", result.llm_status);
-            Assert.Equal("unknown", result.stt_status);
+            Assert.Equal("disabled", result.llm_status);
+            Assert.Equal("disabled", result.stt_status);
             Assert.Equal("healthy", result.notif_status);
             Assert.True(result.notif_smtp);
             Assert.False(result.notif_web_push);
@@ -142,8 +142,30 @@ namespace ElectrostoreAPI.Tests.Services
             // Act
             var result = await service.GetStatus();
             // Assert
-            Assert.Equal("unknown", result.llm_status);
-            Assert.Equal("unknown", result.stt_status);
+            Assert.Equal("disabled", result.llm_status);
+            Assert.Equal("disabled", result.stt_status);
+        }
+
+        [Fact]
+        public async Task GetStatus_ShouldReportLlmAndSttHealthy_WhenEnabledInConfiguration()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            SetupAllHealthy();
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["NotifServiceHealthUrl"] = NotifUrl,
+                ["CRONServiceHealthUrl"] = CronUrl,
+                ["WORKERServiceHealthUrl"] = WorkerUrl,
+                ["Llm:Enable"] = "true",
+                ["Stt:Enable"] = "true",
+            }).Build();
+            var service = CreateService(context, configuration);
+            // Act
+            var result = await service.GetStatus();
+            // Assert
+            Assert.Equal("healthy", result.llm_status);
+            Assert.Equal("healthy", result.stt_status);
         }
 
         [Fact]

@@ -22,6 +22,8 @@ using Microsoft.Extensions.Configuration;
 
 namespace ElectrostoreAPI.Tests.Services
 {
+    // FileService resolves wwwroot from the current directory, which ProgramTests changes
+    [Collection("CurrentDirectory")]
     public class FileServiceTests : TestBase
     {
         private readonly Mock<IMinioClient> _minioClient;

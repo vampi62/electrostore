@@ -10145,6 +10145,10 @@ export interface components {
             allowed_image_extensions?: string[] | null;
             allowed_document_mime_types?: string[] | null;
             allowed_document_extensions?: string[] | null;
+            /** Format: int32 */
+            max_size_audio_in_mb?: number;
+            allowed_audio_mime_types?: string[] | null;
+            allowed_audio_extensions?: string[] | null;
         };
         ReadCronJobDto: {
             /** Format: int32 */

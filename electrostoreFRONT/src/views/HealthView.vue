@@ -17,6 +17,8 @@ const services = computed(() => [
 	{ key: "db_connected", label: t("health.ServiceDb"), type: "bool" },
 	{ key: "mqtt_connected", label: t("health.ServiceMqtt"), type: "bool" },
 	{ key: "kafka_connected", label: t("health.ServiceKafka"), type: "bool" },
+	{ key: "llm_status", label: t("health.ServiceLlm"), type: "string" },
+	{ key: "stt_status", label: t("health.ServiceStt"), type: "string" },
 	{ key: "notif_status", label: t("health.ServiceNotif"), type: "string" },
 	{ key: "notif_smtp", label: t("health.ServiceNotifSmtp"), type: "bool" },
 	{ key: "notif_web_push", label: t("health.ServiceNotifWebPush"), type: "bool" },
@@ -31,6 +33,7 @@ const configGroups = computed(() => [
 			{ key: "demo_mode", label: t("health.ConfigDemoMode"), type: "bool" },
 			{ key: "max_size_document_in_mb", label: t("health.ConfigMaxDocSize"), type: "value", unit: "MB" },
 			{ key: "max_size_image_in_mb", label: t("health.ConfigMaxImgSize"), type: "value", unit: "MB" },
+			{ key: "max_size_audio_in_mb", label: t("health.ConfigMaxAudioSize"), type: "value", unit: "MB" },
 		],
 	},
 	{
@@ -52,6 +55,7 @@ const configGroups = computed(() => [
 		keys: [
 			{ key: "allowed_image_extensions", label: t("health.ConfigImgExt"), type: "list" },
 			{ key: "allowed_document_extensions", label: t("health.ConfigDocExt"), type: "list" },
+			{ key: "allowed_audio_extensions", label: t("health.ConfigAudioExt"), type: "list" },
 		],
 	},
 	{
@@ -74,7 +78,7 @@ function statusBadge(key: string, type: string) {
 	if (["healthy", "ok", "online", "running"].includes(v)) {
 		return "bg-green-100 text-green-800";
 	}
-	if (["unknown", ""].includes(v) || !v) {
+	if (["unknown", "disabled", ""].includes(v) || !v) {
 		return "bg-gray-100 text-gray-600";
 	}
 	return "bg-red-100 text-red-800";

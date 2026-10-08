@@ -38,6 +38,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace ElectrostoreAPI.Tests
 {
+    // Shares a collection with FileServiceTests: these tests change the process-wide current directory
+    [Collection("CurrentDirectory")]
     public class ProgramTests
     {
         [Fact]
