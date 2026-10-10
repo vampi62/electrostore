@@ -5,6 +5,7 @@ import { isNewId } from "@/utils";
 
 import { useTagsStore, useStoresStore, useUsersStore } from "@/stores";
 
+import type { StoreGeneric } from "pinia";
 import type { components } from "@/types/api";
 type ReadEquipementDto = components["schemas"]["ReadEquipementDto"];
 type ReadEquipementTagDto = components["schemas"]["ReadEquipementTagDto"];
@@ -16,7 +17,7 @@ type ReadEquipementStatusDto = components["schemas"]["ReadEquipementStatusDto"];
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-const EXPAND_HANDLERS: Record<string, (store: any, idEquipement: any, data: any) => void> = {
+const EXPAND_HANDLERS: Record<string, (store: StoreGeneric, idEquipement: string, data: any) => void> = {
 	equipement_tags: (store, idEquipement, data) => {
 		store.equipementTags[idEquipement] = {};
 		for (const equipementTag of data) {
@@ -31,7 +32,7 @@ const EXPAND_HANDLERS: Record<string, (store: any, idEquipement: any, data: any)
 	},
 };
 
-function hydrateEquipement(store: any, idEquipement: string, equipement: any, expand: string[] = []) {
+function hydrateEquipement(store: StoreGeneric, idEquipement: string, equipement: any, expand: string[] = []) {
 	if (equipement.url_thumbnail_equipement && !store.thumbnailsURL[idEquipement]) {
 		store.showThumbnailById(idEquipement);
 	}

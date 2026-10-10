@@ -1,4 +1,5 @@
 import { isNewId } from "@/utils";
+import type { StoreGeneric } from "pinia";
 
 // Unsaved changes of a view and their draft (serializable copy).
 // Convention of the stores: the edition of an element is store[mainKey][id], the changes staged for its nested resources
@@ -19,7 +20,7 @@ const SENSITIVE_FIELDS = /password/i;
 
 const isEmpty = (value: unknown) => value === undefined || value === null || value === "";
 
-function sameValue(a: any, b: any) {
+function sameValue(a: unknown, b: unknown) {
 	if (isEmpty(a) && isEmpty(b)) {
 		return true;
 	}
@@ -30,9 +31,9 @@ function sameValue(a: any, b: any) {
 	return `${a}` === `${b}`;
 }
 
-const readyKeys = (store: any) => Object.keys(store.$state).filter((key) => key.endsWith("Ready"));
+const readyKeys = (store: StoreGeneric) => Object.keys(store.$state).filter((key) => key.endsWith("Ready"));
 
-export function isEditionDirty(store: any, id: string, mainKey: string, sourceKey: string): boolean {
+export function isEditionDirty(store: StoreGeneric, id: string, mainKey: string, sourceKey: string): boolean {
 	if (!id) {
 		return false;
 	}
@@ -56,15 +57,15 @@ export function isEditionDirty(store: any, id: string, mainKey: string, sourceKe
 			return true;
 		}
 		if (key.startsWith("unset_")) {
-			return !!value;
+			return false;
 		}
 		return !sameValue(value, source[key]);
 	});
 }
 
-export function snapshotEdition(store: any, id: string, mainKey: string): EditionDraft {
+export function snapshotEdition(store: StoreGeneric, id: string, mainKey: string): EditionDraft {
 	let lost = 0;
-	const edition: Record<string, any> = {};
+	const edition: Record<string, unknown> = {};
 	for (const [key, value] of Object.entries(store.$state[mainKey]?.[id] ?? {})) {
 		if (IGNORED_FIELDS.has(key) || SENSITIVE_FIELDS.test(key)) {
 			continue;
@@ -93,11 +94,11 @@ export function snapshotEdition(store: any, id: string, mainKey: string): Editio
 	return JSON.parse(JSON.stringify({ edition, ready, lost }));
 }
 
-export function applyDraft(store: any, id: string, mainKey: string, draft: EditionDraft) {
-	Object.assign(store[mainKey][id], draft.edition, { loading: false });
+export function applyDraft(store: StoreGeneric, id: string, mainKey: string, draft: EditionDraft) {
+	Object.assign(store.$state[mainKey][id], draft.edition, { loading: false });
 	for (const [key, entries] of Object.entries(draft.ready)) {
 		if (store.$state[key] !== undefined) {
-			store[key][id] = entries;
+			store.$state[key][id] = entries;
 		}
 	}
 }

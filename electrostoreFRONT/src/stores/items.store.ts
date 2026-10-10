@@ -5,6 +5,7 @@ import { isNewId } from "@/utils";
 
 import { useTagsStore, useStoresStore, useCommandsStore, useProjectsStore } from "@/stores";
 
+import type { StoreGeneric } from "pinia";
 import type { components } from "@/types/api";
 type ReadItemDto = components["schemas"]["ReadItemDto"];
 type ReadItemDocumentDto = components["schemas"]["ReadItemDocumentDto"];
@@ -16,7 +17,7 @@ type ReadItemHistoryDto = components["schemas"]["ReadItemHistoryDto"];
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-const EXPAND_HANDLERS: Record<string, (store: any, idItem: any, data: any) => void> = {
+const EXPAND_HANDLERS: Record<string, (store: StoreGeneric, idItem: string, data: any) => void> = {
 	item_documents: (store, idItem, data) => {
 		store.documents[idItem] = {};
 		for (const document of data) {
@@ -55,7 +56,7 @@ const EXPAND_HANDLERS: Record<string, (store: any, idItem: any, data: any) => vo
 	},
 };
 
-function hydrateItem(store: any, idItem: string, item: any, expand: string[] = []) {
+function hydrateItem(store: StoreGeneric, idItem: string, item: any, expand: string[] = []) {
 	if (item.url_thumbnail_item && !store.thumbnailsURL[idItem]) {
 		store.showThumbnailById(idItem);
 	}

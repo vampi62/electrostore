@@ -5,16 +5,32 @@ import { isNewId } from "@/utils";
 
 import { useUsersStore, useCarriersStore } from "@/stores";
 
-import type { components } from "@/types/api";
+import type { StoreGeneric } from "pinia";
+import type { components, paths } from "@/types/api";
 type ReadCommandDto = components["schemas"]["ReadCommandDto"];
+type ReadExtendedCommandDto = components["schemas"]["ReadExtendedCommandDto"];
+type CreateCommandDto = components["schemas"]["CreateCommandDto"];
+type UpdateCommandDto = components["schemas"]["UpdateCommandDto"];
+
 type ReadCommandCommentDto = components["schemas"]["ReadCommandCommentDto"];
+type ReadExtendedCommandCommentDto = components["schemas"]["ReadExtendedCommandCommentDto"];
+type CreateCommandCommentByCommandDto = components["schemas"]["CreateCommandCommentByCommandDto"];
+type UpdateCommandCommentDto = components["schemas"]["UpdateCommandCommentDto"];
+
 type ReadCommandDocumentDto = components["schemas"]["ReadCommandDocumentDto"];
+type CreateCommandDocumentByCommandDto = NonNullable<paths["/api/command/{id_command}/document"]["post"]["requestBody"]>["content"]["multipart/form-data"];
+type UpdateCommandDocumentDto = components["schemas"]["UpdateCommandDocumentDto"];
+
 type ReadCommandItemDto = components["schemas"]["ReadCommandItemDto"];
+type ReadExtendedCommandItemDto = components["schemas"]["ReadExtendedCommandItemDto"];
+type CreateCommandItemByCommandDto = components["schemas"]["CreateCommandItemByCommandDto"];
+type UpdateCommandItemDto = components["schemas"]["UpdateCommandItemDto"];
+
 type ReadCommandHistoryDto = components["schemas"]["ReadCommandHistoryDto"];
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-const EXPAND_HANDLERS: Record<string, (store: any, idCommand: any, data: any) => void> = {
+const EXPAND_HANDLERS: Record<string, (store: StoreGeneric, idCommand: string, data: any[]) => void> = {
 	command_comments: (store, idCommand, data) => {
 		store.comments[idCommand] = {};
 		for (const comment of data) {
@@ -47,7 +63,7 @@ const EXPAND_HANDLERS: Record<string, (store: any, idCommand: any, data: any) =>
 	},
 };
 
-function hydrateCommand(store: any, idCommand: string, command: any, expand: string[] = []) {
+function hydrateCommand(store: StoreGeneric, idCommand: string, command: ReadExtendedCommandDto, expand: string[] = []) {
 	store.commentsTotalCount[idCommand] = command.command_comments_count;
 	store.documentsTotalCount[idCommand] = command.commands_documents_count;
 	store.itemsTotalCount[idCommand] = command.commands_items_count;
@@ -58,33 +74,52 @@ function hydrateCommand(store: any, idCommand: string, command: any, expand: str
 	}
 }
 
-const commandResource = createMainResource({
+type EditionCommandDto = {
+	loading?: boolean;
+} & Partial<ReadCommandDto>;
+
+type EditionCommandCommentDto = {
+	loading?: boolean;
+} & Partial<ReadCommandCommentDto>;
+
+type EditionCommandItemDto = {
+	loading?: boolean;
+} & Partial<ReadCommandItemDto>;
+
+type EditionCommandDocumentDto = {
+	loading?: boolean;
+} & Partial<ReadCommandDocumentDto>;
+
+const commandResource = createMainResource<{ readExtended: ReadExtendedCommandDto, readBasic: ReadCommandDto, create: CreateCommandDto, update: UpdateCommandDto }>({
 	path: () => "/command",
 	idField: "id_command",
 	stateKey: "commands",
 	countKey: "commandsTotalCount",
 	loadingKey: "commandsLoading",
 	editionKey: "commandEdition",
-	onHydrate: (store, entity, expand) => {
-		hydrateCommand(store, entity.id_command, entity, expand);
+	onHydrate: (store, entity: ReadExtendedCommandDto, expand) => {
+		if (!entity || !entity.id_command) {
+			return;
+		}
+		hydrateCommand(store, String(entity.id_command), entity, expand);
 	},
 });
 
-const commentResource = createNestedResource({
+const commentResource = createNestedResource<{ readExtended: ReadExtendedCommandCommentDto, readBasic: ReadCommandCommentDto, create: CreateCommandCommentByCommandDto, update: UpdateCommandCommentDto }>({
 	path: (idCommand) => `/command/${idCommand}/comment`,
 	idField: "id_command_comment",
 	stateKey: "comments",
 	countKey: "commentsTotalCount",
 	loadingKey: "commentsLoading",
 	editionKey: "commentEdition",
-	onHydrate: (store, entity, expand) => {
-		if (expand.includes("user")) {
+	onHydrate: (store, entity: ReadExtendedCommandCommentDto, expand) => {
+		if (expand.includes("user") && entity.user && entity.id_user) {
 			const usersStore = useUsersStore();
 			usersStore.users[entity.id_user] = entity.user;
 		}
 	},
 });
-const documentResource = createNestedResource({
+const documentResource = createNestedResource<{ readExtended: ReadCommandDocumentDto, create: CreateCommandDocumentByCommandDto, update: UpdateCommandDocumentDto }>({
 	path: (idCommand) => `/command/${idCommand}/document`,
 	idField: "id_command_document",
 	stateKey: "documents",
@@ -93,7 +128,7 @@ const documentResource = createNestedResource({
 	editionKey: "documentEdition",
 	readyKey: "documentReady",
 });
-const itemResource = createNestedResource({
+const itemResource = createNestedResource<{ readExtended: ReadExtendedCommandItemDto, readBasic: ReadCommandItemDto, create: CreateCommandItemByCommandDto, update: UpdateCommandItemDto }>({
 	path: (idCommand) => `/command/${idCommand}/item`,
 	idField: "id_item",
 	stateKey: "items",
@@ -102,7 +137,7 @@ const itemResource = createNestedResource({
 	editionKey: "itemEdition",
 	readyKey: "itemReady",
 });
-const historyResource = createNestedResource({
+const historyResource = createNestedResource<{ readExtended: ReadCommandHistoryDto }>({
 	path: (idCommand) => `/command/${idCommand}/history`,
 	idField: "id_command_history",
 	stateKey: "history",
@@ -115,23 +150,23 @@ export const useCommandsStore = defineStore("commands",{
 		commandsLoading: false,
 		commandsTotalCount: 0,
 		commands: {} as Record<string, ReadCommandDto>,
-		commandEdition: {} as Record<string, any>,
+		commandEdition: {} as Record<string, EditionCommandDto>,
 
 		commentsTotalCount: {} as Record<string, number>,
 		commentsLoading: false,
 		comments: {} as Record<string, Record<string, ReadCommandCommentDto>>,
-		commentEdition: {} as Record<string, any>,
+		commentEdition: {} as Record<string, EditionCommandCommentDto>,
 
 		documentsTotalCount: {} as Record<string, number>,
 		documentsLoading: false,
 		documents: {} as Record<string, Record<string, ReadCommandDocumentDto>>,
-		documentEdition: {} as Record<string, any>,
+		documentEdition: {} as Record<string, EditionCommandDocumentDto>,
 		documentReady: {} as Record<string, any>,
 
 		itemsTotalCount: {} as Record<string, number>,
 		itemsLoading: false,
 		items: {} as Record<string, Record<string, ReadCommandItemDto>>,
-		itemEdition: {} as Record<string, any>,
+		itemEdition: {} as Record<string, EditionCommandItemDto>,
 		itemReady: {} as Record<string, any>,
 
 		historyTotalCount: {} as Record<string, number>,
@@ -197,7 +232,7 @@ export const useCommandsStore = defineStore("commands",{
 		async saveAllChanges(id: string) {
 			let realId = id;
 			if (isNewId(id)) {
-				realId = await this.createCommand(this.commandEdition[id]);
+				realId = await this.createCommand(this.commandEdition[id] as CreateCommandDto);
 				this.copyDocumentAllId(id, realId);
 				this.copyItemAllId(id, realId);
 			} else {

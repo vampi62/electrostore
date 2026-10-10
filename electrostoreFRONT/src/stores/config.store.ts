@@ -6,10 +6,22 @@ const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 const demoMode = `${import.meta.env.VITE_APP_DEMO_MODE}` === "true";
 
+import type { components } from "@/types/api";
+type ReadConfig = components["schemas"]["ReadConfig"];
+type ReadStatusDto = components["schemas"]["ReadStatusDto"];
+
+interface Configs extends ReadConfig {
+	loading: boolean;
+}
+
+interface Status extends ReadStatusDto {
+	loading: boolean;
+}
+
 export const useConfigsStore = defineStore("configs",{
 	state: () => ({
-		configs: {} as Record<string, any>,
-		status: {} as Record<string, any>,
+		configs: {} as Configs,
+		status: {} as Status,
 		defaultsConfig: {
 			"demo_mode": demoMode,
 			"max_length_url": 150,
@@ -114,33 +126,39 @@ export const useConfigsStore = defineStore("configs",{
 	actions: {
 		async getConfig() {
 			this.configs.loading = true;
-			this.configs = await fetchWrapper.get({
+			const config = await fetchWrapper.get<ReadConfig>({
 				url: `${baseUrl}/config`,
 			});
+			this.configs = { ...config, loading: false };
 		},
 		async getHealth() {
 			this.status.loading = true;
-			this.status = await fetchWrapper.get({
+			const status = await fetchWrapper.get<ReadStatusDto>({
 				url: `${baseUrl}/status`,
 			});
+			this.status = { ...status, loading: false };
 		},
 	},
 	getters: {
 		getConfigByKey: (state) => (key: string) => {
-			if (state.configs[key]) {
-				return state.configs[key];
+			const configs = state.configs as unknown as Record<string, unknown>;
+			if (configs[key]) {
+				return configs[key];
 			}
-			if ((state.defaultsConfig as Record<string, any>)[key]) {
-				return (state.defaultsConfig as Record<string, any>)[key];
+			const defaults = state.defaultsConfig as unknown as Record<string, unknown>;
+			if (defaults[key]) {
+				return defaults[key];
 			}
 			return null;
 		},
 		getStatusByKey: (state) => (key: string) => {
-			if (state.status[key]) {
-				return state.status[key];
+			const status = state.status as unknown as Record<string, unknown>;
+			if (status[key]) {
+				return status[key];
 			}
-			if ((state.defaultsStatus as Record<string, any>)[key]) {
-				return (state.defaultsStatus as Record<string, any>)[key];
+			const defaults = state.defaultsStatus as unknown as Record<string, unknown>;
+			if (defaults[key]) {
+				return defaults[key];
 			}
 			return null;
 		},

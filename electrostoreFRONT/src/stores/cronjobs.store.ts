@@ -5,10 +5,17 @@ import { isNewId } from "@/utils";
 
 import type { components } from "@/types/api";
 type ReadCronJobDto = components["schemas"]["ReadCronJobDto"];
+type CreateCronJobDto = components["schemas"]["CreateCronJobDto"];
+type UpdateCronJobDto = components["schemas"]["UpdateCronJobDto"];
+type ReadCronJobStatusDto = components["schemas"]["ReadCronJobStatusDto"];
+
+type EditionCronJobDto = {
+	loading?: boolean;
+} & Partial<ReadCronJobDto>;
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-const cronJobResource = createMainResource({
+const cronJobResource = createMainResource<{ readExtended: ReadCronJobDto, create: CreateCronJobDto, update: UpdateCronJobDto }>({
 	path: () => "/cronjob",
 	idField: "id_cronjob",
 	stateKey: "cronJobs",
@@ -22,7 +29,7 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		cronJobsLoading: false,
 		cronJobsTotalCount: 0,
 		cronJobs: {} as Record<string, ReadCronJobDto>,
-		cronJobEdition: {} as Record<string | number, any>,
+		cronJobEdition: {} as Record<string, EditionCronJobDto>,
 	}),
 	actions: {
 		getCronJobByList: cronJobResource.getByList,
@@ -66,7 +73,7 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		async saveAllChanges(id: string) {
 			let realId = id;
 			if (isNewId(id)) {
-				realId = await this.createCronJob(this.cronJobEdition[id]);
+				realId = await this.createCronJob(this.cronJobEdition[id] as CreateCronJobDto);
 			} else {
 				await this.updateCronJob(id, this.cronJobEdition[id]);
 			}
@@ -74,7 +81,7 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		},
 
 		async getCronJobStatus(id: string) {
-			const status = await fetchWrapper.get({ url: `${baseUrl}/cronjob/${id}/status`, useToken: "access" });
+			const status = await fetchWrapper.get<ReadCronJobStatusDto>({ url: `${baseUrl}/cronjob/${id}/status`, useToken: "access" });
 			if (this.cronJobs[id]) {
 				this.cronJobs[id].status_cronjob = status.status_cronjob;
 				this.cronJobs[id].last_error_cronjob = status.last_error_cronjob;

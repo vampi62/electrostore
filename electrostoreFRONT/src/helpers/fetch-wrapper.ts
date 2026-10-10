@@ -1,8 +1,11 @@
 import { useAuthStore } from "@/stores";
-import type { TokenType } from "@/types/fetch";
 import { ApiError, extractApiMessage } from "@/utils/messages";
+import type { TokenType, RequestParams } from "@/types/fetch";
+import type { StoreGeneric } from "pinia";
 
-let renewPromise: Promise<any> | null = null;
+const LOGOUT_MESSAGE = "Unable to renew token. Logging out.";
+
+let renewPromise: Promise<void> | null = null;
 
 export const fetchWrapper = {
 	get: request("GET"),
@@ -13,56 +16,106 @@ export const fetchWrapper = {
 	stream: stream(),
 };
 
+/* ------------------------------------------------------------------ */
+/* Token renewal management                                           */
+/* ------------------------------------------------------------------ */
+
+function isRenewing(): boolean {
+	return renewPromise !== null;
+}
+
+// Start the renewal (only once) or join the one already in progress.
+// All callers get the same promise, so they share the same result / error.
+function renewToken(authStore: StoreGeneric): Promise<void> {
+	renewPromise ??= doRenew(authStore).finally(() => {
+		renewPromise = null;
+	});
+	return renewPromise;
+}
+
+async function doRenew(authStore: StoreGeneric): Promise<void> {
+	try {
+		await authStore.refreshLogin();
+	} catch (error) {
+		authStore.logout();
+		throw new Error(LOGOUT_MESSAGE, { cause: error });
+	}
+}
+
+// Call before any request using the access token:
+// waits for the renewal in progress, or starts one if the token is expired
+async function ensureValidAccessToken(authStore: StoreGeneric, useToken: TokenType): Promise<void> {
+	if (useToken === "access" && (isRenewing() || authStore.TokenIsExpired())) {
+		await renewToken(authStore);
+	}
+}
+
+/* ------------------------------------------------------------------ */
+/* JSON requests                                                      */
+/* ------------------------------------------------------------------ */
+
 function request(method: string) {
-	return async({ url, body = null, useToken = null, contentFile = false }: { url: string; body?: any; useToken?: TokenType; contentFile?: boolean }): Promise<any> => {
+	const send = async<T>(params: RequestParams, hasRetried: boolean): Promise<T> => {
+		const { url, body = null, useToken = null, contentFile = false } = params;
 		const authStore = useAuthStore();
-		// if access token is expired or about to expire, try to renew it before making the request
-		if (useToken === "access" && (authStore.TokenIsExpired() || renewPromise)) {
-			await renewToken(authStore);
-		} else if (useToken === "refresh" && authStore.RefreshTokenIsExpired()) {
+
+		if (useToken === "refresh" && authStore.RefreshTokenIsExpired()) {
 			authStore.logout();
-			throw new Error("Unable to renew token. Logging out.");
+			throw new Error(LOGOUT_MESSAGE);
 		}
-		const requestOptions: { method: string; headers: Record<string, string>; body?: any } = {
+		await ensureValidAccessToken(authStore, useToken);
+
+		const requestOptions: { method: string; headers: Record<string, string>; body?: BodyInit } = {
 			method,
 			headers: authHeader(url, useToken),
 		};
-		if (body && !contentFile) {
-			requestOptions.headers["Content-Type"] = "application/json";
-			requestOptions.body = JSON.stringify(body);
-		} else if (body && contentFile) {
-			requestOptions.body = body;
-		}
-		const response = await fetch(url, requestOptions);
-		const text = await response.text();
-		const data = parseBody(text, response);
-		if (!response.ok) {
-			if (response.status === 401 && authStore.user) {
-				if (!renewPromise) {
-					// if the request failed with 401 and we are not already trying to renew the token, then try to renew the token
-					//console.log("Token expired. Renewing token...");
-					await renewToken(authStore);
-					return request(method)({ url, body, useToken }); // retry the original request after renewing the token
-				} else if (useToken === "refresh") {
-					// if the request was using the refresh token and it failed with 401, then the refresh token is also expired, so we log out the user
-					authStore.logout();
-					throw new Error("Unable to renew token. Logging out.");
-				}
-			} else if (response.status === 403 && authStore.user) {
-				throw new ApiError(extractApiMessage(data, "Access forbidden."), response.status, data);
+		if (body !== null) {
+			if (contentFile) {
+				requestOptions.body = body as BodyInit;
+			} else {
+				requestOptions.headers["Content-Type"] = "application/json";
+				requestOptions.body = JSON.stringify(body);
 			}
-			const message = typeof data === "string" ? response.statusText : extractApiMessage(data, response.statusText);
-			throw new ApiError(message || `HTTP ${response.status}`, response.status, data);
 		}
-		return data;
+
+		const response = await fetch(url, requestOptions);
+		const data = parseBody(await response.text(), response);
+
+		if (response.ok) {
+			return data as T;
+		}
+
+		if (response.status === 401 && authStore.user) {
+			// the refresh token itself is rejected: session is over
+			if (useToken === "refresh") {
+				authStore.logout();
+				throw new Error(LOGOUT_MESSAGE);
+			}
+			// access token rejected: renew it (or join the renewal in progress),
+			// then replay the request ONCE with the same params (contentFile included)
+			if (useToken === "access" && !hasRetried) {
+				await renewToken(authStore);
+				return send(params, true);
+			}
+		} else if (response.status === 403 && authStore.user) {
+			throw new ApiError(extractApiMessage(data, "Access forbidden."), response.status, data);
+		}
+
+		const message = typeof data === "string" ? response.statusText : extractApiMessage(data, response.statusText);
+		throw new ApiError(message || `HTTP ${response.status}`, response.status, data);
 	};
+
+	return <T = unknown>(params: RequestParams): Promise<T> => send<T>(params, false);
 }
 
-function parseBody(text: string, response: Response): any {
+function parseBody(text: string, response: Response): unknown {
+	if (!text) {
+		return text;
+	}
 	try {
-		return text && JSON.parse(text);
+		return JSON.parse(text) as unknown;
 	} catch {
-		// non JSON body (proxy error page, plain text...): keep raw text for error responses
+		// non-JSON body (proxy error page, plain text...): keep the raw text for error responses
 		if (response.ok) {
 			throw new ApiError(response.statusText || "Invalid response", response.status, text);
 		}
@@ -70,35 +123,17 @@ function parseBody(text: string, response: Response): any {
 	}
 }
 
-// renew token or waiting end renew
-async function renewToken(authStore: any) {
-	if (renewPromise) { // if there is already a renew in progress, wait for it to finish
-		await renewPromise;
-		return;
-	}
-	renewPromise = authStore.refreshLogin();
-	try {
-		await renewPromise;
-	} catch (error) {
-		authStore.logout();
-		throw new Error("Unable to renew token. Logging out.");
-	} finally {
-		renewPromise = null;
-	}
-}
+/* ------------------------------------------------------------------ */
+/* Image / stream                                                     */
+/* ------------------------------------------------------------------ */
 
-// download a image
+// download an image
 function image(method: string) {
-	return async({ url, useToken = null }: { url: string; useToken?: TokenType }) => {
+	return async({ url, useToken = null }: { url: string; useToken?: TokenType }): Promise<Blob> => {
 		const authStore = useAuthStore();
-		if (useToken === "access" && (authStore.TokenIsExpired() || renewPromise)) {
-			await renewToken(authStore);
-		}
-		const requestOptions = {
-			method,
-			headers: authHeader(url, useToken),
-		};
-		const response = await fetch(url, requestOptions);
+		await ensureValidAccessToken(authStore, useToken);
+
+		const response = await fetch(url, { method, headers: authHeader(url, useToken) });
 		if (!response.ok) {
 			throw new ApiError(response.statusText || `HTTP ${response.status}`, response.status);
 		}
@@ -106,30 +141,28 @@ function image(method: string) {
 	};
 }
 
-// return stream mjpeg in img.src
+// return the mjpeg stream url to be used in img.src
 function stream() {
-	return async({ url, useToken = null }: { url: string, useToken?: TokenType }) => {
+	return async({ url, useToken = null }: { url: string; useToken?: TokenType }): Promise<string> => {
 		const authStore = useAuthStore();
-		if (useToken === "access" && (authStore.TokenIsExpired() || renewPromise)) {
-			await renewToken(authStore);
-		}
-		return url + "?token=" + authStore.accessToken.token;
+		await ensureValidAccessToken(authStore, useToken);
+		return `${url}?token=${authStore.accessToken.token}`;
 	};
 }
 
-// build header functions
+/* ------------------------------------------------------------------ */
+/* Headers                                                            */
+/* ------------------------------------------------------------------ */
+
 function authHeader(url: string, useToken: TokenType = null): Record<string, string> {
 	const authStore = useAuthStore();
-	// return auth header with jwt if user is logged in and request is to the api url
 	const header: Record<string, string> = {};
 	const isLoggedIn = !!authStore.user;
 	const isApiUrl = url.startsWith(import.meta.env.VITE_API_URL);
+
 	if (isLoggedIn && isApiUrl && useToken) {
-		if (useToken === "access") {
-			header["Authorization"] = `Bearer ${authStore.accessToken.token}`;
-		} else {
-			header["Authorization"] = `Bearer ${authStore.refreshToken.token}`;
-		}
+		const token = useToken === "access" ? authStore.accessToken.token : authStore.refreshToken.token;
+		header["Authorization"] = `Bearer ${token}`;
 	}
 	return header;
 }

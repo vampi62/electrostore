@@ -5,7 +5,11 @@ import router from "@/router";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 import type { components } from "@/types/api";
+type CreateUserDto = components["schemas"]["CreateUserDto"];
+type LoginRequest = components["schemas"]["LoginRequest"];
+type LoginResponse = components["schemas"]["LoginResponse"];
 type ReadUserDto = components["schemas"]["ReadUserDto"];
+type SsoUrlResponse = components["schemas"]["SsoUrlResponse"];
 
 export const useAuthStore = defineStore("auth",{
 	state: () => ({
@@ -67,40 +71,46 @@ export const useAuthStore = defineStore("auth",{
 			return false;
 		},
 		async login(email: string, password: string) {
-			const request = await fetchWrapper.post({
+			const request = await fetchWrapper.post<LoginResponse>({
 				url: `${baseUrl}/auth/login`,
-				body: { "email": email, "password": password },
+				body: { "email": email, "password": password } as LoginRequest,
 			});
+			if (!request || !request?.user) {
+				console.log("Error logging in", request);
+				return;
+			}
 			this.setToken(
 				request?.user,
-				{ "token": request?.token, "date_expire": request?.expire_date_token },
-				{ "token": request?.refresh_token, "date_expire": request?.expire_date_refresh_token },
+				{ "token": request?.token ?? "", "date_expire": request?.expire_date_token ?? "" },
+				{ "token": request?.refresh_token ?? "", "date_expire": request?.expire_date_refresh_token ?? "" },
 				false,
 			);
 			router.push("/");
 		},
 		async loginSSO(provider: string) {
-			const request = await fetchWrapper.get({
+			const request = await fetchWrapper.get<SsoUrlResponse>({
 				url: `${baseUrl}/auth/${provider}/url`,
 			});
 			this.selectedProvider = provider;
 			localStorage.setItem("selectedProvider", JSON.stringify(provider));
 			// open small window to the url
-			window.open(request.auth_url, "SSO Login", "width=600,height=600");
+			if (request.auth_url) {
+				window.open(request.auth_url, "SSO Login", "width=600,height=600");
+			}
 		},
 		async handleSSOCallback() {
 			const params = new URLSearchParams(window.location.search);
 			const token = params.get("code");
 			const state = params.get("state");
 			if (token && state) {
-				const request = await fetchWrapper.post({
+				const request = await fetchWrapper.post<LoginResponse>({
 					url: `${baseUrl}/auth/${this.selectedProvider}/callback`,
 					body: { "Code": token, "State": state },
 				});
 				this.setToken(
 					request?.user,
-					{ "token": request?.token, "date_expire": request?.expire_date_token },
-					{ "token": request?.refresh_token, "date_expire": request?.expire_date_refresh_token },
+					{ "token": request?.token ?? "", "date_expire": request?.expire_date_token ?? "" },
+					{ "token": request?.refresh_token ?? "", "date_expire": request?.expire_date_refresh_token ?? "" },
 					true,
 				);
 				localStorage.removeItem("selectedProvider");
@@ -110,9 +120,9 @@ export const useAuthStore = defineStore("auth",{
 			}
 		},
 		async register(email: string, password: string, prenom: string, nom: string) {
-			const request = await fetchWrapper.post({
+			const request = await fetchWrapper.post<ReadUserDto>({
 				url: `${baseUrl}/user`,
-				body: { "email_user": email, "password_user": password, "name_user": nom, "firstname_user": prenom, "role_user": "user" },
+				body: { "email_user": email, "password_user": password, "name_user": nom, "firstname_user": prenom, "role_user": 0 } as CreateUserDto,
 			});
 			if (request) {
 				this.login(email, password);
@@ -121,14 +131,17 @@ export const useAuthStore = defineStore("auth",{
 			}
 		},
 		async refreshLogin() {
-			const request = await fetchWrapper.post({
+			const request = await fetchWrapper.post<LoginResponse>({
 				url: `${baseUrl}/auth/refresh-token`,
 				useToken: "refresh",
 			});
+			if (!request) {
+				return;
+			}
 			this.setToken(
 				request?.user,
-				{ "token": request?.token, "date_expire": request?.expire_date_token },
-				{ "token": request?.refresh_token, "date_expire": request?.expire_date_refresh_token },
+				{ "token": request?.token ?? "", "date_expire": request?.expire_date_token ?? "" },
+				{ "token": request?.refresh_token ?? "", "date_expire": request?.expire_date_refresh_token ?? "" },
 				this.isSSOUser,
 			);
 		},

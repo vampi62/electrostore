@@ -6,6 +6,7 @@ import { StorePositionMode } from "@/enums";
 
 import { useTagsStore, useItemsStore, useEquipementsStore } from "@/stores";
 
+import type { StoreGeneric } from "pinia";
 import type { components } from "@/types/api";
 import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 type ReadStoreDto = components["schemas"]["ReadStoreDto"];
@@ -18,7 +19,7 @@ type ReadEquipementBoxDto = components["schemas"]["ReadEquipementBoxDto"];
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-const EXPAND_HANDLERS_STORE: Record<string, (store: any, idStore: string, data: any) => void> = {
+const EXPAND_HANDLERS_STORE: Record<string, (store: StoreGeneric, idStore: string, data: any) => void> = {
 	boxs: (store, idStore, data) => {
 		store.boxs[idStore] = {};
 		for (const box of data.boxs) {
@@ -38,7 +39,7 @@ const EXPAND_HANDLERS_STORE: Record<string, (store: any, idStore: string, data: 
 		}
 	},
 };
-const EXPAND_HANDLERS_BOX: Record<string, (store: any, idBox: string, data: any) => void> = {
+const EXPAND_HANDLERS_BOX: Record<string, (store: StoreGeneric, idBox: string, data: any) => void> = {
 	item_boxs: (store, idBox, data) => {
 		store.boxItems[idBox] = {};
 		for (const item of data.item_boxs) {
@@ -53,7 +54,7 @@ const EXPAND_HANDLERS_BOX: Record<string, (store: any, idBox: string, data: any)
 	},
 };
 
-function hydrateStore(store: any, idStore: string, storeData: any, expand: string[] = []) {
+function hydrateStore(store: StoreGeneric, idStore: string, storeData: any, expand: string[] = []) {
 	store.boxsTotalCount[idStore] = storeData.boxs_count;
 	store.ledsTotalCount[idStore] = storeData.leds_count;
 	store.storeTagsTotalCount[idStore] = storeData.stores_tags_count;
@@ -64,7 +65,7 @@ function hydrateStore(store: any, idStore: string, storeData: any, expand: strin
 	}
 }
 
-function hydrateBox(store: any, idStore: string, idBox: string, boxData: any, expand: string[] = []) {
+function hydrateBox(store: StoreGeneric, idStore: string, idBox: string, boxData: any, expand: string[] = []) {
 	store.boxs[idStore][idBox] = boxData;
 	store.boxItemsTotalCount[idBox] = boxData.item_boxs_count;
 	store.boxTagsTotalCount[idBox] = boxData.box_tags_count;
@@ -173,7 +174,7 @@ export const useStoresStore = defineStore("stores",{
 		getAvailableNewStoreId: storeResource.getAvailableNewId,
 		updateStore: storeResource.update,
 		deleteStore: storeResource.remove,
-		async createStoreComplete(params: { store: any; leds: any[]; boxs: any[] }) {
+		async createStoreComplete(params: { store: StoreGeneric; leds: any[]; boxs: any[] }) {
 			const store = await fetchWrapper.post({
 				url: `${baseUrl}/store/complete`,
 				useToken: "access",
@@ -182,7 +183,7 @@ export const useStoresStore = defineStore("stores",{
 			this.stores[store.store.id_store] = store.store;
 			return store.store.id_store;
 		},
-		async updateStoreComplete(id: string, params: { store: any; leds: any[]; boxs: any[] }) {
+		async updateStoreComplete(id: string, params: { store: StoreGeneric; leds: any[]; boxs: any[] }) {
 			this.stores[id] = await fetchWrapper.put({
 				url: `${baseUrl}/store/${id}/complete`,
 				useToken: "access",

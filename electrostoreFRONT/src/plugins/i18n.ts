@@ -2,7 +2,7 @@ import { createI18n } from "vue-i18n";
 import messages from "@/locales";
 
 function getBrowserLang(): string {
-	const navigatorLang = navigator.language || (navigator as any).userLanguage;
+	const navigatorLang = navigator.language || (navigator as Navigator & { userLanguage?: string }).userLanguage || "en";
 	return navigatorLang.split("-")[0];
 }
 

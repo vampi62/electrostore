@@ -161,7 +161,7 @@ const createSchema = () => {
 		.max(configsStore.getConfigByKey("max_length_email"), t("user.EmailMaxLength", { count: configsStore.getConfigByKey("max_length_email") }))
 		.required(t("user.EmailRequired"))
 		.email(t("user.EmailInvalid"));
-	if (edition?._check) {
+	if (edition?.unset_check) {
 		shape.password_user = Yup.string()
 			.required(t("user.PasswordRequired")).notOneOf([Yup.ref("current_password_user"), null], t("user.PasswordMatch")).matches(
 				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
@@ -188,11 +188,11 @@ const labelForm = ref<FormLabel[]>([
 	{ key: "firstname_user", label: "user.FirstName", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
 	{ key: "email_user", label: "user.Email", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
 	{ key: "role_user", label: "user.Role", type: "select", options: userTypeRole, enableCondition: "func.hasPermission([2])" },
-	{ key: "_check", label: "user.Check", type: "checkbox", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])",
+	{ key: "unset_check", label: "user.Check", type: "checkbox", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
-	{ key: "password_user", label: "user.Password", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && edition?._check",
+	{ key: "password_user", label: "user.Password", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && edition?.unset_check",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
-	{ key: "confirm_password_user", label: "user.ConfirmPassword", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && edition?._check",
+	{ key: "confirm_password_user", label: "user.ConfirmPassword", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && edition?.unset_check",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
 	{ key: "current_password_user", label: "user.CurrentPassword", type: "password", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
@@ -235,7 +235,7 @@ const notificationPermission = ref(typeof Notification !== "undefined" ? Notific
 
 function urlBase64ToUint8Array(base64String: string) {
 	const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-	const base64 = (base64String + padding).replaceAll(/-/g, "+").replaceAll(/_/g, "/");
+	const base64 = (base64String + padding).replaceAll("-","+").replaceAll("_", "/");
 	const rawData = window.atob(base64);
 	const outputArray = new Uint8Array(rawData.length);
 	for (let i = 0; i < rawData.length; ++i) {
@@ -471,7 +471,7 @@ onMounted(() => {
 				<div v-if="pushSupported" class="flex flex-col gap-4 py-2">
 					<div v-if="!pushSubscriptionId" class="flex items-end gap-3 flex-wrap">
 						<div class="flex flex-col gap-1">
-							<label class="text-sm font-medium text-gray-700">{{ $t('user.PushDeviceName') }}</label>
+							<span class="text-sm font-medium text-gray-700">{{ $t('user.PushDeviceName') }}</span>
 							<input v-model="pushDeviceName" type="text" maxlength="255"
 								class="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
 								:placeholder="$t('user.PushDeviceName')" />

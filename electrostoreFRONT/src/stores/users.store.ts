@@ -5,6 +5,7 @@ import { isNewId } from "@/utils";
 
 import { useCommandsStore, useProjectsStore, useEquipementsStore } from "@/stores";
 
+import type { StoreGeneric } from "pinia";
 import type { components } from "@/types/api";
 type ReadUserDto = components["schemas"]["ReadUserDto"];
 type ReadCommandCommentDto = components["schemas"]["ReadCommandCommentDto"];
@@ -15,7 +16,7 @@ type ReadUserPushSubscriptionDto = components["schemas"]["ReadUserPushSubscripti
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-const EXPAND_HANDLERS: Record<string, (store: any, idUser: any, data: any) => void> = {
+const EXPAND_HANDLERS: Record<string, (store: StoreGeneric, idUser: string, data: any) => void> = {
 	project_comments: (store, idUser, user) => {
 		store.projectsComment[idUser] = {};
 		for (const projectComment of user.project_comments) {
@@ -42,7 +43,7 @@ const EXPAND_HANDLERS: Record<string, (store: any, idUser: any, data: any) => vo
 	},
 };
 
-function hydrateUser(store: any, idUser: string, user: any, expand: string[] = []) {
+function hydrateUser(store: StoreGeneric, idUser: string, user: any, expand: string[] = []) {
 	store.projectsCommentTotalCount[idUser] = user.project_comments_count;
 	store.commandsCommentTotalCount[idUser] = user.command_comments_count;
 	for (const key of expand) {

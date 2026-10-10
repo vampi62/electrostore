@@ -5,10 +5,11 @@ import { isNewId } from "@/utils";
 
 import { useStoresStore, useItemsStore, useEquipementsStore } from "@/stores";
 
+import type { StoreGeneric } from "pinia";
 import type { components } from "@/types/api";
 type ReadTagDto = components["schemas"]["ReadTagDto"];
 
-const EXPAND_HANDLERS: Record<string, (store: any, idTag: any, data: any) => void> = {
+const EXPAND_HANDLERS: Record<string, (store: StoreGeneric, idTag: string, data: any) => void> = {
 	stores_tags: (store, idTag, tag) => {
 		store.tagsStore[idTag] = {};
 		for (const tagStore of tag.stores_tags) {
@@ -35,7 +36,7 @@ const EXPAND_HANDLERS: Record<string, (store: any, idTag: any, data: any) => voi
 	},
 };
 
-function hydrateTag(store: any, idTag: string, tag: any, expand: string[] = []) {
+function hydrateTag(store: StoreGeneric, idTag: string, tag: any, expand: string[] = []) {
 	store.tagsStoreTotalCount[idTag] = tag.stores_tags_count;
 	store.tagsBoxTotalCount[idTag] = tag.boxs_tags_count;
 	store.tagsItemTotalCount[idTag] = tag.items_tags_count;

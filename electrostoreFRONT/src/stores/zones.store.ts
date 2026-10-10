@@ -5,12 +5,13 @@ import { isNewId } from "@/utils";
 
 import { useStoresStore } from "@/stores";
 
+import type { StoreGeneric } from "pinia";
 import type { components } from "@/types/api";
 type ReadZoneDto = components["schemas"]["ReadZoneDto"];
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-function hydrateZone(store: any, idZone: string, zone: any, expand: string[] = []) {
+function hydrateZone(store: StoreGeneric, idZone: string, zone: any, expand: string[] = []) {
 	if (zone.url_thumbnail_zone && !store.thumbnailsURL[idZone]) {
 		store.showThumbnailById(idZone);
 	}

@@ -1,86 +1,90 @@
 import { buildFormData, fetchWrapper, buildQuery } from "@/helpers";
 
 import type { RSQLFilter, RSQLSort } from "@/types/rsql";
-import type { NestedResourceOptions } from "@/types/resource";
+import type { Body, EntityTypes, NestedResourceOptions } from "@/types/resource";
+import type { StoreGeneric } from "pinia";
+import type { PaginatedResponseDto, ReadBulkDto } from "@/types/fetch";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-export function createNestedResource({ path, idField, countKey, stateKey, loadingKey, editionKey, readyKey, onHydrate }: NestedResourceOptions) {
+export function createNestedResource<T extends EntityTypes>({ path, idField, countKey, stateKey, loadingKey, editionKey, readyKey, onHydrate }: NestedResourceOptions<T>) {
+	type ReadExtended = "readExtended" extends keyof T ? T["readExtended"] : T["readBasic"];
+	type Read = "readBasic" extends keyof T ? T["readBasic"] : T["readExtended"];
 	const resource: Record<string, any> = {
-		async getByInterval(idParentResource: any, limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false, externalParam: any[] = []) {
+		async getByInterval(this: StoreGeneric, idParentResource: string, limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false) {
 			if (!this[stateKey][String(idParentResource)] || clear) {
 				this[stateKey][String(idParentResource)] = {};
 			}
 			this[loadingKey] = true;
 			try {
 				const query = buildQuery({ offset, limit, expand, filter, sort });
-				const res = await fetchWrapper.get({ url: `${baseUrl}${path(idParentResource)}?${query}`, useToken: "access" });
+				const res = await fetchWrapper.get<PaginatedResponseDto<ReadExtended>>({ url: `${baseUrl}${path(idParentResource)}?${query}`, useToken: "access" });
 				for (const entity of res.data) {
 					this[stateKey][String(idParentResource)][entity[idField]] = entity;
-					onHydrate?.(this, entity, expand, externalParam);
+					onHydrate?.(this, entity, expand);
 				}
 				this[countKey][String(idParentResource)] = res.pagination?.total ?? 0;
-				return [res.pagination?.nextOffset ?? 0, res.pagination?.hasMore ?? false];
+				return [res.pagination?.next_offset ?? 0, res.pagination?.has_more ?? false];
 			} finally {
 				this[loadingKey] = false;
 			}
 		},
-		async getById(idParentResource: any, id: any, expand: string[] = [], externalParam: any[] = []) {
+		async getById(this: StoreGeneric, idParentResource: string, id: string, expand: string[] = []) {
 			this[stateKey][idParentResource] ??= {};
 			try {
 				const query = buildQuery({ expand });
-				const data = await fetchWrapper.get({ url: `${baseUrl}${path(idParentResource)}/${id}?${query}`, useToken: "access" });
+				const data = await fetchWrapper.get<ReadExtended>({ url: `${baseUrl}${path(idParentResource)}/${id}?${query}`, useToken: "access" });
 				this[stateKey][idParentResource][id] = data;
-				onHydrate?.(this, data, expand, externalParam);
+				onHydrate?.(this, data, expand);
 			} finally {
 				if (this[stateKey][idParentResource][id]) {
 					this[stateKey][idParentResource][id].loading = false;
 				}
 			}
 		},
-		async create(idParentResource: any, params: any, externalParam: any[] = []) {
+		async create(this: StoreGeneric, idParentResource: string, params: Body<T, "create">) {
 			this[stateKey][idParentResource] ??= {};
 			// if param is FormData, we need to set the content type to multipart/form-data
-			const data = await fetchWrapper.post({ url: `${baseUrl}${path(idParentResource)}`, useToken: "access", body: params, contentFile: params instanceof FormData });
+			const data = await fetchWrapper.post<Read>({ url: `${baseUrl}${path(idParentResource)}`, useToken: "access", body: params, contentFile: params instanceof FormData });
 			this[stateKey][idParentResource][data[idField]] = data;
 			this[countKey][idParentResource] = (this[countKey][idParentResource] ?? 0) + 1;
 			return data[idField];
 		},
-		async update(idParentResource: any, id: any, params: any, externalParam: any[] = []) {
+		async update(this: StoreGeneric, idParentResource: string, id: string, params: Body<T, "update">) {
 			this[stateKey][idParentResource] ??= {};
-			this[stateKey][idParentResource][id] = await fetchWrapper.put({ url: `${baseUrl}${path(idParentResource)}/${id}`, useToken: "access", body: params, contentFile: params instanceof FormData });
+			this[stateKey][idParentResource][id] = await fetchWrapper.put<Read>({ url: `${baseUrl}${path(idParentResource)}/${id}`, useToken: "access", body: params, contentFile: params instanceof FormData });
 		},
-		async remove(idParentResource: any, id: any, externalParam: any[] = []) {
+		async remove(this: StoreGeneric, idParentResource: string, id: string) {
 			await fetchWrapper.delete({ url: `${baseUrl}${path(idParentResource)}/${id}`, useToken: "access" });
 			delete this[stateKey][idParentResource]?.[id];
 			this[countKey][idParentResource] = (this[countKey][idParentResource] ?? 1) - 1;
 		},
-		async createBulk(idParentResource: any, params: any, externalParam: any[] = []) {
+		async createBulk(this: StoreGeneric, idParentResource: string, params: Body<T, "createBulk">) {
 			this[stateKey][idParentResource] ??= {};
-			const res = await fetchWrapper.post({ url: `${baseUrl}${path(idParentResource)}/bulk`, useToken: "access", body: params });
+			const res = await fetchWrapper.post<ReadBulkDto<Read>>({ url: `${baseUrl}${path(idParentResource)}/bulk`, useToken: "access", body: params });
 			for (const entity of res.valide) {
 				this[stateKey][idParentResource][entity[idField]] = entity;
 			}
 			this[countKey][idParentResource] = (this[countKey][idParentResource] ?? 0) + res.valide.length;
 			return res;
 		},
-		async updateBulk(idParentResource: any, params: any, externalParam: any[] = []) {
+		async updateBulk(this: StoreGeneric, idParentResource: string, params: Body<T, "updateBulk">) {
 			this[stateKey][idParentResource] ??= {};
-			const res = await fetchWrapper.put({ url: `${baseUrl}${path(idParentResource)}/bulk`, useToken: "access", body: params });
+			const res = await fetchWrapper.put<ReadBulkDto<Read>>({ url: `${baseUrl}${path(idParentResource)}/bulk`, useToken: "access", body: params });
 			for (const entity of res.valide) {
 				this[stateKey][idParentResource][entity[idField]] = entity;
 			}
 		},
-		async removeBulk(idParentResource: any, ids: any[], externalParam: any[] = []) {
+		async removeBulk(this: StoreGeneric, idParentResource: string, ids: Body<T, "deleteBulk">) {
 			this[stateKey][idParentResource] ??= {};
-			const res = await fetchWrapper.delete({ url: `${baseUrl}${path(idParentResource)}/bulk`, useToken: "access", body: ids });
+			const res = await fetchWrapper.delete<ReadBulkDto<Read>>({ url: `${baseUrl}${path(idParentResource)}/bulk`, useToken: "access", body: ids });
 			for (const id of res.valide) {
 				delete this[stateKey][idParentResource]?.[id];
 			}
 			this[countKey][idParentResource] = (this[countKey][idParentResource] ?? 0) - res.valide.length;
 			this[countKey][idParentResource] = Math.max(this[countKey][idParentResource], 0);
 		},
-		getAvailableNewId(idParentResource: any) {
+		getAvailableNewId(this: StoreGeneric, idParentResource: string) {
 			if (!editionKey) {
 				return;
 			}
@@ -93,7 +97,7 @@ export function createNestedResource({ path, idField, countKey, stateKey, loadin
 			this[editionKey][idParentResource][id] = {};
 			return id;
 		},
-		valideEditionById(idParentResource: any, id: any, status = "modified", isFormData = false) {
+		valideEditionById(this: StoreGeneric, idParentResource: string, id: string, status = "modified", isFormData = false) {
 			if (!readyKey || !editionKey) {
 				return;
 			}
@@ -111,7 +115,7 @@ export function createNestedResource({ path, idField, countKey, stateKey, loadin
 			}
 			this[readyKey][idParentResource][id] = { ...edition, [idField]: id, status, isFormData };
 		},
-		copyPerId(idParentResource: any, oldId: any, newId: any) {
+		copyPerId(this: StoreGeneric, idParentResource: string, oldId: string, newId: string) {
 			if (!readyKey || !editionKey) {
 				return;
 			}
@@ -124,7 +128,7 @@ export function createNestedResource({ path, idField, countKey, stateKey, loadin
 				this[readyKey][idParentResource][newId] = { ...this[readyKey][idParentResource][oldId], [idField]: newId };
 			}
 		},
-		copyAllId(oldIdParentResource: any, newIdParentResource: any) {
+		copyAllId(this: StoreGeneric, oldIdParentResource: string, newIdParentResource: string) {
 			if (!readyKey || !editionKey) {
 				return;
 			}
@@ -137,7 +141,7 @@ export function createNestedResource({ path, idField, countKey, stateKey, loadin
 				this[readyKey][newIdParentResource][id] = { ...(entry as object), [idField]: id };
 			}
 		},
-		async pushChange(idParentResource: any) {
+		async pushChange(this: StoreGeneric, idParentResource: string) {
 			if (!readyKey) {
 				return;
 			}

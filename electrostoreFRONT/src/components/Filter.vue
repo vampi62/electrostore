@@ -82,7 +82,7 @@
 				:type="type"
 				:placeholder="placeholder"
 				:value="preset"
-				autocomplete="one-time-code"
+				autocomplete="off"
 				class="border border-gray-300 rounded px-2 py-1"
 				:class="[classCss, label.length > 0 ? 'mr-2' : '']"
 				:disabled="disabled"

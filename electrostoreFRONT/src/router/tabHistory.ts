@@ -4,7 +4,7 @@ import { createMemoryHistory } from "vue-router";
 // this one does, the views use it to know if they can go back in the tab
 export function createTabHistory() {
 	const history = createMemoryHistory();
-	const locations = [];
+	const locations = [] as string[];
 	let position = -1;
 	const { push, replace, go } = history;
 	history.push = (to, data) => {

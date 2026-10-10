@@ -5,11 +5,12 @@ import { isNewId } from "@/utils";
 
 import { useProjectsStore } from "@/stores";
 
+import type { StoreGeneric } from "pinia";
 import type { components } from "@/types/api";
 type ReadProjectTagDto = components["schemas"]["ReadProjectTagDto"];
 type ReadProjectProjectTagDto = components["schemas"]["ReadProjectProjectTagDto"];
 
-const EXPAND_HANDLERS: Record<string, (store: any, idProjectTag: any, data: any) => void> = {
+const EXPAND_HANDLERS: Record<string, (store: StoreGeneric, idProjectTag: string, data: any) => void> = {
 	project_tags: (store, idProjectTag, data) => {
 		store.projectTagsProject[idProjectTag] = {};
 		for (const projectTagProject of data.project_tags) {
@@ -18,7 +19,7 @@ const EXPAND_HANDLERS: Record<string, (store: any, idProjectTag: any, data: any)
 	},
 };
 
-function hydrateProjectTag(store: any, idProjectTag: string, projectTag: any, expand: string[] = []) {
+function hydrateProjectTag(store: StoreGeneric, idProjectTag: string, projectTag: any, expand: string[] = []) {
 	store.projectTagsProjectTotalCount[idProjectTag] = projectTag.project_tags_count;
 	for (const key of expand) {
 		if (EXPAND_HANDLERS[key]) {
