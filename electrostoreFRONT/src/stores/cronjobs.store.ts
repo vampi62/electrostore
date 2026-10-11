@@ -3,15 +3,12 @@ import { defineStore } from "pinia";
 import { fetchWrapper, createMainResource } from "@/helpers";
 import { isNewId } from "@/utils";
 
+import type { Edition } from "@/types/resource";
 import type { components } from "@/types/api";
 type ReadCronJobDto = components["schemas"]["ReadCronJobDto"];
 type CreateCronJobDto = components["schemas"]["CreateCronJobDto"];
 type UpdateCronJobDto = components["schemas"]["UpdateCronJobDto"];
 type ReadCronJobStatusDto = components["schemas"]["ReadCronJobStatusDto"];
-
-type EditionCronJobDto = {
-	loading?: boolean;
-} & Partial<ReadCronJobDto>;
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -29,7 +26,7 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		cronJobsLoading: false,
 		cronJobsTotalCount: 0,
 		cronJobs: {} as Record<string, ReadCronJobDto>,
-		cronJobEdition: {} as Record<string, EditionCronJobDto>,
+		cronJobEdition: {} as Record<string, Edition<{ create: CreateCronJobDto, update: UpdateCronJobDto }>>,
 	}),
 	actions: {
 		getCronJobByList: cronJobResource.getByList,

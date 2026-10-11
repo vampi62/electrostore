@@ -3,12 +3,9 @@ import { defineStore } from "pinia";
 import { createMainResource } from "@/helpers";
 
 import type { components } from "@/types/api";
+import type { Edition } from "@/types/resource";
 import { isNewId } from "@/utils/newId";
 type ReadCarrierDto = components["schemas"]["ReadCarrierDto"];
-
-type EditionCarrierDto = {
-	loading?: boolean;
-} & Partial<ReadCarrierDto>;
 
 const carrierResource = createMainResource<{ readExtended: ReadCarrierDto }>({
 	path: () => "/carrier",
@@ -23,7 +20,7 @@ export const useCarriersStore = defineStore("carriers", {
 		carriersLoading: false,
 		carriersTotalCount: 0,
 		carriers: {} as Record<string, ReadCarrierDto>,
-		carrierEdition: {} as Record<string, EditionCarrierDto>,
+		carrierEdition: {} as Record<string, any>,
 	}),
 	actions: {
 		getCarrierByList: carrierResource.getByList,

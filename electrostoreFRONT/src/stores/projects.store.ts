@@ -6,17 +6,44 @@ import { isNewId } from "@/utils";
 import { useUsersStore, useItemsStore, useProjectTagsStore } from "@/stores";
 
 import type { StoreGeneric } from "pinia";
-import type { components } from "@/types/api";
+import type { Ready, Edition } from "@/types/resource";
+import type { components, paths } from "@/types/api";
 type ReadProjectDto = components["schemas"]["ReadProjectDto"];
+type ReadExtendedProjectDto = components["schemas"]["ReadExtendedProjectDto"];
+type CreateProjectDto = components["schemas"]["CreateProjectDto"];
+type UpdateProjectDto = components["schemas"]["UpdateProjectDto"];
+
 type ReadProjectCommentDto = components["schemas"]["ReadProjectCommentDto"];
+type ReadExtendedProjectCommentDto = components["schemas"]["ReadExtendedProjectCommentDto"];
+type CreateProjectCommentByProjectDto = components["schemas"]["CreateProjectCommentByProjectDto"];
+type UpdateProjectCommentDto = components["schemas"]["UpdateProjectCommentDto"];
+
 type ReadProjectDocumentDto = components["schemas"]["ReadProjectDocumentDto"];
+type CreateProjectDocumentByProjectDto = NonNullable<paths["/api/project/{id_project}/document"]["post"]["requestBody"]>["content"]["multipart/form-data"];
+type UpdateProjectDocumentDto = components["schemas"]["UpdateProjectDocumentDto"];
+
 type ReadProjectItemDto = components["schemas"]["ReadProjectItemDto"];
+type ReadExtendedProjectItemDto = components["schemas"]["ReadExtendedProjectItemDto"];
+type CreateProjectItemByProjectDto = components["schemas"]["CreateProjectItemByProjectDto"];
+type UpdateProjectItemDto = components["schemas"]["UpdateProjectItemDto"];
+
 type ReadProjectProjectTagDto = components["schemas"]["ReadProjectProjectTagDto"];
+type ReadExtendedProjectProjectTagDto = components["schemas"]["ReadExtendedProjectProjectTagDto"];
+type CreateProjectProjectTagByProjectDto = components["schemas"]["CreateProjectProjectTagByProjectDto"];
+
 type ReadProjectStatusDto = components["schemas"]["ReadProjectStatusDto"];
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-const EXPAND_HANDLERS: Record<string, (store: StoreGeneric, idProject: string, data: any) => void> = {
+type ExpandData = {
+	project_comments: ReadProjectCommentDto[];
+	project_documents: ReadProjectDocumentDto[];
+	project_items: ReadProjectItemDto[];
+	project_tags: ReadProjectProjectTagDto[];
+	project_status_history: ReadProjectStatusDto[];
+};
+
+const EXPAND_HANDLERS: { [K in keyof ExpandData]: (store: StoreGeneric, idProject: string, data: ExpandData[K]) => void } = {
 	project_comments: (store, idProject, data) => {
 		store.comments[idProject] = {};
 		for (const comment of data) {
@@ -49,46 +76,51 @@ const EXPAND_HANDLERS: Record<string, (store: StoreGeneric, idProject: string, d
 	},
 };
 
-function hydrateProject(store: StoreGeneric, idProject: string, project: any, expand: string[] = []) {
+function hydrateProject(store: StoreGeneric, idProject: string, project: ReadExtendedProjectDto, expand: string[] = []) {
 	store.commentsTotalCount[idProject] = project.project_comments_count;
 	store.documentsTotalCount[idProject] = project.project_documents_count;
 	store.itemsTotalCount[idProject] = project.project_items_count;
 	store.projectTagProjectTotalCount[idProject] = project.project_tags_count;
 	store.statusHistoryTotalCount[idProject] = project.project_status_history_count;
 	for (const key of expand) {
-		if (EXPAND_HANDLERS[key]) {
-			EXPAND_HANDLERS[key](store, idProject, project[key]);
+		if (key in EXPAND_HANDLERS) {
+			const expandKey = key as keyof ExpandData;
+			const handler = EXPAND_HANDLERS[expandKey] as (store: StoreGeneric, idProject: string, data: unknown[]) => void;
+			handler(store, idProject, project[expandKey] ?? []);
 		}
 	}
 }
 
-const projectResource = createMainResource({
+const projectResource = createMainResource<{ readExtended: ReadExtendedProjectDto, readBasic: ReadProjectDto, create: CreateProjectDto, update: UpdateProjectDto }>({
 	path: () => "/project",
 	idField: "id_project",
 	stateKey: "projects",
 	countKey: "projectsTotalCount",
 	loadingKey: "projectsLoading",
 	editionKey: "projectEdition",
-	onHydrate: (store, entity, expand) => {
-		hydrateProject(store, entity.id_project, entity, expand);
+	onHydrate: (store, entity: ReadExtendedProjectDto, expand) => {
+		if (entity.id_project === undefined) {
+			return;
+		}
+		hydrateProject(store, String(entity.id_project), entity, expand);
 	},
 });
 
-const commentResource = createNestedResource({
+const commentResource = createNestedResource<{ readExtended: ReadExtendedProjectCommentDto, readBasic: ReadProjectCommentDto, create: CreateProjectCommentByProjectDto, update: UpdateProjectCommentDto }>({
 	path: (idProject) => `/project/${idProject}/comment`,
 	idField: "id_project_comment",
 	stateKey: "comments",
 	countKey: "commentsTotalCount",
 	loadingKey: "commentsLoading",
 	editionKey: "commentEdition",
-	onHydrate: (store, entity, expand) => {
-		if (expand.includes("user")) {
+	onHydrate: (store, entity: ReadExtendedProjectCommentDto, expand) => {
+		if (expand.includes("user") && entity.user && entity.id_user) {
 			const usersStore = useUsersStore();
 			usersStore.users[entity.id_user] = entity.user;
 		}
 	},
 });
-const documentResource = createNestedResource({
+const documentResource = createNestedResource<{ readBasic: ReadProjectDocumentDto, create: CreateProjectDocumentByProjectDto, update: UpdateProjectDocumentDto }>({
 	path: (idProject) => `/project/${idProject}/document`,
 	idField: "id_project_document",
 	stateKey: "documents",
@@ -97,7 +129,7 @@ const documentResource = createNestedResource({
 	editionKey: "documentEdition",
 	readyKey: "documentReady",
 });
-const itemResource = createNestedResource({
+const itemResource = createNestedResource<{ readExtended: ReadExtendedProjectItemDto, readBasic: ReadProjectItemDto, create: CreateProjectItemByProjectDto, update: UpdateProjectItemDto }>({
 	path: (idProject) => `/project/${idProject}/item`,
 	idField: "id_item",
 	stateKey: "items",
@@ -105,14 +137,14 @@ const itemResource = createNestedResource({
 	loadingKey: "itemsLoading",
 	editionKey: "itemEdition",
 	readyKey: "itemReady",
-	onHydrate: (store, entity, expand) => {
-		if (expand.includes("item")) {
+	onHydrate: (store, entity: ReadExtendedProjectItemDto, expand) => {
+		if (expand.includes("item") && entity.item && entity.id_item) {
 			const itemsStore = useItemsStore();
 			itemsStore.items[entity.id_item] = entity.item;
 		}
 	},
 });
-const projectTagProjectResource = createNestedResource({
+const projectTagProjectResource = createNestedResource<{ readExtended: ReadExtendedProjectProjectTagDto, readBasic: ReadProjectProjectTagDto, create: CreateProjectProjectTagByProjectDto }>({
 	path: (idProject) => `/project/${idProject}/project-tag`,
 	idField: "id_project_tag",
 	stateKey: "projectTagProject",
@@ -120,14 +152,14 @@ const projectTagProjectResource = createNestedResource({
 	loadingKey: "projectTagProjectLoading",
 	editionKey: "projectTagProjectEdition",
 	readyKey: "projectTagProjectReady",
-	onHydrate: (store, entity, expand) => {
-		if (expand.includes("project_tag")) {
+	onHydrate: (store, entity: ReadExtendedProjectProjectTagDto, expand) => {
+		if (expand.includes("project_tag") && entity.project_tag && entity.id_project_tag) {
 			const projectTagsStore = useProjectTagsStore();
 			projectTagsStore.projectTags[entity.id_project_tag] = entity.project_tag;
 		}
 	},
 });
-const statusHistoryResource = createNestedResource({
+const statusHistoryResource = createNestedResource<{ readBasic: ReadProjectStatusDto }>({
 	path: (idProject) => `/project/${idProject}/status-history`,
 	idField: "id_project_status",
 	stateKey: "statusHistory",
@@ -140,30 +172,30 @@ export const useProjectsStore = defineStore("projects",{
 		projectsLoading: false,
 		projectsTotalCount: 0,
 		projects: {} as Record<string, ReadProjectDto>,
-		projectEdition: {} as Record<string, any>,
+		projectEdition: {} as Record<string, Edition<{ create: CreateProjectDto, update: UpdateProjectDto }>>,
 
 		commentsLoading: false,
 		commentsTotalCount: {} as Record<string, number>,
 		comments: {} as Record<string, Record<string, ReadProjectCommentDto>>,
-		commentEdition: {} as Record<string, any>,
+		commentEdition: {} as Record<string, Record<string, Edition<{ create: CreateProjectCommentByProjectDto, update: UpdateProjectCommentDto }>>>,
 
 		documentsLoading: false,
 		documentsTotalCount: {} as Record<string, number>,
 		documents: {} as Record<string, Record<string, ReadProjectDocumentDto>>,
-		documentEdition: {} as Record<string, any>,
-		documentReady: {} as Record<string, any>,
+		documentEdition: {} as Record<string, Record<string, Edition<{ create: CreateProjectDocumentByProjectDto, update: UpdateProjectDocumentDto }>>>,
+		documentReady: {} as Record<string, Record<string, Ready<{ create: CreateProjectDocumentByProjectDto, update: UpdateProjectDocumentDto }>>>,
 
 		itemsLoading: false,
 		itemsTotalCount: {} as Record<string, number>,
 		items: {} as Record<string, Record<string, ReadProjectItemDto>>,
-		itemEdition: {} as Record<string, any>,
-		itemReady: {} as Record<string, any>,
+		itemEdition: {} as Record<string, Edition<{ create: CreateProjectItemByProjectDto, update: UpdateProjectItemDto }>>,
+		itemReady: {} as Record<string, Record<string, Ready<{ create: CreateProjectItemByProjectDto, update: UpdateProjectItemDto }>>>,
 
 		projectTagProjectLoading: false,
 		projectTagProjectTotalCount: {} as Record<string, number>,
 		projectTagProject: {} as Record<string, Record<string, ReadProjectProjectTagDto>>,
-		projectTagProjectEdition: {} as Record<string, any>,
-		projectTagProjectReady: {} as Record<string, any>,
+		projectTagProjectEdition: {} as Record<string, Record<string, Edition<{ create: CreateProjectProjectTagByProjectDto }>>>,
+		projectTagProjectReady: {} as Record<string, Record<string, Ready<{ create: CreateProjectProjectTagByProjectDto }>>>,
 
 		statusHistoryTotalCount: {} as Record<string, number>,
 		statusHistoryLoading: false,
@@ -177,7 +209,7 @@ export const useProjectsStore = defineStore("projects",{
 		getAvailableNewProjectId: projectResource.getAvailableNewId,
 		updateProject: projectResource.update,
 		deleteProject: projectResource.remove,
-		loadToEdition(id: string, preset = null) {
+		loadToEdition(id: string, preset: string | null = null) {
 			if (!isNewId(id) && this.projects[id]) {
 				this.projectEdition[id] = {
 					loading: false,
@@ -221,7 +253,7 @@ export const useProjectsStore = defineStore("projects",{
 		async saveAllChanges(id: string) {
 			let realId = id;
 			if (isNewId(id)) {
-				realId = await this.createProject(this.projectEdition[id]);
+				realId = await this.createProject(this.projectEdition[id] as CreateProjectDto);
 				this.copyDocumentAllId(id, realId);
 				this.copyItemAllId(id, realId);
 				this.copyProjectTagProjectAllId(id, realId);

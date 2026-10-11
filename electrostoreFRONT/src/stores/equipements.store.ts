@@ -39,16 +39,22 @@ type ReadEquipementStatusDto = components["schemas"]["ReadEquipementStatusDto"];
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-const EXPAND_HANDLERS: Record<string, (store: StoreGeneric, idEquipement: string, data: any) => void> = {
+const EXPAND_HANDLERS: Record<string, (store: StoreGeneric, idEquipement: string, data: ReadExtendedEquipementDto) => void> = {
 	equipement_tags: (store, idEquipement, data) => {
 		store.equipementTags[idEquipement] = {};
-		for (const equipementTag of data) {
+		for (const equipementTag of data.equipement_tags ?? []) {
+			if (!equipementTag.id_tag) {
+				continue;
+			}
 			store.equipementTags[idEquipement][equipementTag.id_tag] = equipementTag;
 		}
 	},
 	equipement_boxs: (store, idEquipement, data) => {
 		store.equipementBoxs[idEquipement] = {};
-		for (const equipementBox of data) {
+		for (const equipementBox of data.equipement_boxs ?? []) {
+			if (!equipementBox.id_box) {
+				continue;
+			}
 			store.equipementBoxs[idEquipement][equipementBox.id_box] = equipementBox;
 		}
 	},
@@ -66,7 +72,7 @@ function hydrateEquipement(store: StoreGeneric, idEquipement: string, equipement
 	store.equipementCommentsTotalCount[idEquipement] = equipement.equipement_comments_count;
 	for (const key of expand) {
 		if (EXPAND_HANDLERS[key]) {
-			EXPAND_HANDLERS[key](store, idEquipement, equipement[key]);
+			EXPAND_HANDLERS[key](store, idEquipement, equipement);
 		}
 	}
 }

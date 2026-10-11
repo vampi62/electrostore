@@ -31,35 +31,50 @@ type ReadCommandHistoryDto = components["schemas"]["ReadCommandHistoryDto"];
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-const EXPAND_HANDLERS: Record<string, (store: StoreGeneric, idCommand: string, data: any[]) => void> = {
+const EXPAND_HANDLERS: Record<string, (store: StoreGeneric, idCommand: string, data: ReadExtendedCommandDto) => void> = {
 	command_comments: (store, idCommand, data) => {
 		store.comments[idCommand] = {};
-		for (const comment of data) {
+		for (const comment of data.command_comments ?? []) {
+			if (!comment.id_command_comment) {
+				continue;
+			}
 			store.comments[idCommand][comment.id_command_comment] = comment;
 		}
 	},
 	commands_documents: (store, idCommand, data) => {
 		store.documents[idCommand] = {};
-		for (const document of data) {
+		for (const document of data.commands_documents ?? []) {
+			if (!document.id_command_document) {
+				continue;
+			}
 			store.documents[idCommand][document.id_command_document] = document;
 		}
 	},
 	commands_history: (store, idCommand, data) => {
 		store.history[idCommand] = {};
-		for (const historyEntry of data) {
+		for (const historyEntry of data.commands_history ?? []) {
+			if (!historyEntry.id_command_history) {
+				continue;
+			}
 			store.history[idCommand][historyEntry.id_command_history] = historyEntry;
 		}
 	},
 	commands_items: (store, idCommand, data) => {
 		store.items[idCommand] = {};
-		for (const item of data) {
+		for (const item of data.commands_items ?? []) {
+			if (!item.id_item) {
+				continue;
+			}
 			store.items[idCommand][item.id_item] = item;
 		}
 	},
 	carrier: (store, idCommand, data) => {
 		if (data) {
+			if (!data.carrier?.id_carrier) {
+				return;
+			}
 			const carriersStore = useCarriersStore();
-			carriersStore.carriers[data.id_carrier] = data;
+			carriersStore.carriers[data.carrier.id_carrier] = data.carrier;
 		}
 	},
 };
@@ -70,7 +85,7 @@ function hydrateCommand(store: StoreGeneric, idCommand: string, command: ReadExt
 	store.itemsTotalCount[idCommand] = command.commands_items_count;
 	for (const key of expand) {
 		if (EXPAND_HANDLERS[key]) {
-			EXPAND_HANDLERS[key](store, idCommand, command[key]);
+			EXPAND_HANDLERS[key](store, idCommand, command);
 		}
 	}
 }
