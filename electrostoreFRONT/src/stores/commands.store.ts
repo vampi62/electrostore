@@ -6,6 +6,7 @@ import { isNewId } from "@/utils";
 import { useUsersStore, useCarriersStore } from "@/stores";
 
 import type { StoreGeneric } from "pinia";
+import type { Ready, Edition } from "@/types/resource";
 import type { components, paths } from "@/types/api";
 type ReadCommandDto = components["schemas"]["ReadCommandDto"];
 type ReadExtendedCommandDto = components["schemas"]["ReadExtendedCommandDto"];
@@ -74,22 +75,6 @@ function hydrateCommand(store: StoreGeneric, idCommand: string, command: ReadExt
 	}
 }
 
-type EditionCommandDto = {
-	loading?: boolean;
-} & Partial<ReadCommandDto>;
-
-type EditionCommandCommentDto = {
-	loading?: boolean;
-} & Partial<ReadCommandCommentDto>;
-
-type EditionCommandItemDto = {
-	loading?: boolean;
-} & Partial<ReadCommandItemDto>;
-
-type EditionCommandDocumentDto = {
-	loading?: boolean;
-} & Partial<ReadCommandDocumentDto>;
-
 const commandResource = createMainResource<{ readExtended: ReadExtendedCommandDto, readBasic: ReadCommandDto, create: CreateCommandDto, update: UpdateCommandDto }>({
 	path: () => "/command",
 	idField: "id_command",
@@ -150,24 +135,24 @@ export const useCommandsStore = defineStore("commands",{
 		commandsLoading: false,
 		commandsTotalCount: 0,
 		commands: {} as Record<string, ReadCommandDto>,
-		commandEdition: {} as Record<string, EditionCommandDto>,
+		commandEdition: {} as Record<string, Edition<{ create: CreateCommandDto, update: UpdateCommandDto }>>,
 
 		commentsTotalCount: {} as Record<string, number>,
 		commentsLoading: false,
 		comments: {} as Record<string, Record<string, ReadCommandCommentDto>>,
-		commentEdition: {} as Record<string, EditionCommandCommentDto>,
+		commentEdition: {} as Record<string, Edition<{ create: CreateCommandCommentByCommandDto, update: UpdateCommandCommentDto }>>,
 
 		documentsTotalCount: {} as Record<string, number>,
 		documentsLoading: false,
 		documents: {} as Record<string, Record<string, ReadCommandDocumentDto>>,
-		documentEdition: {} as Record<string, EditionCommandDocumentDto>,
-		documentReady: {} as Record<string, any>,
+		documentEdition: {} as Record<string, Edition<{ create: CreateCommandDocumentByCommandDto, update: UpdateCommandDocumentDto }>>,
+		documentReady: {} as Record<string, Ready<{ create: CreateCommandDocumentByCommandDto, update: UpdateCommandDocumentDto }>>,
 
 		itemsTotalCount: {} as Record<string, number>,
 		itemsLoading: false,
 		items: {} as Record<string, Record<string, ReadCommandItemDto>>,
-		itemEdition: {} as Record<string, EditionCommandItemDto>,
-		itemReady: {} as Record<string, any>,
+		itemEdition: {} as Record<string, Edition<{ create: CreateCommandItemByCommandDto, update: UpdateCommandItemDto }>>,
+		itemReady: {} as Record<string, Ready<{ create: CreateCommandItemByCommandDto, update: UpdateCommandItemDto }>>,
 
 		historyTotalCount: {} as Record<string, number>,
 		historyLoading: false,
@@ -239,7 +224,7 @@ export const useCommandsStore = defineStore("commands",{
 				await this.updateCommand(id, this.commandEdition[id]);
 			}
 			await Promise.all([
-				this.pushDocumentChange(realId),
+				documentResource.pushChange.call(this as StoreGeneric, realId),
 				this.pushItemChange(realId),
 			]);
 			return realId;

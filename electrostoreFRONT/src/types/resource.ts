@@ -1,7 +1,7 @@
 import type { StoreGeneric } from "pinia";
 
 export interface EntityTypes {
-	readExtended: unknown;
+	readExtended?: unknown;
 	readBasic?: unknown;
 	create?: unknown;
 	update?: unknown;
@@ -13,7 +13,7 @@ export interface EntityTypes {
 export type Body<T extends EntityTypes, K extends keyof EntityTypes> =
 	T extends Record<K, infer B> ? B : never;
 
-export type IdKey<T extends EntityTypes> = Extract<keyof T["readExtended"], string>;
+export type IdKey<T extends EntityTypes> = Extract<keyof T["readExtended"], string> | Extract<keyof T["readBasic"], string>;
 
 export interface MainResourceOptions<T extends EntityTypes> {
 	path: () => string;
@@ -35,3 +35,18 @@ export interface NestedResourceOptions<T extends EntityTypes> {
 	readyKey?: string;
 	onHydrate?: (store: StoreGeneric, entity: T["readExtended"], expand: string[]) => void;
 }
+
+type PartialBody<B> = [B] extends [object] ? Partial<B> : unknown;
+
+// Staged change of an entity: its fields must be valid fields of the create or update dto of EntityTypes.
+// Usage: Record<string, Ready<{ create: CreateXDto, update: UpdateXDto }>>
+export type Ready<T extends Pick<EntityTypes, "create" | "update">> = {
+	status?: "created" | "modified" | "deleted";
+	isFormData?: boolean;
+	pushChange?: boolean;
+} & PartialBody<NonNullable<T["create"]>> & PartialBody<NonNullable<T["update"]>>;
+
+export type Edition<T extends Pick<EntityTypes, "create" | "update">> = {
+	isFormData?: boolean;
+	loading?: boolean;
+} & PartialBody<NonNullable<T["create"]>> & PartialBody<NonNullable<T["update"]>>;

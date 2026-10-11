@@ -1,4 +1,4 @@
-import { fetchWrapper, buildQuery } from "@/helpers";
+import { buildFormData, fetchWrapper, buildQuery } from "@/helpers";
 
 import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 import type { Body, EntityTypes, MainResourceOptions } from "@/types/resource";
@@ -60,17 +60,19 @@ export function createMainResource<T extends EntityTypes>({ path, idField, count
 				}
 			}
 		},
-		async create(this: StoreGeneric, params: Body<T, "create">) {
+		async create(this: StoreGeneric, params: Body<T, "create">, isFormData = false) {
 			this[stateKey] ??= {};
-			// if param is FormData, we need to set the content type to multipart/form-data
-			const data = await fetchWrapper.post<Read>({ url: `${baseUrl}${path()}`, useToken: "access", body: params, contentFile: params instanceof FormData });
+			// if isFormData, params is converted to FormData and sent as multipart/form-data
+			const body = isFormData ? buildFormData(params as Record<string, string | Blob>) : params;
+			const data = await fetchWrapper.post<Read>({ url: `${baseUrl}${path()}`, useToken: "access", body: body, contentFile: isFormData });
 			this[stateKey][data[idField]] = data;
 			this[countKey] = (this[countKey] ?? 0) + 1;
 			return data[idField] as string;
 		},
-		async update(this: StoreGeneric, id: string, params: Body<T, "update">) {
+		async update(this: StoreGeneric, id: string, params: Body<T, "update">, isFormData = false) {
 			this[stateKey] ??= {};
-			this[stateKey][id] = await fetchWrapper.put<Read>({ url: `${baseUrl}${path()}/${id}`, useToken: "access", body: params, contentFile: params instanceof FormData });
+			const body = isFormData ? buildFormData(params as Record<string, string | Blob>) : params;
+			this[stateKey][id] = await fetchWrapper.put<Read>({ url: `${baseUrl}${path()}/${id}`, useToken: "access", body: body, contentFile: isFormData });
 		},
 		async remove(this: StoreGeneric, id: string) {
 			await fetchWrapper.delete({ url: `${baseUrl}${path()}/${id}`, useToken: "access" });

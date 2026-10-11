@@ -1,7 +1,7 @@
 import { buildFormData, fetchWrapper, buildQuery } from "@/helpers";
 
 import type { RSQLFilter, RSQLSort } from "@/types/rsql";
-import type { Body, EntityTypes, NestedResourceOptions } from "@/types/resource";
+import type { Body, EntityTypes, NestedResourceOptions, Ready } from "@/types/resource";
 import type { StoreGeneric } from "pinia";
 import type { PaginatedResponseDto, ReadBulkDto } from "@/types/fetch";
 
@@ -42,17 +42,19 @@ export function createNestedResource<T extends EntityTypes>({ path, idField, cou
 				}
 			}
 		},
-		async create(this: StoreGeneric, idParentResource: string, params: Body<T, "create">) {
+		async create(this: StoreGeneric, idParentResource: string, params: Body<T, "create">, isFormData = false) {
 			this[stateKey][idParentResource] ??= {};
-			// if param is FormData, we need to set the content type to multipart/form-data
-			const data = await fetchWrapper.post<Read>({ url: `${baseUrl}${path(idParentResource)}`, useToken: "access", body: params, contentFile: params instanceof FormData });
+			// if isFormData, params is converted to FormData and sent as multipart/form-data
+			const body = isFormData ? buildFormData(params as Record<string, string | Blob>) : params;
+			const data = await fetchWrapper.post<Read>({ url: `${baseUrl}${path(idParentResource)}`, useToken: "access", body, contentFile: isFormData });
 			this[stateKey][idParentResource][data[idField]] = data;
 			this[countKey][idParentResource] = (this[countKey][idParentResource] ?? 0) + 1;
 			return data[idField];
 		},
-		async update(this: StoreGeneric, idParentResource: string, id: string, params: Body<T, "update">) {
+		async update(this: StoreGeneric, idParentResource: string, id: string, params: Body<T, "update">, isFormData = false) {
 			this[stateKey][idParentResource] ??= {};
-			this[stateKey][idParentResource][id] = await fetchWrapper.put<Read>({ url: `${baseUrl}${path(idParentResource)}/${id}`, useToken: "access", body: params, contentFile: params instanceof FormData });
+			const body = isFormData ? buildFormData(params as Record<string, string | Blob>) : params;
+			this[stateKey][idParentResource][id] = await fetchWrapper.put<Read>({ url: `${baseUrl}${path(idParentResource)}/${id}`, useToken: "access", body, contentFile: isFormData });
 		},
 		async remove(this: StoreGeneric, idParentResource: string, id: string) {
 			await fetchWrapper.delete({ url: `${baseUrl}${path(idParentResource)}/${id}`, useToken: "access" });
@@ -146,21 +148,25 @@ export function createNestedResource<T extends EntityTypes>({ path, idField, cou
 				return;
 			}
 			const readyEntries = { ...this[readyKey][idParentResource] };
-			for (const [id, entry] of Object.entries(readyEntries) as [string, any][]) {
+			let pendingChanges = Promise.resolve();
+			for (const [id, entry] of Object.entries(readyEntries) as [string, Ready<{ create: T["create"], update: T["update"] }>][]) {
 				const { status, isFormData, ...data } = entry;
 				const isNewId = String(id).startsWith("new-");
 				if (data?.pushChange) {
 					continue; // Skip if already pushed
 				}
-				if (status === "created") {
-					await resource.create.call(this, idParentResource, isFormData ? buildFormData(data) : data);
-				} else if (status === "modified" && !isNewId) {
-					await resource.update.call(this, idParentResource, id, isFormData ? buildFormData(data) : data);
-				} else if (status === "deleted" && !isNewId) {
-					await resource.remove.call(this, idParentResource, id);
-				}
-				entry.pushChange = true;
+				pendingChanges = pendingChanges.then(async() => {
+					if (status === "created") {
+						await resource.create.call(this, idParentResource, data, isFormData);
+					} else if (status === "modified" && !isNewId) {
+						await resource.update.call(this, idParentResource, id, data, isFormData);
+					} else if (status === "deleted" && !isNewId) {
+						await resource.remove.call(this, idParentResource, id);
+					}
+					entry.pushChange = true;
+				});
 			}
+			await pendingChanges;
 		},
 	};
 	return resource;
