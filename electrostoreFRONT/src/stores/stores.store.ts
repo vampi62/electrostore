@@ -56,18 +56,27 @@ const EXPAND_HANDLERS_STORE: Record<string, (store: StoreGeneric, idStore: strin
 	boxs: (store, idStore, data) => {
 		store.boxs[idStore] = {};
 		for (const box of data.boxs ?? []) {
+			if (!box.id_box) {
+				continue;
+			}
 			store.boxs[idStore][box.id_box] = box;
 		}
 	},
 	leds: (store, idStore, data) => {
 		store.leds[idStore] = {};
 		for (const led of data.leds ?? []) {
+			if (!led.id_led) {
+				continue;
+			}
 			store.leds[idStore][led.id_led] = led;
 		}
 	},
 	stores_tags: (store, idStore, data) => {
 		store.storeTags[idStore] = {};
 		for (const tag of data.stores_tags ?? []) {
+			if (!tag.id_tag) {
+				continue;
+			}
 			store.storeTags[idStore][tag.id_tag] = tag;
 		}
 	},
@@ -76,12 +85,18 @@ const EXPAND_HANDLERS_BOX: Record<string, (store: StoreGeneric, idBox: string, d
 	item_boxs: (store, idBox, data) => {
 		store.boxItems[idBox] = {};
 		for (const item of data.item_boxs ?? []) {
+			if (!item.id_item) {
+				continue;
+			}
 			store.boxItems[idBox][item.id_item] = item;
 		}
 	},
 	box_tags: (store, idBox, data) => {
 		store.boxTags[idBox] = {};
 		for (const tag of data.box_tags ?? []) {
+			if (!tag.id_tag) {
+				continue;
+			}
 			store.boxTags[idBox][tag.id_tag] = tag;
 		}
 	},
@@ -235,14 +250,11 @@ export const useStoresStore = defineStore("stores",{
 			if (!isNewId(id) && this.stores[id]) {
 				this.storeEdition[id] = {
 					loading: false,
-					id_store: this.stores[id].id_store,
-					name_store: this.stores[id].name_store,
-					mqtt_name_store: this.stores[id].mqtt_name_store,
+					name_store: this.stores[id].name_store ?? undefined,
+					mqtt_name_store: this.stores[id].mqtt_name_store ?? undefined,
 					xlength_store: this.stores[id].xlength_store,
 					ylength_store: this.stores[id].ylength_store,
 					position_mode_store: this.stores[id].position_mode_store,
-					is_mqtt_connected_store: this.stores[id].is_mqtt_connected_store,
-					mqtt_last_seen_store: this.stores[id].mqtt_last_seen_store,
 					id_zone: this.stores[id].id_zone ?? 0,
 					xmin_store: this.stores[id].xmin_store,
 					ymin_store: this.stores[id].ymin_store,

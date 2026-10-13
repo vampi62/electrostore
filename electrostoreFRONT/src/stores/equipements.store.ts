@@ -226,11 +226,10 @@ export const useEquipementsStore = defineStore("equipements", {
 			if (!isNewId(id) && this.equipements[id]) {
 				this.equipementEdition[id] = {
 					loading: false,
-					reference_name_equipement: this.equipements[id].reference_name_equipement,
-					friendly_name_equipement: this.equipements[id].friendly_name_equipement,
-					description_equipement: this.equipements[id].description_equipement,
+					reference_name_equipement: this.equipements[id].reference_name_equipement ?? undefined,
+					friendly_name_equipement: this.equipements[id].friendly_name_equipement ?? undefined,
+					description_equipement: this.equipements[id].description_equipement ?? undefined,
 					status_equipement: this.equipements[id].status_equipement,
-					url_thumbnail_equipement: this.equipements[id].url_thumbnail_equipement,
 				};
 			} else {
 				this.equipementEdition[id] = {

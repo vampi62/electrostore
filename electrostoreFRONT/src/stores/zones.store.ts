@@ -25,6 +25,9 @@ function hydrateZone(store: StoreGeneric, idZone: string, zone: ReadExtendedZone
 		const storesStore = useStoresStore();
 		store.zoneStores[idZone] = {};
 		for (const zoneStore of zone.stores) {
+			if (!zoneStore.id_store) {
+				continue;
+			}
 			store.zoneStores[idZone][zoneStore.id_store] = zoneStore;
 			storesStore.stores[zoneStore.id_store] = zoneStore;
 		}
@@ -71,11 +74,10 @@ export const useZonesStore = defineStore("zones", {
 			if (!isNewId(id) && this.zones[id]) {
 				this.zoneEdition[id] = {
 					loading: false,
-					name_zone: this.zones[id].name_zone,
-					description_zone: this.zones[id].description_zone,
+					name_zone: this.zones[id].name_zone ?? undefined,
+					description_zone: this.zones[id].description_zone ?? undefined,
 					xlength_zone: this.zones[id].xlength_zone,
 					ylength_zone: this.zones[id].ylength_zone,
-					url_thumbnail_zone: this.zones[id].url_thumbnail_zone,
 				};
 			} else {
 				this.zoneEdition[id] = {

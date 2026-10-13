@@ -208,10 +208,9 @@ export const useUsersStore = defineStore("users",{
 			if (!isNewId(id) && this.users[id]) {
 				this.userEdition[id] = {
 					loading: false,
-					id_user: this.users[id].id_user,
-					name_user: this.users[id].name_user,
-					firstname_user: this.users[id].firstname_user,
-					email_user: this.users[id].email_user,
+					name_user: this.users[id].name_user ?? undefined,
+					firstname_user: this.users[id].firstname_user ?? undefined,
+					email_user: this.users[id].email_user ?? undefined,
 					role_user: this.users[id].role_user,
 					current_password_user: "",
 					password_user: "",

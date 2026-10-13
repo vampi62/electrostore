@@ -40,49 +40,58 @@ type ReadItemHistoryDto = components["schemas"]["ReadItemHistoryDto"];
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-type ExpandData = {
-	item_documents: ReadItemDocumentDto[];
-	item_boxs: ReadItemBoxDto[];
-	item_tags: ReadItemTagDto[];
-	item_commands: ReadCommandItemDto[];
-	project_items: ReadProjectItemDto[];
-	item_history: ReadItemHistoryDto[];
-};
-
-const EXPAND_HANDLERS: { [K in keyof ExpandData]: (store: StoreGeneric, idItem: string, data: ExpandData[K]) => void } = {
+const EXPAND_HANDLERS: Record<string, (store: StoreGeneric, idItem: string, data: ReadExtendedItemDto) => void> = {
 	item_documents: (store, idItem, data) => {
 		store.documents[idItem] = {};
-		for (const document of data) {
+		for (const document of data.item_documents ?? []) {
+			if (!document.id_item_document) {
+				continue;
+			}
 			store.documents[idItem][document.id_item_document] = document;
 		}
 	},
 	item_boxs: (store, idItem, data) => {
 		store.itemBoxs[idItem] = {};
-		for (const itemBox of data) {
+		for (const itemBox of data.item_boxs ?? []) {
+			if (!itemBox.id_box) {
+				continue;
+			}
 			store.itemBoxs[idItem][itemBox.id_box] = itemBox;
 		}
 	},
 	item_tags: (store, idItem, data) => {
 		store.itemTags[idItem] = {};
-		for (const itemTag of data) {
+		for (const itemTag of data.item_tags ?? []) {
+			if (!itemTag.id_tag) {
+				continue;
+			}
 			store.itemTags[idItem][itemTag.id_tag] = itemTag;
 		}
 	},
-	item_commands: (store, idItem, data) => {
+	command_items: (store, idItem, data) => {
 		store.itemCommands[idItem] = {};
-		for (const itemCommand of data) {
+		for (const itemCommand of data.command_items ?? []) {
+			if (!itemCommand.id_command) {
+				continue;
+			}
 			store.itemCommands[idItem][itemCommand.id_command] = itemCommand;
 		}
 	},
 	project_items: (store, idItem, data) => {
 		store.itemProjects[idItem] = {};
-		for (const itemProject of data) {
+		for (const itemProject of data.project_items ?? []) {
+			if (!itemProject.id_project) {
+				continue;
+			}
 			store.itemProjects[idItem][itemProject.id_project] = itemProject;
 		}
 	},
 	item_history: (store, idItem, data) => {
 		store.itemHistory[idItem] = {};
-		for (const itemHistory of data) {
+		for (const itemHistory of data.item_history ?? []) {
+			if (!itemHistory.id_item_history) {
+				continue;
+			}
 			store.itemHistory[idItem][itemHistory.id_item_history] = itemHistory;
 		}
 	},
@@ -98,10 +107,8 @@ function hydrateItem(store: StoreGeneric, idItem: string, item: ReadExtendedItem
 	store.itemCommandsTotalCount[idItem] = item.command_items_count;
 	store.itemProjectsTotalCount[idItem] = item.project_items_count;
 	for (const key of expand) {
-		if (key in EXPAND_HANDLERS) {
-			const expandKey = key as keyof ExpandData;
-			const handler = EXPAND_HANDLERS[expandKey] as (store: StoreGeneric, idItem: string, data: unknown[]) => void;
-			handler(store, idItem, item[expandKey] ?? []);
+		if (EXPAND_HANDLERS[key]) {
+			EXPAND_HANDLERS[key](store, idItem, item);
 		}
 	}
 }
@@ -255,12 +262,10 @@ export const useItemsStore = defineStore("items",{
 			if (!isNewId(id) && this.items[id]) {
 				this.itemEdition[id] = {
 					loading: false,
-					id_item: this.items[id].id_item,
-					reference_name_item: this.items[id].reference_name_item,
-					friendly_name_item: this.items[id].friendly_name_item,
-					description_item: this.items[id].description_item,
+					reference_name_item: this.items[id].reference_name_item ?? undefined,
+					friendly_name_item: this.items[id].friendly_name_item ?? undefined,
+					description_item: this.items[id].description_item ?? undefined,
 					threshold_min_item: this.items[id].threshold_min_item,
-					url_thumbnail_item: this.items[id].url_thumbnail_item,
 				};
 			} else {
 				this.itemEdition[id] = {

@@ -95,7 +95,7 @@ export const useProjectTagsStore = defineStore("projectTags",{
 			if (!isNewId(id) && this.projectTags[id]) {
 				this.projectTagEdition[id] = {
 					loading: false,
-					name_project_tag: this.projectTags[id].name_project_tag,
+					name_project_tag: this.projectTags[id].name_project_tag ?? undefined,
 					weight_project_tag: this.projectTags[id].weight_project_tag,
 				};
 			} else {

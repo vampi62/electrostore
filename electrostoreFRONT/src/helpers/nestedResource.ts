@@ -10,7 +10,7 @@ const baseUrl = `${import.meta.env.VITE_API_URL}`;
 export function createNestedResource<T extends EntityTypes>({ path, idField, countKey, stateKey, loadingKey, editionKey, readyKey, onHydrate }: NestedResourceOptions<T>) {
 	type ReadExtended = "readExtended" extends keyof T ? T["readExtended"] : T["readBasic"];
 	type Read = "readBasic" extends keyof T ? T["readBasic"] : T["readExtended"];
-	const resource: Record<string, any> = {
+	const resource = {
 		async getByInterval(this: StoreGeneric, idParentResource: string, limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false) {
 			if (!this[stateKey][String(idParentResource)] || clear) {
 				this[stateKey][String(idParentResource)] = {};
@@ -157,9 +157,11 @@ export function createNestedResource<T extends EntityTypes>({ path, idField, cou
 				}
 				pendingChanges = pendingChanges.then(async() => {
 					if (status === "created") {
-						await resource.create.call(this, idParentResource, data, isFormData);
+						const payload = data as Body<T, "create">;
+						await resource.create.call(this, idParentResource, payload, isFormData);
 					} else if (status === "modified" && !isNewId) {
-						await resource.update.call(this, idParentResource, id, data, isFormData);
+						const payload = data as Body<T, "update">;
+						await resource.update.call(this, idParentResource, id, payload, isFormData);
 					} else if (status === "deleted" && !isNewId) {
 						await resource.remove.call(this, idParentResource, id);
 					}

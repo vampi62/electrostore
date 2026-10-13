@@ -75,7 +75,7 @@ export const useAuthStore = defineStore("auth",{
 				url: `${baseUrl}/auth/login`,
 				body: { "email": email, "password": password } as LoginRequest,
 			});
-			if (!request || !request?.user) {
+			if (!request?.user) {
 				console.log("Error logging in", request);
 				return;
 			}
@@ -85,7 +85,7 @@ export const useAuthStore = defineStore("auth",{
 				{ "token": request?.refresh_token ?? "", "date_expire": request?.expire_date_refresh_token ?? "" },
 				false,
 			);
-			router.push("/");
+			void router.push("/");
 		},
 		async loginSSO(provider: string) {
 			const request = await fetchWrapper.get<SsoUrlResponse>({
@@ -125,7 +125,7 @@ export const useAuthStore = defineStore("auth",{
 				body: { "email_user": email, "password_user": password, "name_user": nom, "firstname_user": prenom, "role_user": 0 } as CreateUserDto,
 			});
 			if (request) {
-				this.login(email, password);
+				await this.login(email, password);
 			} else {
 				console.log("Error registering user", request);
 			}
@@ -157,7 +157,7 @@ export const useAuthStore = defineStore("auth",{
 				body: { "email": email, "token": token, "password": password },
 			});
 			if (request) {
-				this.login(email, password);
+				await this.login(email, password);
 			} else {
 				console.log("Error resetting password", request);
 			}

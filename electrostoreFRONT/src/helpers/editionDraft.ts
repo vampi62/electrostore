@@ -6,8 +6,8 @@ import type { StoreGeneric } from "pinia";
 // (pending creations / modifications / deletions) are in every store[*Ready][id].
 
 export interface EditionDraft {
-	edition: Record<string, any>;
-	ready: Record<string, any>;
+	edition: Record<string, unknown>;
+	ready: Record<string, Record<string, unknown>>;
 	// number of staged files that cannot be kept in a draft (File objects)
 	lost: number;
 }
@@ -28,7 +28,7 @@ function sameValue(a: unknown, b: unknown) {
 	if (typeof a === "object" || typeof b === "object") {
 		return JSON.stringify(a) === JSON.stringify(b);
 	}
-	return `${a}` === `${b}`;
+	return String(a as string | number | boolean) === String(b as string | number | boolean);
 }
 
 const readyKeys = (store: StoreGeneric) => Object.keys(store.$state).filter((key) => key.endsWith("Ready"));
@@ -76,9 +76,9 @@ export function snapshotEdition(store: StoreGeneric, id: string, mainKey: string
 			edition[key] = value;
 		}
 	}
-	const ready: Record<string, any> = {};
+	const ready: Record<string, Record<string, unknown>> = {};
 	for (const key of readyKeys(store)) {
-		const entries: Record<string, any> = {};
+		const entries: Record<string, unknown> = {};
 		for (const [entryId, entry] of Object.entries(store.$state[key]?.[id] ?? {})) {
 			// an entry holding a file would be pushed without it
 			if (Object.values(entry as object).some((value) => value instanceof Blob)) {
@@ -91,7 +91,7 @@ export function snapshotEdition(store: StoreGeneric, id: string, mainKey: string
 			ready[key] = entries;
 		}
 	}
-	return JSON.parse(JSON.stringify({ edition, ready, lost }));
+	return structuredClone({ edition, ready, lost });
 }
 
 export function applyDraft(store: StoreGeneric, id: string, mainKey: string, draft: EditionDraft) {

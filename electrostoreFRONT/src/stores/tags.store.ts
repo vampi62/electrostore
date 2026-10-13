@@ -202,7 +202,7 @@ export const useTagsStore = defineStore("tags",{
 		loadToEdition(id: string, preset: string | null = null) {
 			if (!isNewId(id) && this.tags[id]) {
 				this.tagEdition[id] = {
-					name_tag: this.tags[id].name_tag,
+					name_tag: this.tags[id].name_tag ?? undefined,
 					weight_tag: this.tags[id].weight_tag,
 					loading: false,
 				};

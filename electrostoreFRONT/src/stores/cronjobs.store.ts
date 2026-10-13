@@ -40,15 +40,11 @@ export const useCronJobsStore = defineStore("cronJobs", {
 			if (!isNewId(id) && this.cronJobs[id]) {
 				this.cronJobEdition[id] = {
 					loading: false,
-					name_cronjob: this.cronJobs[id].name_cronjob,
-					cron_expression_cronjob: this.cronJobs[id].cron_expression_cronjob,
+					name_cronjob: this.cronJobs[id].name_cronjob ?? undefined,
+					cron_expression_cronjob: this.cronJobs[id].cron_expression_cronjob ?? undefined,
 					action_cronjob: this.cronJobs[id].action_cronjob,
 					params_cronjob: this.cronJobs[id].params_cronjob,
 					is_enabled: this.cronJobs[id].is_enabled,
-					last_run_at: this.cronJobs[id].last_run_at,
-					next_run_at: this.cronJobs[id].next_run_at,
-					status_cronjob: this.cronJobs[id].status_cronjob,
-					last_error_cronjob: this.cronJobs[id].last_error_cronjob,
 				};
 			} else {
 				this.cronJobEdition[id] = {

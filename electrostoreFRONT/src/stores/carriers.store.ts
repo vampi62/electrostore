@@ -3,7 +3,6 @@ import { defineStore } from "pinia";
 import { createMainResource } from "@/helpers";
 
 import type { components } from "@/types/api";
-import type { Edition } from "@/types/resource";
 import { isNewId } from "@/utils/newId";
 type ReadCarrierDto = components["schemas"]["ReadCarrierDto"];
 

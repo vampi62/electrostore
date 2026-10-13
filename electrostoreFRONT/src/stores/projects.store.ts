@@ -47,30 +47,45 @@ const EXPAND_HANDLERS: { [K in keyof ExpandData]: (store: StoreGeneric, idProjec
 	project_comments: (store, idProject, data) => {
 		store.comments[idProject] = {};
 		for (const comment of data) {
+			if (!comment.id_project_comment) {
+				continue;
+			}
 			store.comments[idProject][comment.id_project_comment] = comment;
 		}
 	},
 	project_documents: (store, idProject, data) => {
 		store.documents[idProject] = {};
 		for (const document of data) {
+			if (!document.id_project_document) {
+				continue;
+			}
 			store.documents[idProject][document.id_project_document] = document;
 		}
 	},
 	project_items: (store, idProject, data) => {
 		store.items[idProject] = {};
 		for (const item of data) {
+			if (!item.id_item) {
+				continue;
+			}
 			store.items[idProject][item.id_item] = item;
 		}
 	},
 	project_tags: (store, idProject, data) => {
 		store.projectTagProject[idProject] = {};
 		for (const projectTagProject of data) {
+			if (!projectTagProject.id_project_tag) {
+				continue;
+			}
 			store.projectTagProject[idProject][projectTagProject.id_project_tag] = projectTagProject;
 		}
 	},
 	project_status_history: (store, idProject, data) => {
 		store.statusHistory[idProject] = {};
 		for (const statusHistory of data) {
+			if (!statusHistory.id_project_status) {
+				continue;
+			}
 			store.statusHistory[idProject][statusHistory.id_project_status] = statusHistory;
 		}
 	},
@@ -213,12 +228,10 @@ export const useProjectsStore = defineStore("projects",{
 			if (!isNewId(id) && this.projects[id]) {
 				this.projectEdition[id] = {
 					loading: false,
-					name_project: this.projects[id].name_project,
+					name_project: this.projects[id].name_project ?? undefined,
 					description_project: this.projects[id].description_project,
 					url_project: this.projects[id].url_project,
 					status_project: this.projects[id].status_project,
-					date_start_project: this.projects[id].date_start_project,
-					date_end_project: this.projects[id].date_end_project,
 				};
 			} else {
 				this.projectEdition[id] = {

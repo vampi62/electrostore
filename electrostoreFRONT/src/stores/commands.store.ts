@@ -192,19 +192,12 @@ export const useCommandsStore = defineStore("commands",{
 					tracking_number_command: this.commands[id].tracking_number_command,
 					id_carrier: this.commands[id].id_carrier,
 					is_tracking_requested: this.commands[id].is_tracking_requested,
-					is_tracking_validated: this.commands[id].is_tracking_validated,
-					is_active: this.commands[id].is_active,
-					shipper_address_command: this.commands[id].shipper_address_command,
-					recipient_address_command: this.commands[id].recipient_address_command,
-					last_status_command: this.commands[id].last_status_command,
 					loading: false,
 				};
 			} else {
 				this.commandEdition[id] = {
 					loading: false,
 					is_tracking_requested: false,
-					is_tracking_validated: false,
-					is_active: true,
 					tracking_number_command: "",
 				};
 				commandResource.loadEditionPreset.call(this, id, preset);
