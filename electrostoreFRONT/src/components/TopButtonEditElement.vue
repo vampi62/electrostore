@@ -3,7 +3,7 @@
 		<!-- Desktop -->
 		<template v-for="(button, index) in optionalConfig" :key="index">
 			<div v-if="button.showCondition" class="relative">
-				<button type="button" @click="button.action"
+				<button type="button" @click="() => button.action?.()"
 					:disabled="button.enableCondition === false"
 					:class="['text-white px-4 py-2 rounded flex items-center',
 					button.bgColor ? button.bgColor : 'bg-gray-500',
@@ -79,7 +79,7 @@
 			class="absolute right-0 mt-2 w-48 rounded-md shadow-lg border border-gray-200">
 			<template v-for="(button, index) in optionalConfig" :key="index">
 				<div v-if="button.showCondition" class="relative">
-					<button @click="button.action"
+					<button @click="() => button.action?.()"
 						:disabled="button.enableCondition === false"
 						:class="['relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white text-gray-700 border-b border-gray-200',
 						button.bgColor ? button.bgColor : 'bg-gray-500',
@@ -135,11 +135,17 @@
 <script lang="ts">
 import { useRouter } from "vue-router";
 import type { PropType } from "vue";
+import type { TopButton } from "@/types/boutton";
 export default {
 	name: "TopButtonEditElement",
 	props: {
 		mainConfig: {
-			type: Object,
+			type: Object as PropType<{
+				path: string;
+				create: TopButton;
+				update: TopButton;
+				delete: TopButton;
+			}>,
 			required: true,
 			// main configuration object with properties:
 			// path: string (default "/"),
@@ -150,7 +156,7 @@ export default {
 			// loading: boolean (if true, the button shows a loading spinner) must be linked to a boolean that indicates if the function is currently processing
 		},
 		optionalConfig: {
-			type: Array as PropType<any[]>,
+			type: Array as PropType<TopButton[]>,
 			required: false,
 			// array of optional buttons with properties: label, action, showCondition, enableCondition, bgColor, hoverColor, loading
 			// Example: [{ label: 'components.VModalTopButtonCustom', action: customFucntionCall, showCondition: false, enableCondition: true, bgColor: 'bg-green-500', hoverColor: 'hover:bg-green-600', loading: false }]

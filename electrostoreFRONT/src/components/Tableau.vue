@@ -54,6 +54,7 @@ import { toLowerCaseWithoutAccents } from "@/utils";
 import { useTabsStore } from "@/stores";
 import type { TableauLabel, TableauMeta, TableauCss } from "@/types/tableau";
 import type { FilterLabel } from "@/types/filter";
+import type { StoreGeneric, StateTree } from "pinia";
 
 export default {
 	name: "Tableau",
@@ -93,19 +94,19 @@ export default {
 			// linkEditionKey is a string to identify the key to link edition and ready stores to the main store, if not provided it will use the main key
 		},
 		storeData: {
-			type: Array as PropType<Record<number, any>[]>,
+			type: Array as PropType<StateTree[]>,
 			required: true,
 			// storeData is an array of objects, each object should contain the data for a row
 			// storeData[0] is the main data array
 		},
 		storeEdition: {
-			type: Object as PropType<Record<string, any>>,
+			type: Object as PropType<StateTree>,
 			required: false,
 			default: () => ({}),
 			// storeEdition is an object containing the store to edit a resource
 		},
 		storeReady: {
-			type: Object as PropType<Record<string, any>>,
+			type: Object as PropType<StateTree>,
 			required: false,
 			default: () => ({}),
 			// storeReady is an object containing the ready state of the store for editing a resource
@@ -135,7 +136,7 @@ export default {
 			// e.g. (limit, offset, expand, filter, sort, clear) => { store.fetchData(limit, offset, expand, filter, sort, clear) }
 		},
 		listFetchFunction: {
-			type: Array as PropType<any[]>,
+			type: Array as PropType<Array<(minOffset: number, maxOffset: number) => any>>,
 			default: () => [],
 		},
 		tableauCss: {

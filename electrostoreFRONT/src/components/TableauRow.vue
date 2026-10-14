@@ -80,6 +80,7 @@ import { defineAsyncComponent } from "vue";
 import type { PropType } from "vue";
 import { Form, Field } from "vee-validate";
 import type { TableauLabel } from "@/types/tableau";
+import type * as Yup from "yup";
 export default {
 	name: "TableauRow",
 	props: {

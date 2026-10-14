@@ -8,12 +8,10 @@ export interface TableauButton {
 	label?: string;
 	icon?: string;
 	class?: string;
-	type?: string;
 	animation?: boolean;
 	showCondition?: string;
 	enableCondition?: string;
-	action?: (row: TableauRowData) => any;
-	[key: string]: any;
+	action: (row: TableauRowData) => any;
 }
 
 export interface TableauLabel {

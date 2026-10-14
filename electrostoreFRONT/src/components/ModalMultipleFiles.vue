@@ -100,6 +100,7 @@
 
 <script lang="ts">
 import { useConfigsStore } from "@/stores";
+import type { FilesUploaded } from "@/types/files"
 
 export default {
 	name: "ModalMultipleFiles",
@@ -202,7 +203,7 @@ export default {
 			}
 			this.loading = true;
 			try {
-				const savedFiles = [];
+				const savedFiles: FilesUploaded[] = [];
 				for (const fileItem of this.filesList) {
 					savedFiles.push({
 						name: fileItem.name,

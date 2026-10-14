@@ -161,11 +161,12 @@
 <script lang="ts">
 import { useAuthStore, useConfigsStore, useTabsStore } from "@/stores";
 import type { PropType } from "vue";
+import type { NavLabel } from "@/types/nav"
 export default {
 	name: "NavBar",
 	props: {
 		listNav: {
-			type: Array as PropType<any[]>,
+			type: Array as PropType<NavLabel[]>,
 			required: true,
 		},
 	},

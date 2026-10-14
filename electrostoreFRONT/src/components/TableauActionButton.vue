@@ -23,11 +23,13 @@
 </template>
 
 <script lang="ts">
+import type { PropType } from "vue";
+import type { TableauButton } from "@/types/tableau";
 export default {
 	name: "TableauActionButton",
 	props: {
 		button: {
-			type: Object,
+			type: Object as PropType<TableauButton>,
 			required: true,
 		},
 		row: {
