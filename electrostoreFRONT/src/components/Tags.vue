@@ -54,14 +54,10 @@ export default {
 		tagsStore: {
 			type: Object,
 			required: true,
-			default: null,
-			//
 		},
 		currentTags: {
 			type: Object,
 			required: true,
-			default: null,
-			//
 		},
 		readyStore: {
 			type: Object,
@@ -76,7 +72,6 @@ export default {
 		restoreFunction: {
 			type: Function,
 			default: () => {},
-			// restoreFunction cancels a pending deletion staged in readyStore
 		},
 		fetchFunction: {
 			type: Function,
@@ -89,12 +84,10 @@ export default {
 		tableauModal: {
 			type: Object,
 			required: true,
-			default: null,
 		},
 		filterModal: {
 			type: Object,
 			required: true,
-			default: null,
 		},
 		otherStore: {
 			type: Array,
@@ -104,7 +97,6 @@ export default {
 		meta: {
 			type: Object,
 			required: true,
-			default: null,
 		},
 	},
 	computed:{

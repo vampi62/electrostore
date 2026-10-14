@@ -105,14 +105,12 @@ export default {
 			required: true,
 			// This should be a translation key for the label
 			// e.g., 'components.FilterLabel'
-			default: "",
 		},
 		type: {
 			type: String,
 			required: true,
 			// This should be a valid input type
 			// 'text', 'number', 'select', 'datalist', etc.
-			default: "text",
 		},
 		disabled: {
 			type: Boolean,

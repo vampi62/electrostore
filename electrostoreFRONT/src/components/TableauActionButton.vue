@@ -59,12 +59,12 @@ export default {
 
 <style scoped>
 .disabled-button {
-	background-color: #9ca3af !important;
-	cursor: not-allowed !important;
+	background-color: #9ca3af;
+	cursor: not-allowed;
 	opacity: 0.6;
 }
 
 .disabled-button:hover {
-	background-color: #9ca3af !important;
+	background-color: #9ca3af;
 }
 </style>

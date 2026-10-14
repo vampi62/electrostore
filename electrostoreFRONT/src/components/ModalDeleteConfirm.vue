@@ -33,19 +33,14 @@ export default {
 			type: Boolean,
 			required: true,
 			// This should be a boolean to control the visibility of the modal
-			default: false,
 		},
 		textTitle: {
 			type: String,
 			required: true,
-			// This should be a translation key for the modal title
-			default: "common.VALLMissingTranslateLink",
 		},
 		textP: {
 			type: String,
 			required: true,
-			// This should be a translation key for the modal paragraph text
-			default: "common.VALLMissingTranslateLink",
 		},
 		deleteAction: {
 			type: Function,

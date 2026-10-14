@@ -148,12 +148,6 @@ export default {
 			// delete: { showCondition: boolean, enableCondition: boolean, loading: boolean } // configuration for delete button
 			// showCondition: boolean (if true, the button is only visible if the user has the required role, this should be handled in the parent component by checking the user's roles and passing the appropriate value)
 			// loading: boolean (if true, the button shows a loading spinner) must be linked to a boolean that indicates if the function is currently processing
-			default: () => ({
-				path: "/",
-				create: { showCondition: false, loading: false },
-				update: { showCondition: false, loading: false },
-				delete: { showCondition: false, loading: false },
-			}),
 		},
 		optionalConfig: {
 			type: Array as PropType<any[]>,

@@ -107,7 +107,6 @@ export default {
 		showModal: {
 			type: Boolean,
 			required: true,
-			default: false,
 		},
 		textTitle: {
 			type: String,

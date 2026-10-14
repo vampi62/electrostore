@@ -69,7 +69,6 @@ export default {
 		showModal: {
 			type: Boolean,
 			required: true,
-			default: false,
 		},
 	},
 	emits: ["closeModal"],
@@ -100,13 +99,13 @@ export default {
 				&& !!navigator.mediaDevices?.getUserMedia;
 		},
 		audioExtensions(): string[] {
-			return this.configsStore.getConfigByKey("allowed_audio_extensions") || [];
+			return (this.configsStore.getConfigByKey("allowed_audio_extensions") as string[]) || [];
 		},
 		audioMimeTypes(): string[] {
-			return this.configsStore.getConfigByKey("allowed_audio_mime_types") || [];
+			return (this.configsStore.getConfigByKey("allowed_audio_mime_types") as string[]) || [];
 		},
 		maxAudioSize(): number {
-			return this.configsStore.getConfigByKey("max_size_audio_in_mb") || 25;
+			return (this.configsStore.getConfigByKey("max_size_audio_in_mb") as number) || 25;
 		},
 		canSend(): boolean {
 			return !this.loading && !this.recording && (this.message.trim() !== "" || this.audioBlob !== null);

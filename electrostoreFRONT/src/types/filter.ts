@@ -11,7 +11,7 @@ export interface FilterLabel {
 	key: string;
 	label: string;
 	value?: any;
-	type?: string;
+	type: string;
 	typeData?: string;
 	compareMethod?: string;
 	placeholder?: string;
