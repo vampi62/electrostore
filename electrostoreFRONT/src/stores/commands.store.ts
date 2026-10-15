@@ -98,7 +98,7 @@ const commandResource = createMainResource<{ readExtended: ReadExtendedCommandDt
 	loadingKey: "commandsLoading",
 	editionKey: "commandEdition",
 	onHydrate: (store, entity: ReadExtendedCommandDto, expand) => {
-		if (!entity || !entity.id_command) {
+		if (!entity?.id_command) {
 			return;
 		}
 		hydrateCommand(store, String(entity.id_command), entity, expand);
@@ -155,23 +155,23 @@ export const useCommandsStore = defineStore("commands",{
 		commentsTotalCount: {} as Record<string, number>,
 		commentsLoading: false,
 		comments: {} as Record<string, Record<string, ReadCommandCommentDto>>,
-		commentEdition: {} as Record<string, Edition<{ create: CreateCommandCommentByCommandDto, update: UpdateCommandCommentDto }>>,
+		commentEdition: {} as Record<string, Record<string, Edition<{ create: CreateCommandCommentByCommandDto, update: UpdateCommandCommentDto }>>>,
 
 		documentsTotalCount: {} as Record<string, number>,
 		documentsLoading: false,
 		documents: {} as Record<string, Record<string, ReadCommandDocumentDto>>,
-		documentEdition: {} as Record<string, Edition<{ create: CreateCommandDocumentByCommandDto, update: UpdateCommandDocumentDto }>>,
-		documentReady: {} as Record<string, Ready<{ create: CreateCommandDocumentByCommandDto, update: UpdateCommandDocumentDto }>>,
+		documentEdition: {} as Record<string, Record<string, Edition<{ create: CreateCommandDocumentByCommandDto, update: UpdateCommandDocumentDto }>>>,
+		documentReady: {} as Record<string, Record<string, Ready<{ create: CreateCommandDocumentByCommandDto, update: UpdateCommandDocumentDto }>>>,
 
 		itemsTotalCount: {} as Record<string, number>,
 		itemsLoading: false,
 		items: {} as Record<string, Record<string, ReadCommandItemDto>>,
-		itemEdition: {} as Record<string, Edition<{ create: CreateCommandItemByCommandDto, update: UpdateCommandItemDto }>>,
-		itemReady: {} as Record<string, Ready<{ create: CreateCommandItemByCommandDto, update: UpdateCommandItemDto }>>,
+		itemEdition: {} as Record<string, Record<string, Edition<{ create: CreateCommandItemByCommandDto, update: UpdateCommandItemDto }>>>,
+		itemReady: {} as Record<string, Record<string, Ready<{ create: CreateCommandItemByCommandDto, update: UpdateCommandItemDto }>>>,
 
 		historyTotalCount: {} as Record<string, number>,
 		historyLoading: false,
-		history: {} as Record<string, Record<string, ReadCommandHistoryDto>>,
+		history: {} as Record<string, Record<string, Record<string, ReadCommandHistoryDto>>>,
 	}),
 	actions: {
 		getCommandByList: commandResource.getByList,
@@ -202,7 +202,8 @@ export const useCommandsStore = defineStore("commands",{
 				};
 				commandResource.loadEditionPreset.call(this, id, preset);
 			}
-			this.commentEdition[id] = {};
+			// a comment being edited is saved on its own, saving the element must not discard it
+			this.commentEdition[id] ??= {};
 			this.documentEdition[id] = {};
 			this.documentReady[id] = {};
 			this.itemEdition[id] = {};

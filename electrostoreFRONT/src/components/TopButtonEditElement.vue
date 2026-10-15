@@ -135,17 +135,12 @@
 <script lang="ts">
 import { useRouter } from "vue-router";
 import type { PropType } from "vue";
-import type { TopButton } from "@/types/boutton";
+import type { TopButton, TopButtonMainConfig } from "@/types/button";
 export default {
 	name: "TopButtonEditElement",
 	props: {
 		mainConfig: {
-			type: Object as PropType<{
-				path: string;
-				create: TopButton;
-				update: TopButton;
-				delete: TopButton;
-			}>,
+			type: Object as PropType<TopButtonMainConfig>,
 			required: true,
 			// main configuration object with properties:
 			// path: string (default "/"),

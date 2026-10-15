@@ -24,7 +24,7 @@
 
 <script lang="ts">
 import type { PropType } from "vue";
-import type { TableauButton } from "@/types/tableau";
+import type { TableauButton, TableauRowData } from "@/types/tableau";
 export default {
 	name: "TableauActionButton",
 	props: {
@@ -33,7 +33,7 @@ export default {
 			required: true,
 		},
 		row: {
-			type: Object,
+			type: Object as PropType<TableauRowData>,
 			required: true,
 		},
 		disabled: {

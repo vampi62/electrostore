@@ -3,7 +3,7 @@ import { buildFormData, fetchWrapper, buildQuery } from "@/helpers";
 import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 import type { Body, EntityTypes, MainResourceOptions } from "@/types/resource";
 import type { StoreGeneric } from "pinia";
-import { PaginatedResponseDto, ReadBulkDto } from "@/types/fetch";
+import type { FetchPage, PaginatedResponseDto, ReadBulkDto } from "@/types/fetch";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -11,7 +11,7 @@ export function createMainResource<T extends EntityTypes>({ path, idField, count
 	type ReadExtended = "readExtended" extends keyof T ? T["readExtended"] : T["readBasic"];
 	type Read = "readBasic" extends keyof T ? T["readBasic"] : T["readExtended"];
 	return {
-		async getByList(this: StoreGeneric, idResearch: string[] = [], expand: string[] = [], clear = false) {
+		async getByList(this: StoreGeneric, idResearch: string[] = [], expand: string[] = [], clear = false): Promise<FetchPage> {
 			if (!this[stateKey] || clear) {
 				this[stateKey] = {};
 			}
@@ -29,7 +29,7 @@ export function createMainResource<T extends EntityTypes>({ path, idField, count
 				this[loadingKey] = false;
 			}
 		},
-		async getByInterval(this: StoreGeneric, limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false) {
+		async getByInterval(this: StoreGeneric, limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false): Promise<FetchPage> {
 			if (!this[stateKey] || clear) {
 				this[stateKey] = {};
 			}
@@ -60,7 +60,7 @@ export function createMainResource<T extends EntityTypes>({ path, idField, count
 				}
 			}
 		},
-		async create(this: StoreGeneric, params: Body<T, "create">, isFormData = false) {
+		async create(this: StoreGeneric, params: Body<T, "create">, isFormData = false): Promise<string> {
 			this[stateKey] ??= {};
 			// if isFormData, params is converted to FormData and sent as multipart/form-data
 			const body = isFormData ? buildFormData(params as Record<string, string | Blob>) : params;
@@ -79,7 +79,7 @@ export function createMainResource<T extends EntityTypes>({ path, idField, count
 			delete this[stateKey]?.[id];
 			this[countKey] = (this[countKey] ?? 1) - 1;
 		},
-		async createBulk(this: StoreGeneric, params: Body<T, "createBulk">) {
+		async createBulk(this: StoreGeneric, params: Body<T, "createBulk">): Promise<ReadBulkDto<Read>> {
 			this[stateKey] ??= {};
 			const res = await fetchWrapper.post<ReadBulkDto<Read>>({ url: `${baseUrl}${path()}/bulk`, useToken: "access", body: params });
 			for (const entity of res.valide) {
@@ -104,7 +104,7 @@ export function createMainResource<T extends EntityTypes>({ path, idField, count
 			this[countKey] = (this[countKey] ?? 0) - res.valide.length;
 			this[countKey] = Math.max(this[countKey], 0);
 		},
-		getAvailableNewId(this: StoreGeneric) {
+		getAvailableNewId(this: StoreGeneric): string {
 			if (!editionKey) {
 				throw new Error("Edition key is not defined");
 			}

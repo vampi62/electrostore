@@ -35,12 +35,7 @@
 
 <script lang="ts">
 import type { PropType } from "vue";
-
-// API error body: the message is in "error" or "message", as a string or a list of strings
-interface NotificationErrorBody {
-	error?: string | string[];
-	message?: string | string[];
-}
+import type { NotificationErrorBody } from "@/types/notification";
 
 export default {
 	name: "Notification",

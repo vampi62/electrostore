@@ -180,36 +180,36 @@ export const useEquipementsStore = defineStore("equipements", {
 
 		equipementTagsLoading: false,
 		equipementTagsTotalCount: {} as Record<string, number>,
-		equipementTags: {} as Record<string, ReadEquipementTagDto>,
-		equipementTagEdition: {} as Record<string, Edition<{ create: CreateEquipementTagByEquipementDto }>>,
-		equipementTagReady: {} as Record<string, Ready<{ create: CreateEquipementTagByEquipementDto }>>,
+		equipementTags: {} as Record<string, Record<string, ReadEquipementTagDto>>,
+		equipementTagEdition: {} as Record<string, Record<string, Edition<{ create: CreateEquipementTagByEquipementDto }>>>,
+		equipementTagReady: {} as Record<string, Record<string, Ready<{ create: CreateEquipementTagByEquipementDto }>>>,
 
 		equipementBoxsLoading: false,
 		equipementBoxsTotalCount: {} as Record<string, number>,
-		equipementBoxs: {} as Record<string, ReadEquipementBoxDto>,
-		equipementBoxEdition: {} as Record<string, Edition<{ create: CreateEquipementBoxByEquipementDto }>>,
-		equipementBoxReady: {} as Record<string, Ready<{ create: CreateEquipementBoxByEquipementDto }>>,
+		equipementBoxs: {} as Record<string, Record<string, ReadEquipementBoxDto>>,
+		equipementBoxEdition: {} as Record<string, Record<string, Edition<{ create: CreateEquipementBoxByEquipementDto }>>>,
+		equipementBoxReady: {} as Record<string, Record<string, Ready<{ create: CreateEquipementBoxByEquipementDto }>>>,
 
 		equipementDocumentsLoading: false,
 		equipementDocumentsTotalCount: {} as Record<string, number>,
-		equipementDocuments: {} as Record<string, ReadEquipementDocumentDto>,
-		equipementDocumentEdition: {} as Record<string, Edition<{ create: CreateEquipementDocumentByEquipementDto, update: UpdateEquipementDocumentByEquipementDto }>>,
-		equipementDocumentReady: {} as Record<string, Ready<{ create: CreateEquipementDocumentByEquipementDto, update: UpdateEquipementDocumentByEquipementDto }>>,
+		equipementDocuments: {} as Record<string, Record<string, ReadEquipementDocumentDto>>,
+		equipementDocumentEdition: {} as Record<string, Record<string, Edition<{ create: CreateEquipementDocumentByEquipementDto, update: UpdateEquipementDocumentByEquipementDto }>>>,
+		equipementDocumentReady: {} as Record<string, Record<string, Ready<{ create: CreateEquipementDocumentByEquipementDto, update: UpdateEquipementDocumentByEquipementDto }>>>,
 
 		equipementMaintenancesLoading: false,
 		equipementMaintenancesTotalCount: {} as Record<string, number>,
-		equipementMaintenances: {} as Record<string, ReadEquipementMaintenanceDto>,
-		equipementMaintenanceEdition: {} as Record<string, Edition<{ create: CreateEquipementMaintenanceByEquipementDto, update: UpdateEquipementMaintenanceByEquipementDto }>>,
-		equipementMaintenanceReady: {} as Record<string, Ready<{ create: CreateEquipementMaintenanceByEquipementDto, update: UpdateEquipementMaintenanceByEquipementDto }>>,
+		equipementMaintenances: {} as Record<string, Record<string, ReadEquipementMaintenanceDto>>,
+		equipementMaintenanceEdition: {} as Record<string, Record<string, Edition<{ create: CreateEquipementMaintenanceByEquipementDto, update: UpdateEquipementMaintenanceByEquipementDto }>>>,
+		equipementMaintenanceReady: {} as Record<string, Record<string, Ready<{ create: CreateEquipementMaintenanceByEquipementDto, update: UpdateEquipementMaintenanceByEquipementDto }>>>,
 
 		equipementCommentsLoading: false,
 		equipementCommentsTotalCount: {} as Record<string, number>,
-		equipementComments: {} as Record<string, ReadEquipementCommentDto>,
-		equipementCommentEdition: {} as Record<string, Edition<{ create: CreateEquipementCommentByEquipementDto, update: UpdateEquipementCommentByEquipementDto }>>,
+		equipementComments: {} as Record<string, Record<string, ReadEquipementCommentDto>>,
+		equipementCommentEdition: {} as Record<string, Record<string, Record<string, Edition<{ create: CreateEquipementCommentByEquipementDto, update: UpdateEquipementCommentByEquipementDto }>>>>,
 
 		equipementStatusHistoryLoading: false,
 		equipementStatusHistoryTotalCount: {} as Record<string, number>,
-		equipementStatusHistory: {} as Record<string, ReadEquipementStatusDto>,
+		equipementStatusHistory: {} as Record<string, Record<string, ReadEquipementStatusDto>>,
 
 		imagesURL: {} as Record<string, string>,
 		thumbnailsURL: {} as Record<string, string>,
@@ -238,6 +238,8 @@ export const useEquipementsStore = defineStore("equipements", {
 				};
 				equipementResource.loadEditionPreset.call(this, id, preset);
 			}
+			// a comment being edited is saved on its own, saving the element must not discard it
+			this.equipementCommentEdition[id] ??= {};
 			this.equipementTagEdition[id] = {};
 			this.equipementTagReady[id] = {};
 			this.equipementBoxEdition[id] = {};
@@ -255,6 +257,7 @@ export const useEquipementsStore = defineStore("equipements", {
 		},
 		clearEdition(id: string) {
 			delete this.equipementEdition[id];
+			delete this.equipementCommentEdition[id];
 			delete this.equipementTagEdition[id];
 			delete this.equipementTagReady[id];
 			delete this.equipementBoxEdition[id];
@@ -286,8 +289,8 @@ export const useEquipementsStore = defineStore("equipements", {
 			if (imageChanged) {
 				delete this.thumbnailsURL[realId];
 				delete this.imagesURL[realId];
-				this.showThumbnailById(realId);
-				this.showImageById(realId);
+				void this.showThumbnailById(realId);
+				void this.showImageById(realId);
 			}
 			return realId;
 		},

@@ -34,24 +34,24 @@
 				</span>
 			</div>
 			<div v-if="meta.canEdit" class="text-center text-gray-800 mb-2">
-				<template v-if="comment.tmp && meta.canEdit">
+				<template v-if="storeEdition[comment[meta.key]] && meta.canEdit">
 					<Form :validation-schema="schemaComment" v-slot="{ errors }">
 						<Field :name="meta.contenu" type="text"
-							v-model="comment.tmp[meta.contenu]"
+							v-model="storeEdition[comment[meta.key]][meta.contenu]"
 							class="w-full p-2 border rounded-lg"
 							:class="{ 'border-red-500': errors[meta.contenu] }" />
 						<div class="flex justify-end space-x-2 mt-2">
 							<div class="relative">
-								<button type="button" @click="commentUpdate(comment.tmp)"
+								<button type="button" @click="commentUpdate(comment[meta.key])"
 									class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
 									{{ $t('components.VModalCommentSave') }}
 								</button>
-								<div v-if="comment.tmp.loading"
+								<div v-if="storeEdition[comment[meta.key]].loading"
 									class="absolute inset-0 bg-green-500 bg-opacity-90 rounded-lg flex items-center justify-center">
 									<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 								</div>
 							</div>
-							<button type="button" @click="comment.tmp = null"
+							<button type="button" @click="commentEditCancel(comment[meta.key])"
 								class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
 								{{ $t('components.VModalCommentCancel') }}
 							</button>
@@ -67,7 +67,7 @@
 					</div>
 					<div v-if="meta.canEdit && (comment.id_user === storeUser.id_user || meta.roleRequired)"
 						class="flex justify-end space-x-2">
-						<button type="button" @click="comment.tmp = { ...comment }"
+						<button type="button" @click="commentEdit(comment)"
 							class="px-3 py-1 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500">
 							{{ $t('components.VModalCommentEdit') }}
 						</button>
@@ -82,7 +82,7 @@
 				<div>
 					{{ comment[meta.contenu] }}
 				</div>
-				<RouterLink :to="meta.link + comment[meta.idRessource]"
+				<RouterLink :to="meta.link + comment[meta.idRessource ?? '']"
 					class="text-blue-500 hover:underline">
 					{{ $t('components.VModalCommentLink') }}
 				</RouterLink>
@@ -101,42 +101,52 @@
 <script lang="ts">
 import { inject, defineAsyncComponent } from "vue";
 import type { PropType } from "vue";
+import type { StateTree, StoreGeneric } from "pinia";
 import { Form, Field } from "vee-validate";
 import * as Yup from "yup";
 import type { useNotification } from "@/composables";
+import type { FetchFunction, FetchPage, ListFetchFunction } from "@/types/fetch";
+import type { CommentDeleteText, CommentMeta, CommentStoreFunction } from "@/types/comment";
 export default {
 	name: "Comment",
 	props: {
 		storeData: {
-			type: Array as PropType<any[]>,
+			type: Array as PropType<StateTree[]>,
 			required: true,
 			// This should be an array containing:
 			// [0] - store with all comments
 			// [1] - store with all users
 			default: () => [],
 		},
+		storeEdition: {
+			type: Object as PropType<StateTree>,
+			required: false,
+			// This should be the edition store of the comments, keyed by the id of the comment:
+			// the comment being edited has an entry holding its draft, without it the comments cannot be edited
+			default: () => ({}),
+		},
 		storeFunction: {
-			type: Object,
+			type: Object as PropType<CommentStoreFunction>,
 			required: false,
 			// This should contain functions for create, update, and delete operations
 			default: () => ({
-				create: () => {},
-				update: () => {},
-				delete: () => Promise.resolve(),
+				create: async() => {},
+				update: async() => {},
+				delete: async() => {},
 			}),
 		},
 		storeUser: {
-			type: Object,
+			type: Object as PropType<StateTree>,
 			default: () => ({}),
 			// This should be an object containing the user session data
 		},
 		storeConfig: {
-			type: Object,
-			default: () => ({}),
-			// This should be an object containing the configuration store, used to get max length for validation
+			type: Object as PropType<StoreGeneric>,
+			required: true,
+			// This should be the configuration store, used to get max length for validation
 		},
 		meta: {
-			type: Object,
+			type: Object as PropType<CommentMeta>,
 			required: true,
 			// This should contain metadata about the comment, such as:
 			// - key: unique identifier for the comment
@@ -145,6 +155,7 @@ export default {
 			// - idRessource: identifier for the resource linked to the comment
 			// - link: URL for the resource linked to the comment
 			// - roleRequired: boolean indicating if a specific role is required to edit/delete all comments (not just the user's own comments)
+			// - expand: expand sent to the fetch function
 			default: () => ({
 				key: "id_comment",
 				contenu: "content_comment",
@@ -164,18 +175,18 @@ export default {
 			default: 0,
 		},
 		fetchFunction: {
-			type: Function,
-			default: () => { 
+			type: Function as PropType<FetchFunction>,
+			default: (): FetchPage => {
 				return [0, false];
 			},
 		},
 		listFetchFunction: {
-			type: Array as PropType<any[]>,
+			type: Array as PropType<ListFetchFunction[]>,
 			default: () => [],
 			// This should be an array of functions to refetch related lists when a comment is created, updated, or deleted
 		},
 		texteModalDelete: {
-			type: Object,
+			type: Object as PropType<CommentDeleteText>,
 			required: false,
 			// This should contain the text for the delete confirmation modal
 			// the text will be translated using $t so it should be a key from the translation files
@@ -203,7 +214,7 @@ export default {
 	data() {
 		return {
 			commentFormNew: "",
-			selectedComment: null as any,
+			selectedComment: null as string | null,
 			deleteModalShow: false,
 			createLoading: false,
 			nextOffset: 0,
@@ -240,36 +251,51 @@ export default {
 				this.createLoading = false;
 			}
 		},
-		async commentUpdate(comment: Record<string, any>) {
-			comment.loading = true;
+		commentEdit(comment: StateTree) {
+			this.storeEdition[comment[this.meta.key]] = { ...comment, loading: false };
+		},
+		commentEditCancel(id: string) {
+			delete this.storeEdition[id];
+		},
+		async commentUpdate(id: string) {
+			const edition = this.storeEdition[id];
+			if (!edition) {
+				return;
+			}
+			edition.loading = true;
 			try {
-				this.schemaComment.validateSync(comment, { abortEarly: false });
-				await this.storeFunction.update(comment[this.meta.key], {
-					[this.meta.contenu]: comment[this.meta.contenu],
+				this.schemaComment.validateSync(edition, { abortEarly: false });
+				await this.storeFunction.update(id, {
+					[this.meta.contenu]: edition[this.meta.contenu],
 				});
 				this.addNotification({
 					type: "success",
 					message: this.$t("components.VModalCommentUpdateSuccess"),
 				});
-				comment.loading = false;
+				delete this.storeEdition[id];
 			} catch (e) {
 				const errorMessage = e instanceof Error ? e.message : String(e);
 				this.addNotification({ message: errorMessage, type: "error" });
-				return;
+			} finally {
+				edition.loading = false;
 			}
 		},
 		async commentDelete() {
-			await this.storeFunction.delete(this.selectedComment)
-				.then(() => {
-					this.addNotification({
-						type: "success",
-						message: this.$t("components.VModalCommentDeleteSuccess"),
-					});
-				})
-				.catch((e: Error) => {
-					const errorMessage = e instanceof Error ? e.message : String(e);
-					this.addNotification({ message: errorMessage, type: "error" });
+			const id = this.selectedComment;
+			if (id === null) {
+				return;
+			}
+			try {
+				await this.storeFunction.delete(id);
+				delete this.storeEdition[id];
+				this.addNotification({
+					type: "success",
+					message: this.$t("components.VModalCommentDeleteSuccess"),
 				});
+			} catch (e) {
+				const errorMessage = e instanceof Error ? e.message : String(e);
+				this.addNotification({ message: errorMessage, type: "error" });
+			}
 			this.deleteModalShow = false;
 		},
 		async loadNext(e: Event) {
@@ -284,7 +310,7 @@ export default {
 				if (this.totalCount === this.nextOffset) {
 					return;
 				}
-				[this.nextOffset, this.hasMore] = await this.fetchFunction(this.nextOffset, 100, this.meta?.expand || []);
+				[this.nextOffset, this.hasMore] = await this.fetchFunction(100, this.nextOffset, this.meta?.expand || [], [], {}, false);
 			}
 		},
 		async refetchData() {
@@ -292,7 +318,7 @@ export default {
 			this.nextOffset = 0;
 			this.hasMore = true;
 			let intervalOffset = this.nextOffset;
-			[this.nextOffset, this.hasMore] = await this.fetchFunction(100, 0, this.meta?.expand || []);
+			[this.nextOffset, this.hasMore] = await this.fetchFunction(100, 0, this.meta?.expand || [], [], {}, false);
 			await this.refetchListData(intervalOffset, this.nextOffset);
 		},
 		async refetchListData(minOffset: number, maxOffset: number) {

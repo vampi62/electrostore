@@ -107,8 +107,8 @@ export const useZonesStore = defineStore("zones", {
 			if (imageChanged) {
 				delete this.thumbnailsURL[realId];
 				delete this.imagesURL[realId];
-				this.showThumbnailById(realId);
-				this.showImageById(realId);
+				void this.showThumbnailById(realId);
+				void this.showImageById(realId);
 			}
 			return realId;
 		},

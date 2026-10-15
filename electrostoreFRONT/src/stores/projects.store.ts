@@ -203,7 +203,7 @@ export const useProjectsStore = defineStore("projects",{
 		itemsLoading: false,
 		itemsTotalCount: {} as Record<string, number>,
 		items: {} as Record<string, Record<string, ReadProjectItemDto>>,
-		itemEdition: {} as Record<string, Edition<{ create: CreateProjectItemByProjectDto, update: UpdateProjectItemDto }>>,
+		itemEdition: {} as Record<string, Record<string, Edition<{ create: CreateProjectItemByProjectDto, update: UpdateProjectItemDto }>>>,
 		itemReady: {} as Record<string, Record<string, Ready<{ create: CreateProjectItemByProjectDto, update: UpdateProjectItemDto }>>>,
 
 		projectTagProjectLoading: false,
@@ -239,7 +239,8 @@ export const useProjectsStore = defineStore("projects",{
 				};
 				projectResource.loadEditionPreset.call(this, id, preset);
 			}
-			this.commentEdition[id] = {};
+			// a comment being edited is saved on its own, saving the element must not discard it
+			this.commentEdition[id] ??= {};
 			this.documentEdition[id] = {};
 			this.documentReady[id] = {};
 			this.itemEdition[id] = {};

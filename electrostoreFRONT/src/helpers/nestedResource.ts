@@ -3,7 +3,7 @@ import { buildFormData, fetchWrapper, buildQuery } from "@/helpers";
 import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 import type { Body, EntityTypes, NestedResourceOptions, Ready } from "@/types/resource";
 import type { StoreGeneric } from "pinia";
-import type { PaginatedResponseDto, ReadBulkDto } from "@/types/fetch";
+import type { FetchPage, PaginatedResponseDto, ReadBulkDto } from "@/types/fetch";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -11,7 +11,7 @@ export function createNestedResource<T extends EntityTypes>({ path, idField, cou
 	type ReadExtended = "readExtended" extends keyof T ? T["readExtended"] : T["readBasic"];
 	type Read = "readBasic" extends keyof T ? T["readBasic"] : T["readExtended"];
 	const resource = {
-		async getByInterval(this: StoreGeneric, idParentResource: string, limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false) {
+		async getByInterval(this: StoreGeneric, idParentResource: string, limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false): Promise<FetchPage> {
 			if (!this[stateKey][String(idParentResource)] || clear) {
 				this[stateKey][String(idParentResource)] = {};
 			}
@@ -42,14 +42,14 @@ export function createNestedResource<T extends EntityTypes>({ path, idField, cou
 				}
 			}
 		},
-		async create(this: StoreGeneric, idParentResource: string, params: Body<T, "create">, isFormData = false) {
+		async create(this: StoreGeneric, idParentResource: string, params: Body<T, "create">, isFormData = false): Promise<string> {
 			this[stateKey][idParentResource] ??= {};
 			// if isFormData, params is converted to FormData and sent as multipart/form-data
 			const body = isFormData ? buildFormData(params as Record<string, string | Blob>) : params;
 			const data = await fetchWrapper.post<Read>({ url: `${baseUrl}${path(idParentResource)}`, useToken: "access", body, contentFile: isFormData });
 			this[stateKey][idParentResource][data[idField]] = data;
 			this[countKey][idParentResource] = (this[countKey][idParentResource] ?? 0) + 1;
-			return data[idField];
+			return String(data[idField]);
 		},
 		async update(this: StoreGeneric, idParentResource: string, id: string, params: Body<T, "update">, isFormData = false) {
 			this[stateKey][idParentResource] ??= {};
@@ -61,7 +61,7 @@ export function createNestedResource<T extends EntityTypes>({ path, idField, cou
 			delete this[stateKey][idParentResource]?.[id];
 			this[countKey][idParentResource] = (this[countKey][idParentResource] ?? 1) - 1;
 		},
-		async createBulk(this: StoreGeneric, idParentResource: string, params: Body<T, "createBulk">) {
+		async createBulk(this: StoreGeneric, idParentResource: string, params: Body<T, "createBulk">): Promise<ReadBulkDto<Read>> {
 			this[stateKey][idParentResource] ??= {};
 			const res = await fetchWrapper.post<ReadBulkDto<Read>>({ url: `${baseUrl}${path(idParentResource)}/bulk`, useToken: "access", body: params });
 			for (const entity of res.valide) {
@@ -86,9 +86,9 @@ export function createNestedResource<T extends EntityTypes>({ path, idField, cou
 			this[countKey][idParentResource] = (this[countKey][idParentResource] ?? 0) - res.valide.length;
 			this[countKey][idParentResource] = Math.max(this[countKey][idParentResource], 0);
 		},
-		getAvailableNewId(this: StoreGeneric, idParentResource: string) {
+		getAvailableNewId(this: StoreGeneric, idParentResource: string): string {
 			if (!editionKey) {
-				return;
+				throw new Error("Edition key is not defined");
 			}
 			this[editionKey][idParentResource] ??= {};
 			let i = 1;

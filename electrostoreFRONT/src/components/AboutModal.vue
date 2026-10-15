@@ -26,6 +26,8 @@
 </template>
 
 <script lang="ts">
+import type { VersionInfo } from "@/types/version";
+
 export default {
 	name: "AboutModal",
 	props: {
@@ -57,7 +59,8 @@ export default {
 			try {
 				const res = await fetch(`/version.json?t=${Date.now()}`, { cache: "no-store" });
 				if (res.ok) {
-					this.version = (await res.json()).version ?? "";
+					const info = await res.json() as VersionInfo;
+					this.version = info.version ?? "";
 				}
 			} catch {
 				this.version = "";

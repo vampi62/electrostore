@@ -20,10 +20,7 @@
 </template>
 
 <script lang="ts">
-// content of /version.json
-interface VersionInfo {
-	version: string;
-}
+import type { VersionInfo } from "@/types/version";
 
 export default {
 	name: "NotificationAppUpdate",
