@@ -60,6 +60,7 @@
 <script lang="ts">
 import { fetchWrapper } from "@/helpers";
 import { useConfigsStore } from "@/stores";
+import { ApiError, getMessage } from "@/utils";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -174,9 +175,9 @@ export default {
 				}
 				const data = await fetchWrapper.post({ url: `${baseUrl}/ai/chat/messages`, useToken: "access", body: formData, contentFile: true });
 				this.response = JSON.stringify(data, null, 2);
-			} catch (error: any) {
-				const detail = error?.data !== undefined ? JSON.stringify(error.data, null, 2) : "";
-				this.response = `${this.$t("common.VAiError")}: ${error?.message ?? error}${detail ? "\n" + detail : ""}`;
+			} catch (error) {
+				const detail = error instanceof ApiError && error.data !== undefined ? JSON.stringify(error.data, null, 2) : "";
+				this.response = `${this.$t("common.VAiError")}: ${getMessage(error)}${detail ? "\n" + detail : ""}`;
 			} finally {
 				this.loading = false;
 			}

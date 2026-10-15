@@ -161,7 +161,8 @@
 <script lang="ts">
 import { useAuthStore, useConfigsStore, useTabsStore } from "@/stores";
 import type { PropType } from "vue";
-import type { NavLabel } from "@/types/nav"
+import type { NavLabel } from "@/types/nav";
+import type { BeforeInstallPromptEvent } from "@/types/pwa";
 export default {
 	name: "NavBar",
 	props: {
@@ -188,7 +189,7 @@ export default {
 		return {
 			showTopBar: false,
 			reduceLeftSideBar: false,
-			installEvent: null as any,
+			installEvent: null as BeforeInstallPromptEvent | null,
 			showPwaPrompt: false,
 		};
 	},
@@ -227,7 +228,7 @@ export default {
 		},
 		onBeforeInstallPrompt(e: Event) {
 			e.preventDefault();
-			this.installEvent = e;
+			this.installEvent = e as BeforeInstallPromptEvent;
 			this.showPwaPrompt = true;
 		},
 		onAppInstalled() {

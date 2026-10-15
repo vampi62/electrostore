@@ -26,6 +26,7 @@
 </template>
 
 <script lang="ts">
+import type { PropType } from "vue";
 export default {
 	name: "ModalDeleteConfirm",
 	props: {
@@ -43,7 +44,7 @@ export default {
 			required: true,
 		},
 		deleteAction: {
-			type: Function,
+			type: Function as PropType<() => unknown>,
 			required: false,
 			// This function will be called when the delete is confirmed
 			default: null,

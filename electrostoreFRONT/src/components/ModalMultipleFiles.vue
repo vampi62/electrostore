@@ -100,7 +100,7 @@
 
 <script lang="ts">
 import { useConfigsStore } from "@/stores";
-import type { FilesUploaded } from "@/types/files"
+import type { FilesUploaded } from "@/types/files";
 
 export default {
 	name: "ModalMultipleFiles",
@@ -131,12 +131,18 @@ export default {
 		return {
 			loading: false,
 			isDragging: false,
-			filesList: [] as { name: string; document: File }[],
+			filesList: [] as FilesUploaded[],
 			errorMessage: "",
-			allowedExtensions: (this as any).configsStore.getConfigByKey(
-				this.fileType === "image" ? "allowed_image_extensions" : "allowed_document_extensions") || [],
-			maxSizeInMb: (this as any).configsStore.getConfigByKey("max_size_" + this.fileType + "_in_mb") || 5,
 		};
+	},
+	computed: {
+		allowedExtensions(): string[] {
+			const key = this.fileType === "image" ? "allowed_image_extensions" : "allowed_document_extensions";
+			return (this.configsStore.getConfigByKey(key) as string[] | undefined) || [];
+		},
+		maxSizeInMb(): number {
+			return (this.configsStore.getConfigByKey("max_size_" + this.fileType + "_in_mb") as number | undefined) || 5;
+		},
 	},
 	methods: {
 		triggerFileInput() {

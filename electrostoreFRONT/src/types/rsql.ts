@@ -1,7 +1,7 @@
 interface RSQLFilter {
 	key: string;
 	compareMethod: string;
-	value: any;
+	value: string | number | boolean | null | undefined;
 }
 
 interface RSQLSort {
