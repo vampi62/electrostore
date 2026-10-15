@@ -8,7 +8,8 @@ import { useTagsStore, useItemsStore, useEquipementsStore } from "@/stores";
 
 import type { StoreGeneric } from "pinia";
 import type { Ready, Edition } from "@/types/resource";
-import type { PaginatedResponseDto, ReadBulkDto } from "@/types/fetch";
+import type { FetchPage, PaginatedResponseDto, ReadBulkDto } from "@/types/fetch";
+import type { ShowParams } from "@/types/store";
 import type { components } from "@/types/api";
 import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 type ReadStoreDto = components["schemas"]["ReadStoreDto"];
@@ -46,9 +47,6 @@ type CreateBoxTagByBoxDto = components["schemas"]["CreateBoxTagByBoxDto"];
 type ReadEquipementBoxDto = components["schemas"]["ReadEquipementBoxDto"];
 type ReadExtendedEquipementBoxDto = components["schemas"]["ReadExtendedEquipementBoxDto"];
 type CreateEquipementBoxByBoxDto = components["schemas"]["CreateEquipementBoxByBoxDto"];
-
-// parameters of the mqtt show command of a led or a box (colors, duration, animation)
-type ShowParams = Record<string, number>;
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -373,7 +371,7 @@ export const useStoresStore = defineStore("stores",{
 		copyTagStoreAllId: storeTagResource.copyAllId,
 		pushTagStoreChange: storeTagResource.pushChange,
 
-		async getBoxItemByInterval(idStore: string, idBox: string, limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false) {
+		async getBoxItemByInterval(idStore: string, idBox: string, limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false): Promise<FetchPage> {
 			if (!this.boxItems[idBox] || clear) {
 				this.boxItems[idBox] = {};
 			}
@@ -433,7 +431,7 @@ export const useStoresStore = defineStore("stores",{
 			delete this.boxItems[idBox][id];
 		},
 
-		async getBoxEquipementByInterval(idStore: string, idBox: string, limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false) {
+		async getBoxEquipementByInterval(idStore: string, idBox: string, limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false): Promise<FetchPage> {
 			if (!this.boxEquipements[idBox] || clear) {
 				this.boxEquipements[idBox] = {};
 			}
@@ -472,7 +470,7 @@ export const useStoresStore = defineStore("stores",{
 			delete this.boxEquipements[idBox][id];
 		},
 
-		async getBoxTagByInterval(idStore: string, idBox: string, limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false) {
+		async getBoxTagByInterval(idStore: string, idBox: string, limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false): Promise<FetchPage> {
 			if (!this.boxTags[idBox] || clear) {
 				this.boxTags[idBox] = {};
 			}
