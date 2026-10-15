@@ -1,8 +1,12 @@
+import type { StateTree } from "pinia";
+
 export interface TableauRessourcePrint {
 	from: "ressource" | "link" | "text";
 	valueKey?: string;
 	text?: string;
 }
+
+export type TableauRowData = StateTree;
 
 export interface TableauButton {
 	label?: string;
@@ -11,7 +15,7 @@ export interface TableauButton {
 	animation?: boolean;
 	showCondition?: string;
 	enableCondition?: string;
-	action: (row: TableauRowData) => any;
+	action: (row: TableauRowData) => unknown;
 }
 
 export interface TableauLabel {
@@ -29,7 +33,8 @@ export interface TableauLabel {
 	ressourcePrint?: TableauRessourcePrint[];
 	buttons?: TableauButton[];
 	condition?: string;
-	options?: Record<string, any>;
+	// type: "enum", { [value]: label }
+	options?: Record<string | number, string>;
 	canEdit?: boolean;
 	fieldUrl?: string;
 	placeholder?: string;
@@ -58,5 +63,3 @@ export interface TableauCss {
 	tr?: string;
 	td?: string;
 }
-
-export type TableauRowData = Record<string, any>;

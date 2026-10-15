@@ -71,7 +71,7 @@ onBeforeUnmount(() => {
 });
 
 const userDeleteModalShow = ref(false);
-const userTypeRole = ref({ [UserRole.User]: t("user.FilterRole0"), [UserRole.Moderator]: t("user.FilterRole1"), [UserRole.Admin]: t("user.FilterRole2") });
+const userTypeRole = { [UserRole.User]: t("user.FilterRole0"), [UserRole.Moderator]: t("user.FilterRole1"), [UserRole.Admin]: t("user.FilterRole2") };
 const userSave = async() => {
 	try {
 		usersStore.setLoadingEdition(userId.value, true);
@@ -395,9 +395,9 @@ onMounted(() => {
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('user.Title') }}</h2>
 		<TopButtonEditElement
 			:main-config="{ path: '/users',
-				create: { sameUserId: true, showCondition: isNewId(userId) && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
-				update: { sameUserId: true, showCondition: !isNewId(userId) && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
-				delete: { sameUserId: true, showCondition: !isNewId(userId) && authStore.hasPermission([1, 2]) }
+				create: { showCondition: isNewId(userId) && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
+				update: { showCondition: !isNewId(userId) && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
+				delete: { showCondition: !isNewId(userId) && authStore.hasPermission([1, 2]) }
 			}"
 			@button-create="userSave" @button-update="userSave" @button-delete="userDeleteModalShow = true"/>
 	</div>

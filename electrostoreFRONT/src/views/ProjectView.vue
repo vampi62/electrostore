@@ -113,9 +113,9 @@ function tagRestore(id_tag: string | number) {
 
 // project
 const projectDeleteModalShow = ref(false);
-const projectTypeStatus = ref({ [ProjectStatus.NotStarted]: t("project.Status0"), [ProjectStatus.InProgress]: t("project.Status1"),
+const projectTypeStatus = { [ProjectStatus.NotStarted]: t("project.Status0"), [ProjectStatus.InProgress]: t("project.Status1"),
 	[ProjectStatus.Completed]: t("project.Status2"), [ProjectStatus.OnHold]: t("project.Status3"),
-	[ProjectStatus.Cancelled]: t("project.Status4"), [ProjectStatus.Archived]: t("project.Status5") });
+	[ProjectStatus.Cancelled]: t("project.Status4"), [ProjectStatus.Archived]: t("project.Status5") };
 
 // roadmap
 const projectRoadmapSteps = [
@@ -618,7 +618,12 @@ useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects");
 				<Comment :meta="{ contenu: 'content_project_comment', key: 'id_project_comment', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[projectsStore.comments[projectId], usersStore.users]"
 					:store-user="authStore.user" :store-config="configsStore"
-					:store-function="{ create: (data: Record<string, any>) => projectsStore.createComment(projectId, data), update: (id: string | number, data: Record<string, any>) => projectsStore.updateComment(projectId, id, data), delete: (id: string | number) => projectsStore.deleteComment(projectId, id) }"
+					:store-edition="projectsStore.commentEdition[projectId]"
+					:store-function="{
+						create: (data: Record<string, string>) => projectsStore.createComment(projectId, { content_project_comment: data.content_project_comment }),
+						update: (id: string, data: Record<string, string>) => projectsStore.updateComment(projectId, id, { content_project_comment: data.content_project_comment }),
+						delete: (id: string) => projectsStore.deleteComment(projectId, id),
+					}"
 					:loading="projectsStore.commentsLoading" :texte-modal-delete="{ textTitle: 'project.CommentDeleteTitle', textP: 'project.CommentDeleteText' }"
 					:total-count="Number(projectsStore.commentsTotalCount[projectId])"
 					:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectsStore.getCommentByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"

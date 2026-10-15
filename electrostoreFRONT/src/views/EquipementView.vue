@@ -637,10 +637,11 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 				<Comment :meta="{ key: 'id_equipement_comment', contenu: 'content_equipement_comment', canEdit: true, roleRequired: authStore.hasPermission([2]), expand: ['user'] }"
 					:store-data="[equipementsStore.equipementComments[equipementId], usersStore.users]"
 					:store-user="authStore.user" :store-config="configsStore"
+					:store-edition="equipementsStore.equipementCommentEdition[equipementId]"
 					:store-function="{
-						create: (data: Record<string, any>) => equipementsStore.createEquipementComment(equipementId, data),
-						update: (id: string | number, data: Record<string, any>) => equipementsStore.updateEquipementComment(equipementId, id, data),
-						delete: (id: string | number) => equipementsStore.deleteEquipementComment(equipementId, id),
+						create: (data: Record<string, string>) => equipementsStore.createEquipementComment(equipementId, { content_equipement_comment: data.content_equipement_comment }),
+						update: (id: string, data: Record<string, string>) => equipementsStore.updateEquipementComment(equipementId, id, { content_equipement_comment: data.content_equipement_comment }),
+						delete: (id: string) => equipementsStore.deleteEquipementComment(equipementId, id),
 					}"
 					:loading="equipementsStore.equipementCommentsLoading"
 					:total-count="Number(equipementsStore.equipementCommentsTotalCount[equipementId]) || 0"

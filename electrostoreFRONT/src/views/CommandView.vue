@@ -791,7 +791,12 @@ useTabGuard(commandsStore, () => commandId.value, "commandEdition", "commands");
 				<Comment :meta="{ contenu: 'content_command_comment', key: 'id_command_comment', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[commandsStore.comments[commandId], usersStore.users]"
 					:store-user="authStore.user" :store-config="configsStore"
-					:store-function="{ create: (data: Record<string, any>) => commandsStore.createComment(commandId, data), update: (id: string | number, data: Record<string, any>) => commandsStore.updateComment(commandId, id, data), delete: (id: string | number) => commandsStore.deleteComment(commandId, id) }"
+					:store-edition="commandsStore.commentEdition[commandId]"
+					:store-function="{
+						create: (data: Record<string, string>) => commandsStore.createComment(commandId, { content_command_comment: data.content_command_comment }),
+						update: (id: string, data: Record<string, string>) => commandsStore.updateComment(commandId, id, { content_command_comment: data.content_command_comment }),
+						delete: (id: string) => commandsStore.deleteComment(commandId, id),
+					}"
 					:loading="commandsStore.commentsLoading" :texte-modal-delete="{ textTitle: 'command.CommentDeleteTitle', textP: 'command.CommentDeleteText' }"
 					:total-count="Number(commandsStore.commentsTotalCount[commandId] || 0)"
 					:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => commandsStore.getCommentByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"

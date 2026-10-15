@@ -300,9 +300,9 @@ function tagRestore(id_tag: string | number) {
 }
 
 // item history enum
-const projectTypeStatus = ref({ [ItemHistoryType.ItemCreated]: t("item.HistoryTypeItemCreated"), [ItemHistoryType.ItemUpdated]: t("item.HistoryTypeItemUpdated"),
+const itemHistoryTypeOptions = { [ItemHistoryType.ItemCreated]: t("item.HistoryTypeItemCreated"), [ItemHistoryType.ItemUpdated]: t("item.HistoryTypeItemUpdated"),
 	[ItemHistoryType.ItemDeleted]: t("item.HistoryTypeItemDeleted"), [ItemHistoryType.StockAdded]: t("item.HistoryTypeStockAdded"),
-	[ItemHistoryType.StockRemoved]: t("item.HistoryTypeStockRemoved"), [ItemHistoryType.StockUpdated]: t("item.HistoryTypeStockUpdated") });
+	[ItemHistoryType.StockRemoved]: t("item.HistoryTypeStockRemoved"), [ItemHistoryType.StockUpdated]: t("item.HistoryTypeStockUpdated") };
 
 const schemaBox = Yup.object().shape({
 	quantity_item_box: Yup.number()
@@ -452,7 +452,7 @@ const labelTableauDocument = ref<TableauLabel[]>([
 ]);
 const labelTableauHistory = ref<TableauLabel[]>([
 	{ label: "item.HistoryDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
-	{ label: "item.HistoryType", sortable: true, key: "type_item_history", valueKey: "type_item_history", type: "enum", options: projectTypeStatus },
+	{ label: "item.HistoryType", sortable: true, key: "type_item_history", valueKey: "type_item_history", type: "enum", options: itemHistoryTypeOptions },
 	{ label: "item.HistoryQuantityChange", sortable: true, key: "quantity_change_item_history", valueKey: "quantity_change_item_history", type: "number" },
 	{ label: "item.HistoryOldQuantity", sortable: true, key: "old_quantity_item_history", valueKey: "old_quantity_item_history", type: "number" },
 	{ label: "item.HistoryNewQuantity", sortable: true, key: "new_quantity_item_history", valueKey: "new_quantity_item_history", type: "number" },
@@ -650,7 +650,7 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items");
 		<CollapsibleSection title="item.History"
 			:total-count="Number(itemsStore.itemHistoryTotalCount[itemId] || 0)">
 			<template #append-row>
-				<Tableau :labels="labelTableauHistory" :meta="{ key: 'id_item_history', expand: ['user'], sort: ['created_at'], sortOrder: 'desc' }"
+				<Tableau :labels="labelTableauHistory" :meta="{ key: 'id_item_history', expand: ['user'], sort: 'created_at', sortOrder: 'desc' }"
 					:store-data="[itemsStore.itemHistory[itemId], usersStore.users]"
 					:loading="itemsStore.itemHistoryLoading"
 					:total-count="Number(itemsStore.itemHistoryTotalCount[itemId])"

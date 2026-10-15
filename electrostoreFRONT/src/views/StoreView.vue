@@ -451,7 +451,7 @@ const labelTableauModalEquipement = ref<TableauLabel[]>([
 		},
 	] },
 ]);
-const labelForm = ref<FormLabel[]>([
+const labelForm = computed<FormLabel[]>(() => [
 	{ key: "name_store", label: "store.Name", type: "text", enableCondition: "func.hasPermission([2])" },
 	{ key: "mqtt_name_store", label: "store.MQTTName", type: "text", enableCondition: "func.hasPermission([2])" },
 	{ key: "xlength_store", label: "store.XLength", type: "number", enableCondition: "func.hasPermission([2])" },

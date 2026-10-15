@@ -42,9 +42,9 @@ async function fetchTagData(minOffset: number, maxOffset: number) {
 	}
 }
 
-const projectTypeStatus = ref({ [ProjectStatus.NotStarted]: t("projects.Status0"), [ProjectStatus.InProgress]: t("projects.Status1"),
+const projectTypeStatus = { [ProjectStatus.NotStarted]: t("projects.Status0"), [ProjectStatus.InProgress]: t("projects.Status1"),
 	[ProjectStatus.Completed]: t("projects.Status2"), [ProjectStatus.OnHold]: t("projects.Status3"),
-	[ProjectStatus.Cancelled]: t("projects.Status4"), [ProjectStatus.Archived]: t("projects.Status5") });
+	[ProjectStatus.Cancelled]: t("projects.Status4"), [ProjectStatus.Archived]: t("projects.Status5") };
 
 const filter = ref<FilterLabel[]>([
 	{ key: "status_project", value: "", type: "datalist", typeData: "number", options: projectTypeStatus, label: "projects.FilterStatus", compareMethod: "==" },
