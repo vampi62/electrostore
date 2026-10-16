@@ -6,6 +6,7 @@ import * as Yup from "yup";
 
 import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
+import type FormContainer from "@/components/FormContainer.vue";
 import { downloadFile, viewFile, isNewId } from "@/utils";
 import { EquipementStatus, EquipementMaintenanceType } from "@/enums";
 import { useConfigsStore, useEquipementsStore, useTagsStore, useStoresStore, useUsersStore, useAuthStore } from "@/stores";
@@ -27,18 +28,18 @@ const usersStore = useUsersStore();
 const authStore = useAuthStore();
 
 const equipementId = ref(route.params.id as string);
-const preset = ref(route.query.preset || null);
+const preset = ref(typeof route.query.preset === "string" ? route.query.preset : null);
 
 // every new element has its own edition space in the store, so several tabs can create an element at the same time
 if (isNewId(equipementId.value)) {
 	equipementId.value = equipementsStore.getAvailableNewEquipementId();
 }
 
-const formContainer = ref<any>(null);
+const formContainer = ref<InstanceType<typeof FormContainer> | null>(null);
 
 async function fetchAllData() {
 	if (isNewId(equipementId.value)) {
-		equipementsStore.loadToEdition(equipementId.value, preset.value as any);
+		equipementsStore.loadToEdition(equipementId.value, preset.value);
 	} else {
 		equipementsStore.setLoadingEdition(equipementId.value, true);
 		try {
@@ -88,7 +89,7 @@ const removeImage = () => {
 		URL.revokeObjectURL(localImagePreviewUrl.value);
 		localImagePreviewUrl.value = null;
 	}
-	equipementsStore.equipementEdition[equipementId.value].img_file = null;
+	delete equipementsStore.equipementEdition[equipementId.value].img_file;
 	equipementsStore.equipementEdition[equipementId.value].unset_img_equipement = true;
 };
 const resetImageSelection = () => {
@@ -147,25 +148,25 @@ const equipementDelete = async() => {
 
 const createSchema = () => {
 	const edition = equipementsStore.equipementEdition[equipementId.value];
-	const shape: any = {};
+	const shape: Record<string, Yup.AnySchema> = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
 	shape.reference_name_equipement = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("equipement.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("equipement.NameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("equipement.NameRequired"));
 	shape.friendly_name_equipement = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("equipement.FriendlyNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("equipement.FriendlyNameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("equipement.FriendlyNameRequired"));
 	shape.description_equipement = Yup.string()
 		.nullable()
 		.optional()
-		.max(configsStore.getConfigByKey("max_length_description"), t("equipement.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }));
+		.max(configsStore.getConfigNumber("max_length_description"), t("equipement.DescriptionMaxLength", { count: configsStore.getConfigNumber("max_length_description") }));
 	shape.status_equipement = Yup.string()
 		.required(t("equipement.StatusRequired"));
 	shape.img_file = Yup.mixed()
 		.nullable()
-		.test("fileSize", t("equipement.ImageSize") + " " + configsStore.getConfigByKey("max_size_image_in_mb") + "Mo", (value: any) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_image_in_mb"))) * 1024 * 1024);
+		.test("fileSize", t("equipement.ImageSize") + " " + configsStore.getConfigNumber("max_size_image_in_mb") + "Mo", (value) => !value || (value as File).size <= (Number(configsStore.getConfigNumber("max_size_image_in_mb"))) * 1024 * 1024);
 	return Yup.object().shape(shape);
 };
 
@@ -173,7 +174,7 @@ const createSchema = () => {
 const filterTag = ref<FilterLabel[]>([
 	{ key: "name_tag", value: "", type: "text", label: "", placeholder: t("equipement.TagFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
-function tagSave(id_tag: string | number) {
+function tagSave(id_tag: number) {
 	try {
 		// re-adding a tag that is only pending deletion locally just cancels that pending deletion
 		if (equipementsStore.equipementTagReady[equipementId.value]?.[id_tag]?.status === "deleted") {
@@ -182,14 +183,14 @@ function tagSave(id_tag: string | number) {
 			return;
 		}
 		equipementsStore.equipementTagEdition[equipementId.value][id_tag] = { id_tag };
-		equipementsStore.valideEquipementTagEditionById(equipementId.value, id_tag, "created");
+		equipementsStore.valideEquipementTagEditionById(equipementId.value, String(id_tag), "created");
 		delete equipementsStore.equipementTagEdition[equipementId.value][id_tag];
 		addNotification({ message: t("equipement.TagAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
 }
-function tagDelete(id_tag: string | number) {
+function tagDelete(id_tag: string) {
 	try {
 		// a tag that was only staged as a pending creation is simply dropped, nothing to push
 		if (equipementsStore.equipementTagReady[equipementId.value]?.[id_tag]?.status === "created") {
@@ -202,7 +203,7 @@ function tagDelete(id_tag: string | number) {
 		addNotification({ message: e, type: "error" });
 	}
 }
-function tagRestore(id_tag: string | number) {
+function tagRestore(id_tag: string) {
 	try {
 		delete equipementsStore.equipementTagReady[equipementId.value][id_tag];
 		addNotification({ message: t("equipement.TagRestored"), type: "success" });
@@ -251,7 +252,7 @@ const documentEdit = (row: TableauRowData) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		equipementsStore.valideEquipementDocumentEditionById(equipementId.value, row.id_equipement_document,
-			equipementsStore.equipementDocumentEdition[equipementId.value][row.id_equipement_document]?.status === "created" ? "created" : "modified");
+			equipementsStore.equipementDocumentReady[equipementId.value]?.[row.id_equipement_document]?.status === "created" ? "created" : "modified");
 		delete equipementsStore.equipementDocumentEdition[equipementId.value][row.id_equipement_document];
 		addNotification({ message: t("equipement.DocumentUpdated"), type: "success" });
 	} catch (e) {
@@ -304,7 +305,7 @@ const maintenanceAdd = () => {
 		schemaMaintenance.validateSync(maintenanceForm.value, { abortEarly: false });
 		const newId = equipementsStore.getAvailableNewEquipementMaintenanceId(equipementId.value);
 		equipementsStore.equipementMaintenanceEdition[equipementId.value][newId] = {
-			type_equipement_maintenance: Number(maintenanceForm.value.type_equipement_maintenance),
+			type_equipement_maintenance: Number(maintenanceForm.value.type_equipement_maintenance) as (typeof EquipementMaintenanceType)[keyof typeof EquipementMaintenanceType],
 			date_planned_equipement_maintenance: new Date(maintenanceForm.value.date_planned_equipement_maintenance).toISOString(),
 			description_equipement_maintenance: maintenanceForm.value.description_equipement_maintenance || null,
 		};
@@ -345,15 +346,15 @@ const maintenanceDelete = (row: TableauRowData) => {
 
 const schemaAddDocument = Yup.object().shape({
 	name_equipement_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("equipement.DocumentNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("equipement.DocumentNameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("equipement.DocumentNameRequired")),
 	document: Yup.mixed()
 		.required(t("equipement.DocumentRequired"))
-		.test("fileSize", t("equipement.DocumentSize", { count: configsStore.getConfigByKey("max_size_document_in_mb") }), (value: any) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
+		.test("fileSize", t("equipement.DocumentSize", { count: configsStore.getConfigNumber("max_size_document_in_mb") }), (value) => !value || (value as File).size <= (Number(configsStore.getConfigNumber("max_size_document_in_mb"))) * 1024 * 1024),
 });
 const schemaEditDocument = Yup.object().shape({
 	name_equipement_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("equipement.DocumentNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("equipement.DocumentNameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("equipement.DocumentNameRequired")),
 });
 
@@ -530,7 +531,7 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 	</div>
 	<div v-if="equipementsStore.equipements[equipementId] || isNewId(equipementId)" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="equipementsStore.equipementEdition[equipementId]">
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-edition="equipementsStore.equipementEdition[equipementId]" :store-data="equipementsStore.equipements[equipementId]">
 				<template #img_file>
 					<div class="flex flex-col items-center gap-2">
 						<div class="flex justify-center items-center cursor-pointer"
@@ -538,17 +539,17 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 							@click="triggerImageInput">
 							<img v-if="localImagePreviewUrl" :src="localImagePreviewUrl" alt="Preview"
 								class="w-48 h-48 object-cover rounded" />
-							<img v-else-if="!equipementsStore.equipementEdition[equipementId]?.unset_img_equipement && equipementsStore.equipementEdition[equipementId]?.url_thumbnail_equipement && equipementsStore.thumbnailsURL[equipementId]"
+							<img v-else-if="!equipementsStore.equipementEdition[equipementId]?.unset_img_equipement && equipementsStore.equipements[equipementId]?.url_thumbnail_equipement && equipementsStore.thumbnailsURL[equipementId]"
 								:src="equipementsStore.thumbnailsURL[equipementId]" alt="Main"
 								class="w-48 h-48 object-cover rounded" />
-							<span v-else-if="!equipementsStore.equipementEdition[equipementId]?.unset_img_equipement && equipementsStore.equipementEdition[equipementId]?.url_thumbnail_equipement"
+							<span v-else-if="!equipementsStore.equipementEdition[equipementId]?.unset_img_equipement && equipementsStore.equipements[equipementId]?.url_thumbnail_equipement"
 								class="w-48 h-48 object-cover rounded flex items-center justify-center">
 								{{ $t('equipement.Loading') }}
 							</span>
 							<img v-else src="../assets/nopicture.webp" alt="Not Found"
 								class="w-48 h-48 object-cover rounded" />
 						</div>
-						<button v-if="localImagePreviewUrl || (!equipementsStore.equipementEdition[equipementId]?.unset_img_equipement && equipementsStore.equipementEdition[equipementId]?.url_thumbnail_equipement)"
+						<button v-if="localImagePreviewUrl || (!equipementsStore.equipementEdition[equipementId]?.unset_img_equipement && equipementsStore.equipements[equipementId]?.url_thumbnail_equipement)"
 							type="button" @click="removeImage"
 							class="text-sm text-red-500 hover:text-red-600">
 							{{ $t('equipement.ImageRemove') }}
@@ -558,8 +559,8 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 				</template>
 			</FormContainer>
 			<Tags :current-tags="equipementsStore.equipementTags[equipementId] || {}" :ready-store="equipementsStore.equipementTagReady[equipementId] || {}" :tags-store="tagsStore.tags" :can-edit="authStore.hasPermission([1, 2])"
-				:delete-function="(value: string | number) => tagDelete(value)"
-				:restore-function="(value: string | number) => tagRestore(value)"
+				:delete-function="(value: string) => tagDelete(value)"
+				:restore-function="(value: string) => tagRestore(value)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
 								, 'loading': tagsStore.tagsLoading, 'fetchFunction': (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)

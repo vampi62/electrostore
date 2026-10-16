@@ -5,7 +5,7 @@ import { useAuthStore } from "@/stores";
 const authStore = useAuthStore();
 
 const loading = ref(true);
-const error = ref<any>(null);
+const error = ref<unknown>(null);
 
 onMounted(async() => {
 	try {

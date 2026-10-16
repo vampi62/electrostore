@@ -15,7 +15,7 @@ const schema = Yup.object().shape({
 		.required(t("common.VForgotPasswordEmailRequired")),
 });
 
-function onSubmit(values: Record<string, any>, { setErrors }: { setErrors: (errors: Record<string, string | undefined>) => void }) {
+function onSubmit(values: Record<string, unknown>, { setErrors }: { setErrors: (errors: Record<string, string | undefined>) => void }) {
 	const email = values.email as string;
 	return authStore.forgotPassword(email)
 		.catch((error) => setErrors({ apiError: error }))

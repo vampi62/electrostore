@@ -6,6 +6,7 @@ import * as Yup from "yup";
 
 import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
+import type FormContainer from "@/components/FormContainer.vue";
 import { downloadFile, viewFile, isNewId } from "@/utils";
 import { ItemHistoryType } from "@/enums";
 import { useConfigsStore, useItemsStore, useTagsStore, useStoresStore, useCommandsStore, useProjectsStore, useAuthStore, useUsersStore } from "@/stores";
@@ -29,18 +30,18 @@ const authStore = useAuthStore();
 const usersStore = useUsersStore();
 
 const itemId = ref(route.params.id as string);
-const preset = ref(route.query.preset || null);
+const preset = ref(typeof route.query.preset === "string" ? route.query.preset : null);
 
 // every new element has its own edition space in the store, so several tabs can create an element at the same time
 if (isNewId(itemId.value)) {
 	itemId.value = itemsStore.getAvailableNewItemId();
 }
 
-const formContainer = ref<any>(null);
+const formContainer = ref<InstanceType<typeof FormContainer> | null>(null);
 
 async function fetchAllData() {
 	if (isNewId(itemId.value)) {
-		itemsStore.loadToEdition(itemId.value, preset.value as any);
+		itemsStore.loadToEdition(itemId.value, preset.value);
 	} else {
 		itemsStore.setLoadingEdition(itemId.value, true);
 		try {
@@ -125,7 +126,7 @@ const getTotalQuantity = computed(() => {
 	if (isNewId(itemId.value)) {
 		return 0;
 	}
-	return itemsStore.itemBoxs[itemId.value] ? (Object.values(itemsStore.itemBoxs[itemId.value]) as any[]).reduce((acc, box) => acc + box.quantity_item_box, 0) : 0;
+	return itemsStore.itemBoxs[itemId.value] ? Object.values(itemsStore.itemBoxs[itemId.value]).reduce((acc, box) => acc + (box.quantity_item_box ?? 0), 0) : 0;
 });
 
 // box
@@ -180,7 +181,7 @@ const documentEdit = (row: TableauRowData) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		itemsStore.valideDocumentEditionById(itemId.value, row.id_item_document, 
-			itemsStore.documentEdition[itemId.value][row.id_item_document]?.status === "created" ? "created" : "modified");
+			itemsStore.documentReady[itemId.value]?.[row.id_item_document]?.status === "created" ? "created" : "modified");
 		delete itemsStore.documentEdition[itemId.value][row.id_item_document];
 		addNotification({ message: t("item.DocumentUpdated"), type: "success" });
 	} catch (e) {
@@ -247,7 +248,7 @@ const removeImage = () => {
 		URL.revokeObjectURL(localImagePreviewUrl.value);
 		localImagePreviewUrl.value = null;
 	}
-	itemsStore.itemEdition[itemId.value].img_file = null;
+	delete itemsStore.itemEdition[itemId.value].img_file;
 	itemsStore.itemEdition[itemId.value].unset_img_item = true;
 };
 const resetImageSelection = () => {
@@ -261,7 +262,7 @@ const resetImageSelection = () => {
 const filterTag = ref<FilterLabel[]>([
 	{ key: "name_tag", value: "", type: "text", label: "", placeholder: t("item.TagFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
-function tagSave(id_tag: string | number) {
+function tagSave(id_tag: number) {
 	try {
 		// re-adding a tag that is only pending deletion locally just cancels that pending deletion
 		if (itemsStore.itemTagReady[itemId.value]?.[id_tag]?.status === "deleted") {
@@ -270,14 +271,14 @@ function tagSave(id_tag: string | number) {
 			return;
 		}
 		itemsStore.itemTagEdition[itemId.value][id_tag] = { id_tag };
-		itemsStore.valideItemTagEditionById(itemId.value, id_tag, "created");
+		itemsStore.valideItemTagEditionById(itemId.value, String(id_tag), "created");
 		delete itemsStore.itemTagEdition[itemId.value][id_tag];
 		addNotification({ message: t("item.TagAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
 }
-function tagDelete(id_tag: string | number) {
+function tagDelete(id_tag: string) {
 	try {
 		// a tag that was only staged as a pending creation is simply dropped, nothing to push
 		if (itemsStore.itemTagReady[itemId.value]?.[id_tag]?.status === "created") {
@@ -290,7 +291,7 @@ function tagDelete(id_tag: string | number) {
 		addNotification({ message: e, type: "error" });
 	}
 }
-function tagRestore(id_tag: string | number) {
+function tagRestore(id_tag: string) {
 	try {
 		delete itemsStore.itemTagReady[itemId.value][id_tag];
 		addNotification({ message: t("item.TagRestored"), type: "success" });
@@ -317,41 +318,41 @@ const schemaBox = Yup.object().shape({
 
 const createSchema = () => {
 	const edition = itemsStore.itemEdition[itemId.value];
-	const shape: any = {};
+	const shape: Record<string, Yup.AnySchema> = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
 	shape.reference_name_item = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("item.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("item.NameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("item.NameRequired"));
 	shape.friendly_name_item = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("item.FriendlyNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("item.FriendlyNameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("item.FriendlyNameRequired"));
 	shape.description_item = Yup.string()
 		.nullable()
 		.optional()
-		.max(configsStore.getConfigByKey("max_length_description"), t("item.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }));
+		.max(configsStore.getConfigNumber("max_length_description"), t("item.DescriptionMaxLength", { count: configsStore.getConfigNumber("max_length_description") }));
 	shape.threshold_min_item = Yup.number()
 		.min(0, t("item.SeuilMinMin"))
 		.typeError(t("item.SeuilMinType"))
 		.required(t("item.SeuilMinRequired"));
 	shape.img_file = Yup.mixed()
 		.nullable()
-		.test("fileSize", t("item.ImageSize") + " " + configsStore.getConfigByKey("max_size_image_in_mb") + "Mo", (value: any) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_image_in_mb"))) * 1024 * 1024);
+		.test("fileSize", t("item.ImageSize") + " " + configsStore.getConfigNumber("max_size_image_in_mb") + "Mo", (value) => !value || (value as File).size <= (Number(configsStore.getConfigNumber("max_size_image_in_mb"))) * 1024 * 1024);
 	return Yup.object().shape(shape);
 };
 
 const schemaAddDocument = Yup.object().shape({
 	name_item_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("item.DocumentNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("item.DocumentNameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("item.DocumentNameRequired")),
 	document: Yup.mixed()
 		.required(t("item.DocumentRequired"))
-		.test("fileSize", t("item.DocumentSize", { count: configsStore.getConfigByKey("max_size_document_in_mb") }), (value: any) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
+		.test("fileSize", t("item.DocumentSize", { count: configsStore.getConfigNumber("max_size_document_in_mb") }), (value) => !value || (value as File).size <= (Number(configsStore.getConfigNumber("max_size_document_in_mb"))) * 1024 * 1024),
 });
 const schemaEditDocument = Yup.object().shape({
 	name_item_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("item.DocumentNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("item.DocumentNameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("item.DocumentNameRequired")),
 });
 
@@ -552,7 +553,7 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items");
 	</div>
 	<div v-if="itemsStore.items[itemId] || isNewId(itemId)" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="itemsStore.itemEdition[itemId]">
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-edition="itemsStore.itemEdition[itemId]" :store-data="itemsStore.items[itemId]">
 				<template #img_file>
 					<div class="flex flex-col items-center gap-2">
 						<div class="flex justify-center items-center cursor-pointer"
@@ -560,17 +561,17 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items");
 							@click="triggerImageInput">
 							<img v-if="localImagePreviewUrl" :src="localImagePreviewUrl" alt="Preview"
 								class="w-48 h-48 object-cover rounded" />
-							<img v-else-if="!itemsStore.itemEdition[itemId]?.unset_img_item && itemsStore.itemEdition[itemId]?.url_thumbnail_item && itemsStore.thumbnailsURL[itemId]"
+							<img v-else-if="!itemsStore.itemEdition[itemId]?.unset_img_item && itemsStore.items[itemId]?.url_thumbnail_item && itemsStore.thumbnailsURL[itemId]"
 								:src="itemsStore.thumbnailsURL[itemId]" alt="Main"
 								class="w-48 h-48 object-cover rounded" />
-							<span v-else-if="!itemsStore.itemEdition[itemId]?.unset_img_item && itemsStore.itemEdition[itemId]?.url_thumbnail_item"
+							<span v-else-if="!itemsStore.itemEdition[itemId]?.unset_img_item && itemsStore.items[itemId]?.url_thumbnail_item"
 								class="w-48 h-48 object-cover rounded flex items-center justify-center">
 								{{ $t('item.Loading') }}
 							</span>
 							<img v-else src="../assets/nopicture.webp" alt="Not Found"
 								class="w-48 h-48 object-cover rounded" />
 						</div>
-						<button v-if="localImagePreviewUrl || (!itemsStore.itemEdition[itemId]?.unset_img_item && itemsStore.itemEdition[itemId]?.url_thumbnail_item)"
+						<button v-if="localImagePreviewUrl || (!itemsStore.itemEdition[itemId]?.unset_img_item && itemsStore.items[itemId]?.url_thumbnail_item)"
 							type="button" @click="removeImage"
 							class="text-sm text-red-500 hover:text-red-600">
 							{{ $t('item.ImageRemove') }}
@@ -580,8 +581,8 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items");
 				</template>
 			</FormContainer>
 			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :ready-store="itemsStore.itemTagReady[itemId] || {}" :tags-store="tagsStore.tags" :can-edit="authStore.hasPermission([1, 2])"
-				:delete-function="(value: string | number) => tagDelete(value)"
-				:restore-function="(value: string | number) => tagRestore(value)"
+				:delete-function="(value: string) => tagDelete(value)"
+				:restore-function="(value: string) => tagRestore(value)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
 								, 'loading': tagsStore.tagsLoading, 'fetchFunction': (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)

@@ -6,6 +6,7 @@ import * as Yup from "yup";
 
 import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
+import type FormContainer from "@/components/FormContainer.vue";
 import { isNewId } from "@/utils";
 import { UserRole } from "@/enums";
 import { useConfigsStore, useUsersStore, useCommandsStore, useProjectsStore, useEquipementsStore, useAuthStore } from "@/stores";
@@ -14,6 +15,9 @@ import type { FilterLabel } from "@/types/filter";
 import type { FormLabel } from "@/types/form";
 import type { TableauLabel, TableauRowData } from "@/types/tableau";
 import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+import type { components } from "@/types/api";
+
+type CreateUserDto = components["schemas"]["CreateUserDto"];
 
 const { addNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 const { t } = useI18n();
@@ -28,14 +32,14 @@ const equipementsStore = useEquipementsStore();
 const authStore = useAuthStore();
 
 const userId = ref(route.params.id as string || authStore.user?.id_user);
-const preset = ref(route.query.preset || null);
+const preset = ref(typeof route.query.preset === "string" ? route.query.preset : null);
 
 // every new element has its own edition space in the store, so several tabs can create an element at the same time
 if (isNewId(userId.value)) {
 	userId.value = usersStore.getAvailableNewUserId();
 }
 
-const formContainer = ref<any>(null);
+const formContainer = ref<InstanceType<typeof FormContainer> | null>(null);
 
 if ((!authStore.hasPermission([1, 2])) && authStore.user?.id_user !== Number(userId.value)) {
 	addNotification({ message: t("user.noAccess"), type: "error" });
@@ -48,7 +52,7 @@ if ((!authStore.hasPermission([1, 2])) && authStore.user?.id_user !== Number(use
 
 async function fetchAllData() {
 	if (isNewId(userId.value)) {
-		usersStore.loadToEdition(userId.value, preset.value as any);
+		usersStore.loadToEdition(userId.value, preset.value);
 	} else {
 		usersStore.setLoadingEdition(userId.value, true);
 		try {
@@ -95,7 +99,7 @@ const userSave = async() => {
 			if (authStore.user?.isSSOUser) {
 				delete data.current_password_user;
 			}
-			const newId = await usersStore.createUser(data);
+			const newId = await usersStore.createUser(data as CreateUserDto);
 			usersStore.loadToEdition(newId);
 			addNotification({ message: t("user.Created"), type: "success" });
 			const tempId = userId.value;
@@ -135,7 +139,7 @@ const userDelete = async() => {
 	userDeleteModalShow.value = false;
 };
 
-const revokeToken = async(tokenId: string | number) => {
+const revokeToken = async(tokenId: string) => {
 	try {
 		await usersStore.updateToken(userId.value, tokenId, { "revoked_reason": "Revoked by user" });
 		usersStore.getTokenById(userId.value, tokenId);
@@ -147,18 +151,18 @@ const revokeToken = async(tokenId: string | number) => {
 
 const createSchema = () => {
 	const edition = usersStore.userEdition[userId.value];
-	const shape: any = {};
+	const shape: Record<string, Yup.AnySchema> = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
 	shape.name_user = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("user.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("user.NameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("user.NameRequired"));
 	shape.firstname_user = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("user.FirstNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("user.FirstNameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("user.FirstNameRequired"));
 	shape.email_user = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_email"), t("user.EmailMaxLength", { count: configsStore.getConfigByKey("max_length_email") }))
+		.max(configsStore.getConfigNumber("max_length_email"), t("user.EmailMaxLength", { count: configsStore.getConfigNumber("max_length_email") }))
 		.required(t("user.EmailRequired"))
 		.email(t("user.EmailInvalid"));
 	if (edition?.unset_check) {
@@ -262,10 +266,10 @@ async function checkExistingSubscription() {
 			return;
 		}
 		// Cherche si cet endpoint est déjà enregistré côté API pour cet utilisateur
-		await usersStore.getPushSubscriptionsByInterval(userId.value, 100, 0, [], "", "", true);
+		await usersStore.getPushSubscriptionsByInterval(userId.value, 100, 0, [], [], {}, true);
 		const subs = usersStore.pushSubscriptions[userId.value] || {};
-		const match: any = Object.values(subs).find((s: any) => s.endpoint === sub.endpoint);
-		pushSubscriptionId.value = match ? match.id_user_push_subscription : null;
+		const match = Object.values(subs).find((s) => s.endpoint === sub.endpoint);
+		pushSubscriptionId.value = match?.id_user_push_subscription ?? null;
 	} catch (e) {
 		pushSubscriptionId.value = null;
 	}
@@ -305,7 +309,7 @@ async function subscribePush() {
 			auth: json.keys.auth,
 			device_name: pushDeviceName.value || undefined,
 		});
-		pushSubscriptionId.value = created.id_user_push_subscription;
+		pushSubscriptionId.value = Number(created);
 		addNotification({ message: t("user.PushSubscribed"), type: "success" });
 	} catch (e) {
 		addNotification({ message: t("user.PushSubscribeError"), type: "error" });
@@ -326,7 +330,7 @@ async function unsubscribePush() {
 		if (sub) {
 			await sub.unsubscribe();
 		}
-		await usersStore.deletePushSubscription(userId.value, pushSubscriptionId.value);
+		await usersStore.deletePushSubscription(userId.value, String(pushSubscriptionId.value));
 		pushSubscriptionId.value = null;
 	} catch (e) {
 		addNotification({ message: t("user.PushDeleteError"), type: "error" });
@@ -364,7 +368,7 @@ const deletePushSubscriptionFromTable = async(subscriptionId: number) => {
 			}
 			pushSubscriptionId.value = null;
 		}
-		await usersStore.deletePushSubscription(userId.value, subscriptionId);
+		await usersStore.deletePushSubscription(userId.value, String(subscriptionId));
 		addNotification({ message: t("user.PushDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: t("user.PushDeleteError"), type: "error" });
@@ -403,7 +407,7 @@ onMounted(() => {
 	</div>
 	<div v-if="usersStore.users[userId] || isNewId(userId)" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="usersStore.userEdition[userId]" :store-user="authStore.user"
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-edition="usersStore.userEdition[userId]" :store-data="usersStore.users[userId]" :store-user="authStore.user"
 				:store-function="{ hasPermission: (validPerm: number[]) => authStore.hasPermission(validPerm) }"/>
 		</div>
 		<CollapsibleSection title="user.Participation" :permission="!isNewId(userId)">

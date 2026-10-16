@@ -6,6 +6,7 @@ import * as Yup from "yup";
 
 import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
+import type FormContainer from "@/components/FormContainer.vue";
 import { downloadFile, viewFile, isNewId } from "@/utils";
 import { ProjectStatus } from "@/enums";
 import { useConfigsStore, useProjectsStore, useUsersStore, useItemsStore, useProjectTagsStore, useAuthStore } from "@/stores";
@@ -28,18 +29,18 @@ const projectTagsStore = useProjectTagsStore();
 const authStore = useAuthStore();
 
 const projectId = ref(route.params.id as string);
-const preset = ref(route.query.preset || null);
+const preset = ref(typeof route.query.preset === "string" ? route.query.preset : null);
 
 // every new element has its own edition space in the store, so several tabs can create an element at the same time
 if (isNewId(projectId.value)) {
 	projectId.value = projectsStore.getAvailableNewProjectId();
 }
 
-const formContainer = ref<any>(null);
+const formContainer = ref<InstanceType<typeof FormContainer> | null>(null);
 
 async function fetchAllData() {
 	if (isNewId(projectId.value)) {
-		projectsStore.loadToEdition(projectId.value, preset.value as any);
+		projectsStore.loadToEdition(projectId.value, preset.value);
 	} else {
 		projectsStore.setLoadingEdition(projectId.value, true);
 		try {
@@ -61,19 +62,18 @@ onMounted(() => {
 onBeforeUnmount(() => {
 	projectsStore.clearEdition(projectId.value);
 });
-const dateDebut = computed(() => {
-	// don't return the GMT offset to avoid timezone issues
-	return projectsStore.projectEdition[projectId.value]?.date_start_project ? new Date(projectsStore.projectEdition[projectId.value].date_start_project).toISOString().replace(/\.\d+Z$/, "").replace("T", " ") : null;
-});
-const dateFin = computed(() => {
-	return projectsStore.projectEdition[projectId.value]?.date_end_project ? new Date(projectsStore.projectEdition[projectId.value].date_end_project).toISOString().replace(/\.\d+Z$/, "").replace("T", " ") : null;
-});
+// don't return the GMT offset to avoid timezone issues
+const formatProjectDate = (date: string | null | undefined) => {
+	return date ? new Date(date).toISOString().replace(/\.\d+Z$/, "").replace("T", " ") : null;
+};
+const dateDebut = computed(() => formatProjectDate(projectsStore.projects[projectId.value]?.date_start_project));
+const dateFin = computed(() => formatProjectDate(projectsStore.projects[projectId.value]?.date_end_project));
 
 // tag
 const filterTag = ref<FilterLabel[]>([
 	{ key: "name_project_tag", value: "", type: "text", label: "", placeholder: t("project.TagFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
-function tagSave(id_tag: string | number) {
+function tagSave(id_tag: number) {
 	try {
 		// re-adding a tag that is only pending deletion locally just cancels that pending deletion
 		if (projectsStore.projectTagProjectReady[projectId.value]?.[id_tag]?.status === "deleted") {
@@ -82,14 +82,14 @@ function tagSave(id_tag: string | number) {
 			return;
 		}
 		projectsStore.projectTagProjectEdition[projectId.value][id_tag] = { id_project_tag: id_tag };
-		projectsStore.valideProjectTagProjectEditionById(projectId.value, id_tag, "created");
+		projectsStore.valideProjectTagProjectEditionById(projectId.value, String(id_tag), "created");
 		delete projectsStore.projectTagProjectEdition[projectId.value][id_tag];
 		addNotification({ message: t("project.TagAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
 }
-function tagDelete(id_tag: string | number) {
+function tagDelete(id_tag: string) {
 	try {
 		// a tag that was only staged as a pending creation is simply dropped, nothing to push
 		if (projectsStore.projectTagProjectReady[projectId.value]?.[id_tag]?.status === "created") {
@@ -102,7 +102,7 @@ function tagDelete(id_tag: string | number) {
 		addNotification({ message: e, type: "error" });
 	}
 }
-function tagRestore(id_tag: string | number) {
+function tagRestore(id_tag: string) {
 	try {
 		delete projectsStore.projectTagProjectReady[projectId.value][id_tag];
 		addNotification({ message: t("project.TagRestored"), type: "success" });
@@ -199,7 +199,7 @@ const documentEdit = (row: TableauRowData) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		projectsStore.valideDocumentEditionById(projectId.value, row.id_project_document,
-			projectsStore.documentEdition[projectId.value][row.id_project_document]?.status === "created" ? "created" : "modified");
+			projectsStore.documentReady[projectId.value]?.[row.id_project_document]?.status === "created" ? "created" : "modified");
 		delete projectsStore.documentEdition[projectId.value][row.id_project_document];
 		addNotification({ message: t("project.DocumentUpdated"), type: "success" });
 	} catch (e) {
@@ -276,21 +276,21 @@ const filterItem = ref<FilterLabel[]>([
 
 const createSchema = () => {
 	const edition = projectsStore.projectEdition[projectId.value];
-	const shape: any = {};
+	const shape: Record<string, Yup.AnySchema> = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
 	shape.name_project = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("project.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("project.NameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("project.NameRequired"));
 	shape.description_project = Yup.string()
 		.nullable()
 		.optional()
-		.max(configsStore.getConfigByKey("max_length_description"), t("project.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }));
+		.max(configsStore.getConfigNumber("max_length_description"), t("project.DescriptionMaxLength", { count: configsStore.getConfigNumber("max_length_description") }));
 	shape.url_project = Yup.string()
 		.nullable()
 		.optional()
-		.max(configsStore.getConfigByKey("max_length_url"), t("project.UrlMaxLength", { count: configsStore.getConfigByKey("max_length_url") }))
+		.max(configsStore.getConfigNumber("max_length_url"), t("project.UrlMaxLength", { count: configsStore.getConfigNumber("max_length_url") }))
 		.url(t("project.UrlInvalid"));
 	shape.status_project = Yup.number()
 		.required(t("project.StatusRequired"));
@@ -299,15 +299,15 @@ const createSchema = () => {
 
 const schemaAddDocument = Yup.object().shape({
 	name_project_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("project.DocumentNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("project.DocumentNameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("project.DocumentNameRequired")),
 	document: Yup.mixed()
 		.required(t("project.DocumentRequired"))
-		.test("fileSize", t("project.DocumentSize", { count: configsStore.getConfigByKey("max_size_document_in_mb") }), (value: any) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
+		.test("fileSize", t("project.DocumentSize", { count: configsStore.getConfigNumber("max_size_document_in_mb") }), (value) => !value || (value as File).size <= (Number(configsStore.getConfigNumber("max_size_document_in_mb"))) * 1024 * 1024),
 });
 const schemaEditDocument = Yup.object().shape({
 	name_project_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("project.DocumentNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("project.DocumentNameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("project.DocumentNameRequired")),
 });
 
@@ -551,10 +551,10 @@ useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects");
 			mode="horizontal-bottom"
 		/>
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="projectsStore.projectEdition[projectId]"/>
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-edition="projectsStore.projectEdition[projectId]" :store-data="projectsStore.projects[projectId]"/>
 			<Tags :current-tags="projectsStore.projectTagProject[projectId] || {}" :ready-store="projectsStore.projectTagProjectReady[projectId] || {}" :tags-store="projectTagsStore.projectTags" :can-edit="authStore.hasPermission([2])"
-				:delete-function="(value: string | number) => tagDelete(value)"
-				:restore-function="(value: string | number) => tagRestore(value)"
+				:delete-function="(value: string) => tagDelete(value)"
+				:restore-function="(value: string) => tagRestore(value)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_project_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
 								, 'loading': projectTagsStore.projectTagsLoading, 'fetchFunction': (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectTagsStore.getProjectTagByInterval(limit, offset, expand, filter, sort, clear)
