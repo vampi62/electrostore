@@ -14,7 +14,7 @@
 			:store-data="filter?.storeData"
 			:store-key="filter?.storeKey"
 			:strict-mode="filter.strictMode"
-			@update-text="(value, mode) => updateText(index, value, mode)"
+			@update-text="(value, mode) => updateText(filter, value, mode)"
 		/>
 	</div>
 </template>
