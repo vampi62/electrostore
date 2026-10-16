@@ -40,7 +40,8 @@ type ExpandedUserDto = ReadExtendedUserDto & {
 	push_subscriptions?: ReadUserPushSubscriptionDto[] | null;
 };
 // the edition form also carries the password confirmation, which is never sent to the api
-type UserEdition = Edition<{ create: CreateUserDto, update: UpdateUserDto }> & { confirm_password_user?: string };
+// unset_check is the checkbox of the form that enables the password fields
+type UserEdition = Edition<{ create: CreateUserDto, update: UpdateUserDto }> & { confirm_password_user?: string; unset_check?: boolean };
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 

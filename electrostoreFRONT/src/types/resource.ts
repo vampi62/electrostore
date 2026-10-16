@@ -50,3 +50,6 @@ export type Edition<T extends Pick<EntityTypes, "create" | "update">> = {
 	isFormData?: boolean;
 	loading?: boolean;
 } & PartialBody<NonNullable<T["create"]>> & PartialBody<NonNullable<T["update"]>>;
+
+// The generated multipart dtos type the files as string (binary), the fields K hold a File.
+export type WithFile<T, K extends keyof T> = { [P in keyof T]: P extends K ? Exclude<T[P], string> | File : T[P] };

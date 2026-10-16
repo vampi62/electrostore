@@ -6,7 +6,7 @@ import { isNewId } from "@/utils";
 import { useUsersStore, useItemsStore, useProjectTagsStore } from "@/stores";
 
 import type { StoreGeneric } from "pinia";
-import type { Ready, Edition } from "@/types/resource";
+import type { Ready, Edition, WithFile } from "@/types/resource";
 import type { components, paths } from "@/types/api";
 type ReadProjectDto = components["schemas"]["ReadProjectDto"];
 type ReadExtendedProjectDto = components["schemas"]["ReadExtendedProjectDto"];
@@ -19,7 +19,7 @@ type CreateProjectCommentByProjectDto = components["schemas"]["CreateProjectComm
 type UpdateProjectCommentDto = components["schemas"]["UpdateProjectCommentDto"];
 
 type ReadProjectDocumentDto = components["schemas"]["ReadProjectDocumentDto"];
-type CreateProjectDocumentByProjectDto = NonNullable<paths["/api/project/{id_project}/document"]["post"]["requestBody"]>["content"]["multipart/form-data"];
+type CreateProjectDocumentByProjectDto = WithFile<NonNullable<paths["/api/project/{id_project}/document"]["post"]["requestBody"]>["content"]["multipart/form-data"], "document">;
 type UpdateProjectDocumentDto = components["schemas"]["UpdateProjectDocumentDto"];
 
 type ReadProjectItemDto = components["schemas"]["ReadProjectItemDto"];

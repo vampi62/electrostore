@@ -25,7 +25,7 @@ export const useCarriersStore = defineStore("carriers", {
 		getCarrierByList: carrierResource.getByList,
 		getCarrierByInterval: carrierResource.getByInterval,
 		getCarrierById: carrierResource.getById,
-		loadToEdition(id: string, preset = null) {
+		loadToEdition(id: string, preset: string | null = null) {
 			if (!isNewId(id) && this.carriers[id]) {
 				this.carrierEdition[id] = {
 					loading: false,

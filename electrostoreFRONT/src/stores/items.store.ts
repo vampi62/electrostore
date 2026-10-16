@@ -6,15 +6,15 @@ import { isNewId } from "@/utils";
 import { useTagsStore, useStoresStore, useCommandsStore, useProjectsStore } from "@/stores";
 
 import type { StoreGeneric } from "pinia";
-import type { Ready, Edition } from "@/types/resource";
+import type { Ready, Edition, WithFile } from "@/types/resource";
 import type { components, paths } from "@/types/api";
 type ReadItemDto = components["schemas"]["ReadItemDto"];
 type ReadExtendedItemDto = components["schemas"]["ReadExtendedItemDto"];
-type CreateItemDto = NonNullable<paths["/api/item"]["post"]["requestBody"]>["content"]["multipart/form-data"];
-type UpdateItemDto = NonNullable<paths["/api/item/{id_item}"]["put"]["requestBody"]>["content"]["multipart/form-data"];
+type CreateItemDto = WithFile<NonNullable<paths["/api/item"]["post"]["requestBody"]>["content"]["multipart/form-data"], "img_file">;
+type UpdateItemDto = WithFile<NonNullable<paths["/api/item/{id_item}"]["put"]["requestBody"]>["content"]["multipart/form-data"], "img_file">;
 
 type ReadItemDocumentDto = components["schemas"]["ReadItemDocumentDto"];
-type CreateItemDocumentByItemDto = NonNullable<paths["/api/item/{id_item}/document"]["post"]["requestBody"]>["content"]["multipart/form-data"];
+type CreateItemDocumentByItemDto = WithFile<NonNullable<paths["/api/item/{id_item}/document"]["post"]["requestBody"]>["content"]["multipart/form-data"], "document">;
 type UpdateItemDocumentDto = components["schemas"]["UpdateItemDocumentDto"];
 
 type ReadItemBoxDto = components["schemas"]["ReadItemBoxDto"];

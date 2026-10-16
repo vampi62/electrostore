@@ -151,6 +151,12 @@ export const useConfigsStore = defineStore("configs",{
 			}
 			return null;
 		},
+		// numeric configs (max lengths and sizes), 0 when the config is unknown
+		getConfigNumber: (state) => (key: string): number => {
+			const configs = state.configs as unknown as Record<string, unknown>;
+			const defaults = state.defaultsConfig as unknown as Record<string, unknown>;
+			return Number(configs[key] || defaults[key] || 0);
+		},
 		getStatusByKey: (state) => (key: string) => {
 			const status = state.status as unknown as Record<string, unknown>;
 			if (status[key]) {

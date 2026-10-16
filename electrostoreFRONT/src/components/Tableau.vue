@@ -409,20 +409,21 @@ export default {
 					return true;
 				}
 				const elementValue = this.getDataValue(element, f.key);
+				const filterValue = String(f.value);
 				switch (f.compareMethod) {
 				case "==":
 					switch (f?.typeData || f.type) {
 					case "bool":
 						return elementValue === (f.value === "true");
 					case "number":
-						return Number.parseInt(elementValue) === Number.parseInt(f.value);
+						return Number.parseInt(elementValue) === Number.parseInt(filterValue);
 					case "string":
 						if (Array.isArray(elementValue)) {
 							return elementValue.some((item) =>
-								toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(f.value)),
+								toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(filterValue)),
 							);
 						}
-						return toLowerCaseWithoutAccents(elementValue) === toLowerCaseWithoutAccents(f.value);
+						return toLowerCaseWithoutAccents(elementValue) === toLowerCaseWithoutAccents(filterValue);
 					}
 					return elementValue === f.value;
 				case "=ge=":
@@ -432,10 +433,10 @@ export default {
 				case "=like=":
 					if (Array.isArray(elementValue)) {
 						return elementValue.some((item) =>
-							toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(f.value)),
+							toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(filterValue)),
 						);
 					}
-					return toLowerCaseWithoutAccents(elementValue).includes(toLowerCaseWithoutAccents(f.value));
+					return toLowerCaseWithoutAccents(elementValue).includes(toLowerCaseWithoutAccents(filterValue));
 				}
 			});
 		},

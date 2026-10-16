@@ -36,7 +36,7 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		getAvailableNewCronJobId: cronJobResource.getAvailableNewId,
 		updateCronJob: cronJobResource.update,
 		deleteCronJob: cronJobResource.remove,
-		loadToEdition(id: string, preset = null) {
+		loadToEdition(id: string, preset: string | null = null) {
 			if (!isNewId(id) && this.cronJobs[id]) {
 				this.cronJobEdition[id] = {
 					loading: false,

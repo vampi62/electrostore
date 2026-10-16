@@ -106,7 +106,7 @@ export default {
 			return (this.configsStore.getConfigByKey("allowed_audio_mime_types") as string[]) || [];
 		},
 		maxAudioSize(): number {
-			return (this.configsStore.getConfigByKey("max_size_audio_in_mb") as number) || 25;
+			return (this.configsStore.getConfigNumber("max_size_audio_in_mb") as number) || 25;
 		},
 		canSend(): boolean {
 			return !this.loading && !this.recording && (this.message.trim() !== "" || this.audioBlob !== null);

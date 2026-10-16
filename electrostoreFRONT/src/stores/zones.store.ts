@@ -6,12 +6,12 @@ import { isNewId } from "@/utils";
 import { useStoresStore } from "@/stores";
 
 import type { StoreGeneric } from "pinia";
-import type { Edition } from "@/types/resource";
+import type { Edition, WithFile } from "@/types/resource";
 import type { components, paths } from "@/types/api";
 type ReadZoneDto = components["schemas"]["ReadZoneDto"];
 type ReadExtendedZoneDto = components["schemas"]["ReadExtendedZoneDto"];
-type CreateZoneDto = NonNullable<paths["/api/zone"]["post"]["requestBody"]>["content"]["multipart/form-data"];
-type UpdateZoneDto = NonNullable<paths["/api/zone/{id_zone}"]["put"]["requestBody"]>["content"]["multipart/form-data"];
+type CreateZoneDto = WithFile<NonNullable<paths["/api/zone"]["post"]["requestBody"]>["content"]["multipart/form-data"], "img_file">;
+type UpdateZoneDto = WithFile<NonNullable<paths["/api/zone/{id_zone}"]["put"]["requestBody"]>["content"]["multipart/form-data"], "img_file">;
 type ReadStoreDto = components["schemas"]["ReadStoreDto"];
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;

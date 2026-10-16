@@ -141,7 +141,7 @@ export default {
 			return (this.configsStore.getConfigByKey(key) as string[] | undefined) || [];
 		},
 		maxSizeInMb(): number {
-			return (this.configsStore.getConfigByKey("max_size_" + this.fileType + "_in_mb") as number | undefined) || 5;
+			return (this.configsStore.getConfigNumber("max_size_" + this.fileType + "_in_mb") as number | undefined) || 5;
 		},
 	},
 	methods: {

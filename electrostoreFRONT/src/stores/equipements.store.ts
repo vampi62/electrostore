@@ -6,12 +6,12 @@ import { isNewId } from "@/utils";
 import { useTagsStore, useStoresStore, useUsersStore } from "@/stores";
 
 import type { StoreGeneric } from "pinia";
-import type { Ready, Edition } from "@/types/resource";
+import type { Ready, Edition, WithFile } from "@/types/resource";
 import type { components, paths } from "@/types/api";
 type ReadEquipementDto = components["schemas"]["ReadEquipementDto"];
 type ReadExtendedEquipementDto = components["schemas"]["ReadExtendedEquipementDto"];
-type CreateEquipementDto = NonNullable<paths["/api/equipement"]["post"]["requestBody"]>["content"]["multipart/form-data"];
-type UpdateEquipementDto = NonNullable<paths["/api/equipement/{id_equipement}"]["put"]["requestBody"]>["content"]["multipart/form-data"];
+type CreateEquipementDto = WithFile<NonNullable<paths["/api/equipement"]["post"]["requestBody"]>["content"]["multipart/form-data"], "img_file">;
+type UpdateEquipementDto = WithFile<NonNullable<paths["/api/equipement/{id_equipement}"]["put"]["requestBody"]>["content"]["multipart/form-data"], "img_file">;
 
 type ReadEquipementTagDto = components["schemas"]["ReadEquipementTagDto"];
 type ReadExtendedEquipementTagDto = components["schemas"]["ReadExtendedEquipementTagDto"];
@@ -22,7 +22,7 @@ type ReadExtendedEquipementBoxDto = components["schemas"]["ReadExtendedEquipemen
 type CreateEquipementBoxByEquipementDto = components["schemas"]["CreateEquipementBoxByEquipementDto"];
 
 type ReadEquipementDocumentDto = components["schemas"]["ReadEquipementDocumentDto"];
-type CreateEquipementDocumentByEquipementDto = NonNullable<paths["/api/equipement/{id_equipement}/document"]["post"]["requestBody"]>["content"]["multipart/form-data"];
+type CreateEquipementDocumentByEquipementDto = WithFile<NonNullable<paths["/api/equipement/{id_equipement}/document"]["post"]["requestBody"]>["content"]["multipart/form-data"], "document">;
 type UpdateEquipementDocumentByEquipementDto = components["schemas"]["UpdateEquipementDocumentDto"];
 
 type ReadEquipementMaintenanceDto = components["schemas"]["ReadEquipementMaintenanceDto"];
@@ -222,7 +222,7 @@ export const useEquipementsStore = defineStore("equipements", {
 		getAvailableNewEquipementId: equipementResource.getAvailableNewId,
 		updateEquipement: equipementResource.update,
 		deleteEquipement: equipementResource.remove,
-		loadToEdition(id: string, preset = null) {
+		loadToEdition(id: string, preset: string | null = null) {
 			if (!isNewId(id) && this.equipements[id]) {
 				this.equipementEdition[id] = {
 					loading: false,

@@ -6,7 +6,7 @@ import { isNewId } from "@/utils";
 import { useUsersStore, useCarriersStore } from "@/stores";
 
 import type { StoreGeneric } from "pinia";
-import type { Ready, Edition } from "@/types/resource";
+import type { Ready, Edition, WithFile } from "@/types/resource";
 import type { components, paths } from "@/types/api";
 type ReadCommandDto = components["schemas"]["ReadCommandDto"];
 type ReadExtendedCommandDto = components["schemas"]["ReadExtendedCommandDto"];
@@ -19,7 +19,7 @@ type CreateCommandCommentByCommandDto = components["schemas"]["CreateCommandComm
 type UpdateCommandCommentDto = components["schemas"]["UpdateCommandCommentDto"];
 
 type ReadCommandDocumentDto = components["schemas"]["ReadCommandDocumentDto"];
-type CreateCommandDocumentByCommandDto = NonNullable<paths["/api/command/{id_command}/document"]["post"]["requestBody"]>["content"]["multipart/form-data"];
+type CreateCommandDocumentByCommandDto = WithFile<NonNullable<paths["/api/command/{id_command}/document"]["post"]["requestBody"]>["content"]["multipart/form-data"], "document">;
 type UpdateCommandDocumentDto = components["schemas"]["UpdateCommandDocumentDto"];
 
 type ReadCommandItemDto = components["schemas"]["ReadCommandItemDto"];
@@ -171,7 +171,7 @@ export const useCommandsStore = defineStore("commands",{
 
 		historyTotalCount: {} as Record<string, number>,
 		historyLoading: false,
-		history: {} as Record<string, Record<string, Record<string, ReadCommandHistoryDto>>>,
+		history: {} as Record<string, Record<string, ReadCommandHistoryDto>>,
 	}),
 	actions: {
 		getCommandByList: commandResource.getByList,
@@ -181,7 +181,7 @@ export const useCommandsStore = defineStore("commands",{
 		getAvailableNewCommandId: commandResource.getAvailableNewId,
 		updateCommand: commandResource.update,
 		deleteCommand: commandResource.remove,
-		loadToEdition(id: string, preset = null) {
+		loadToEdition(id: string, preset: string | null = null) {
 			if (!isNewId(id) && this.commands[id]) {
 				this.commandEdition[id] = {
 					price_command: this.commands[id].price_command,

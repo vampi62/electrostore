@@ -226,7 +226,7 @@ export default {
 		schemaComment() {
 			return Yup.object().shape({
 				[this.meta.contenu]: Yup.string()
-					.max(this.storeConfig.getConfigByKey("max_length_comment"), this.$t("components.VModalCommentMaxLength") + " " + this.storeConfig.getConfigByKey("max_length_comment") + this.$t("common.VAllCaracters"))
+					.max(this.storeConfig.getConfigNumber("max_length_comment"), this.$t("components.VModalCommentMaxLength") + " " + this.storeConfig.getConfigNumber("max_length_comment") + this.$t("common.VAllCaracters"))
 					.required(this.$t("components.VModalCommentRequired")),
 			});
 		},
