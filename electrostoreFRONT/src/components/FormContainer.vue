@@ -23,10 +23,9 @@
 						<label v-else class="font-semibold sm:min-w-[150px]" :for="`form-input-${$.uid}-${field.key}`">{{ field.text }}</label>
 						<div class="flex flex-col flex-1 w-full relative">
 							<template v-if="field.type === 'checkbox'">
-								<Field :id="`form-input-${$.uid}-${field.key}`" :name="field.key" v-slot="{ is_checked_custom }: any">
+								<Field :id="`form-input-${$.uid}-${field.key}`" :name="field.key">
 									<input
 										v-model="storeData[field.key]"
-										v-bind="is_checked_custom"
 										type="checkbox"
 										:value="storeData[field.key]"
 										class="form-checkbox h-5 w-5 text-blue-600"
@@ -256,17 +255,17 @@ export default {
 			required: true,
 		},
 		storeData: {
-			type: Object as PropType<Record<string, any>>,
+			type: Object as PropType<StateTree>,
 			default: () => ({}),
-			// This should be an object containing the data for the form fields
+			// This should be the edition of the element, it contains the data for the form fields
 		},
 		storeUser: {
-			type: Object as PropType<Record<string, any>>,
+			type: Object as PropType<StateTree>,
 			default: () => ({}),
 			// This should be an object containing the user session data
 		},
 		storeFunction: {
-			type: Object as PropType<Record<string, any>>,
+			type: Object as PropType<FormFunction>,
 			default: () => ({}),
 			// This should be an object containing any helper functions that might be needed in conditions
 		},
