@@ -8,7 +8,7 @@
 				class="border border-gray-300 rounded px-2 py-1"
 				:class="[classCss, label.length > 0 ? 'mr-2' : '']"
 				:disabled="disabled"
-				@change="$emit('updateText', ($event.target as HTMLSelectElement).value)">
+				@change="$emit('updateText', [($event.target as HTMLSelectElement).value, ($event.target as HTMLSelectElement).value])">
 				<option value=""></option>
 				<template v-if="options">
 					<option v-for="option in filterOption" :key="option.id" :value="option.id" :selected="preset === option.id">{{ option.value }}
@@ -95,8 +95,12 @@
 <script lang="ts">
 import { nextTick } from "vue";
 import type { PropType } from "vue";
+import type { StateTree } from "pinia";
 import { debounce } from "lodash-es";
 import { toLowerCaseWithoutAccents } from "@/utils";
+import type { FetchFunction, FetchPage } from "@/types/fetch";
+import type { FilterOption, FilterStrictMode, FilterValue } from "@/types/filter";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 export default {
 	name: "Filter",
 	props: {
@@ -125,7 +129,7 @@ export default {
 			default: "",
 		},
 		preset: {
-			type: [String, Number, Boolean],
+			type: [String, Number, Boolean] as PropType<FilterValue>,
 			required: false,
 			// This should be the value to preset the input with
 			default: "",
@@ -137,7 +141,7 @@ export default {
 			default: "",
 		},
 		options: {
-			type: Array as PropType<any[]>,
+			type: Array as PropType<FilterOption[]>,
 			required: false,
 			// This should be an array of options for select/datalist input
 			// e.g., [{id: 'id1', value: 'Option 1'}, {id: 'id2', value: 'Option 2'}]
@@ -146,38 +150,38 @@ export default {
 			default: () => ([]),
 		},
 		sortOptions: {
-			type: String,
+			type: String as PropType<"asc" | "desc">,
 			required: false,
 			// This should be a string indicating how to sort the options, e.g., 'asc' or 'desc'
-			default: null,
+			default: undefined,
 		},
 		fetchOptions: {
-			type: Function,
+			type: Function as PropType<FetchFunction>,
 			required: false,
-			// This should be a function that returns a promise resolving to an array of options
-			// e.g., () => fetch('/api/options').then(res => res.json())
-			default: (limit: number, offset: number, expand: any, filter: any, sort: any, clear: boolean) => { 
+			// This should be a function that loads the options of a datalist in the store of storeData
+			// e.g., (limit, offset, expand, filter, sort, clear) => store.fetchData(limit, offset, expand, filter, sort, clear)
+			default: (): FetchPage => {
 				return [0, false];
 			},
 		},
 		storeData: {
-			type: Object,
+			type: Object as PropType<StateTree>,
 			required: false,
-			// This should be a pinia store whose data will be received by the fetchOptions function
-			default: null,
+			// This should be the state of a pinia store whose data are the options, loaded by the fetchOptions function
+			default: undefined,
 		},
 		storeKey: {
 			type: String,
 			required: false,
-			// This should be the key in storeData to pass to fetchOptions function
-			default: null,
+			// This should be the key in storeData of the value displayed, it is also the key sent to fetchOptions function
+			default: undefined,
 		},
 		strictMode: {
-			type: Object,
+			type: Object as PropType<FilterStrictMode>,
 			required: false,
 			// This should be an object containing the configuration for strict mode
 			// e.g., { key: 'region_signaleur.id', storeKey: 'id', typeData: 'number' }
-			default: null,
+			default: undefined,
 		},
 	},
 	data() {
@@ -201,24 +205,21 @@ export default {
 				this.inputText = this.preset;
 			}
 		}
-		if (this.type === "datalist" && this.fetchOptions && this.storeData && this.storeKey) {
+		if (this.type === "datalist" && this.storeData && this.storeKey) {
 			await this.refetchData();
-			if (this.strictMode) {
-				const foundInStore = Object.values(this.storeData).find((o) => String(o[this.strictMode.storeKey]) === String(this.preset));
-				if (foundInStore) {
-					this.inputText = foundInStore[this.strictMode.storeKey];
-				}
-			} else {
-				const foundInStore = Object.values(this.storeData).find((o) => String(o[this.storeKey]) === String(this.preset));
-				if (foundInStore) {
-					this.inputText = foundInStore[this.storeKey];
-				}
+			const valueKey = this.strictMode ? (this.strictMode.storeKey ?? "") : this.storeKey;
+			const foundInStore = Object.values(this.storeData).find((o) => String(o[valueKey]) === String(this.preset));
+			if (foundInStore) {
+				this.inputText = foundInStore[valueKey];
 			}
 		}
 	},
-	emits: ["updateText"],
+	emits: {
+		// value is [value, displayed text], mode "select" is sent when an option of a strictMode filter is chosen
+		updateText: (_value: [FilterValue, FilterValue], _mode?: "text" | "select") => true,
+	},
 	computed: {
-		filterOption() {
+		filterOption(): FilterOption[] {
 			if (!this.options) {
 				return [];
 			}
@@ -237,19 +238,19 @@ export default {
 			}
 			return result;
 		},
-		filterStoreOption() {
+		// [value, displayed text] of each element of storeData
+		filterStoreOption(): [string | number, string][] {
 			if (!this.storeData || !this.storeKey) {
 				return [];
 			}
-			let result = Object.entries(this.storeData).filter(([index, element]) => {
+			const storeKey = this.storeKey;
+			const valueKey = this.strictMode ? (this.strictMode.storeKey ?? "") : storeKey;
+			let result = Object.values(this.storeData).filter((element) => {
 				if (this.inputText !== null && this.inputText !== "") {
-					return toLowerCaseWithoutAccents(element[this.storeKey]).includes(toLowerCaseWithoutAccents(String(this.inputText)));
+					return toLowerCaseWithoutAccents(element[storeKey]).includes(toLowerCaseWithoutAccents(String(this.inputText)));
 				}
 				return true;
-			}).map(([index, element]) => {
-				const idValue = this.strictMode ? element[this.strictMode.storeKey] : element[this.storeKey];
-				return [idValue, element[this.storeKey]];
-			});
+			}).map((element): [string | number, string] => [element[valueKey], element[storeKey]]);
 			if (this.sortOptions) {
 				result = result.slice().sort((a, b) => {
 					const aVal = toLowerCaseWithoutAccents(String(a[1]));
@@ -261,7 +262,7 @@ export default {
 		},
 	},
 	methods: {
-		selectOption(index: number, option: any){
+		selectOption(index: string | number, option: string){
 			this.inputText = option;
 			this.isOpen = false;
 			if (this.strictMode) {
@@ -317,14 +318,14 @@ export default {
 			}
 		},
 		async refetchData() {
-			const filter = [{
-				key: this.storeKey,
+			const filter: RSQLFilter[] = [{
+				key: this.storeKey ?? "",
 				compareMethod: "=like=",
 				value: this.inputText,
 			}];
-			const sort = {
+			const sort: RSQLSort = {
 				key: this.storeKey,
-				order: "asc" as const,
+				order: "asc",
 			};
 			await this.fetchOptions(10, 0, [], filter, sort, false);
 		},

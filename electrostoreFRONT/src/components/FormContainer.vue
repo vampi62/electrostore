@@ -240,13 +240,19 @@
 <script lang="ts">
 import { Form, Field } from "vee-validate";
 import type { PropType } from "vue";
+import type { StateTree } from "pinia";
 import { debounce } from "lodash-es";
-import type { FormLabel } from "@/types/form";
+import type { FormFunction, FormLabel, FormSchema } from "@/types/form";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+
+// [value, label, disabled, hidden] of an option
+type SortedOption = [string, string, boolean, boolean];
+
 export default {
 	name: "FormContainer",
 	props: {
 		schemaBuilder: {
-			type: Function,
+			type: Function as PropType<() => FormSchema>,
 			required: true,
 			// This function should return a Yup validation schema based on the form fields
 		},
@@ -290,12 +296,12 @@ export default {
 		Field,
 	},
 	methods: {
-		async validate() {
-			if (!this.$refs.formRef) {
+		async validate(): Promise<{ valid: boolean; errors: Partial<Record<string, string>> }> {
+			const form = this.$refs.formRef as InstanceType<typeof Form> | undefined;
+			if (!form) {
 				return { valid: false, errors: {} };
 			}
-			const result = await (this.$refs.formRef as any).validate();
-			return result;
+			return await form.validate();
 		},
 		evaluateCondition(condition: string): boolean {
 			try {
@@ -305,17 +311,23 @@ export default {
 				return false;
 			}
 		},
-		ensureArray(key: string): any[] {
+		// element of a ref, a ref used in a v-for is an array
+		refElement(name: string): HTMLElement | null {
+			const ref = this.$refs[name];
+			const element = Array.isArray(ref) ? ref[0] : ref;
+			return element instanceof HTMLElement ? element : null;
+		},
+		ensureArray(key: string): unknown[] {
 			if (!Array.isArray(this.storeData[key])) {
 				this.storeData[key] = [];
 			}
 			return this.storeData[key];
 		},
-		toggleMultiCheckbox(key: string, value: any) {
+		toggleMultiCheckbox(key: string, value: unknown) {
 			if (!Array.isArray(this.storeData[key])) {
 				this.storeData[key] = [];
 			}
-			
+
 			const index = this.storeData[key].indexOf(value);
 			if (index > -1) {
 				this.storeData[key].splice(index, 1);
@@ -339,7 +351,7 @@ export default {
 			if (!button) {
 				return;
 			}
-			
+
 			const rect = button.getBoundingClientRect();
 			this.dropdownPositions[key] = {
 				top: rect.bottom + window.scrollY,
@@ -347,11 +359,10 @@ export default {
 				width: rect.width,
 			};
 		},
-		recalculateDropdownPosition(key: any) {
-			const buttonRef = `dropdown-button-${key}`;
-			const button = this.$refs[buttonRef];
+		recalculateDropdownPosition(key: string) {
+			const button = this.refElement(`dropdown-button-${key}`);
 			if (button) {
-				this.updateDropdownPosition(key, Array.isArray(button) ? button[0] : button);
+				this.updateDropdownPosition(key, button);
 			}
 		},
 		getDropdownStyle(key: string) {
@@ -359,7 +370,7 @@ export default {
 			if (!pos) {
 				return {};
 			}
-			
+
 			return {
 				top: `${pos.top + 4}px`,
 				left: `${pos.left}px`,
@@ -370,60 +381,54 @@ export default {
 			// update the positions of all open dropdowns
 			for (const key of Object.keys(this.dropdownOpen)) {
 				if (this.dropdownOpen[key]) {
-					const buttonRef = `dropdown-button-${key}`;
-					const button = this.$refs[buttonRef];
+					const button = this.refElement(`dropdown-button-${key}`);
 					if (button) {
-						this.updateDropdownPosition(key, Array.isArray(button) ? button[0] : button);
+						this.updateDropdownPosition(key, button);
 					}
 				}
 			}
 			// update the positions of all open fetch-selects
 			for (const key of Object.keys(this.fetchSelectState)) {
 				if (this.fetchSelectState[key]?.isOpen) {
-					const inputRef = `fetch-select-input-${key}`;
-					const input = this.$refs[inputRef];
+					const input = this.refElement(`fetch-select-input-${key}`);
 					if (input) {
-						this.updateFetchSelectPosition(key, Array.isArray(input) ? input[0] : input);
+						this.updateFetchSelectPosition(key, input);
 					}
 				}
 			}
 		},
 		handleClickOutside(event: MouseEvent) {
 			// Close dropdowns if clicking outside
+			const target = event.target instanceof Node ? event.target : null;
 			for (const key of Object.keys(this.dropdownOpen)) {
 				if (this.dropdownOpen[key]) {
-					const buttonRef = `dropdown-button-${key}`;
-					const menuRef = `dropdown-menu-${key}`;
-					const button = this.$refs[buttonRef];
-					const menu = this.$refs[menuRef];
-					
-					const buttonEl = Array.isArray(button) ? button[0] : button;
-					const menuEl = Array.isArray(menu) ? menu[0] : menu;
-					
-					const clickedInsideButton = buttonEl && buttonEl.contains(event.target);
-					const clickedInsideMenu = menuEl && menuEl.contains(event.target);
-					
+					const buttonEl = this.refElement(`dropdown-button-${key}`);
+					const menuEl = this.refElement(`dropdown-menu-${key}`);
+
+					const clickedInsideButton = buttonEl && buttonEl.contains(target);
+					const clickedInsideMenu = menuEl && menuEl.contains(target);
+
 					if (!clickedInsideButton && !clickedInsideMenu) {
 						this.closeDropdown(key);
 					}
 				}
 			}
 		},
-		getSelectedOptions(field: any) {
+		getSelectedOptions(field: FormLabel): [string, string][] {
 			if (!this.storeData[field.key] || !Array.isArray(this.storeData[field.key])) {
 				return [];
 			}
-			
-			const selectedValues = this.storeData[field.key];
+
+			const selectedValues: unknown[] = this.storeData[field.key];
 			return this.getSortedOptions(field)
 				.filter(([index]) => selectedValues.includes(index))
-				.map(([index, label]) => [index, label]);
+				.map(([index, label]): [string, string] => [index, label]);
 		},
-		removeSelection(key: string, value: any) {
+		removeSelection(key: string, value: string) {
 			if (!Array.isArray(this.storeData[key])) {
 				return;
 			}
-			
+
 			const index = this.storeData[key].indexOf(value);
 			if (index > -1) {
 				this.storeData[key].splice(index, 1);
@@ -437,7 +442,7 @@ export default {
 				let initialText = "";
 				if (this.storeData[key] !== undefined && this.storeData[key] !== null && this.storeData[key] !== "" && field.fetchStore) {
 					const fetchValueKey = field.fetchValueKey || (field.fetchStoreKey ?? "");
-					const found = Object.values(field.fetchStore).find((item: Record<string, any>) => String(item[fetchValueKey]) === String(this.storeData[key]));
+					const found = Object.values(field.fetchStore).find((item) => String(item[fetchValueKey]) === String(this.storeData[key]));
 					if (found) {
 						initialText = found[field.fetchStoreKey ?? ""];
 					}
@@ -450,7 +455,7 @@ export default {
 				return "";
 			}
 			const fetchValueKey = field.fetchValueKey || (field.fetchStoreKey ?? "");
-			const found = Object.values(field.fetchStore).find((item: Record<string, any>) => String(item[fetchValueKey]) === String(this.storeData[field.key]));
+			const found = Object.values(field.fetchStore).find((item) => String(item[fetchValueKey]) === String(this.storeData[field.key]));
 			return found?.[field.fetchStoreKey ?? ""] || "";
 		},
 		isFetchSelectOpen(key: string): boolean {
@@ -494,15 +499,12 @@ export default {
 				this.fetchSelectState[key].isOpen = false;
 			}
 		},
-		selectFetchOption(field: FormLabel, value: any, label: string) {
+		selectFetchOption(field: FormLabel, value: string | number, label: string) {
 			this.storeData[field.key] = value;
 			this.fetchSelectState[field.key].inputText = label;
 			this.fetchSelectState[field.key].isOpen = false;
 			this.$nextTick(() => {
-				const input = this.$refs[`fetch-select-input-${field.key}`] as any;
-				if (input) {
-					(Array.isArray(input) ? input[0] : input).blur();
-				}
+				this.refElement(`fetch-select-input-${field.key}`)?.blur();
 			});
 		},
 		handleFetchSelectInput(field: FormLabel, event: Event) {
@@ -511,13 +513,12 @@ export default {
 			this.fetchSelectState[field.key].inputText = target.value;
 			this.fetchSelectState[field.key].isOpen = true;
 			if (!this.fetchSelectDebouncers[field.key]) {
-				this.fetchSelectDebouncers[field.key] = debounce(async(f) => {
+				this.fetchSelectDebouncers[field.key] = debounce(async(f: FormLabel) => {
 					await this.doFetchSelectSearch(f);
 					this.$nextTick(() => {
-						const inputRef = `fetch-select-input-${f.key}`;
-						const input = this.$refs[inputRef];
+						const input = this.refElement(`fetch-select-input-${f.key}`);
 						if (input) {
-							this.updateFetchSelectPosition(f.key, Array.isArray(input) ? input[0] : input);
+							this.updateFetchSelectPosition(f.key, input);
 						}
 					});
 				}, 300);
@@ -529,11 +530,11 @@ export default {
 				return;
 			}
 			const inputText = this.fetchSelectState[field.key]?.inputText || "";
-			const filter = [{ key: field.fetchStoreKey ?? "", compareMethod: "=like=", value: inputText }];
-			const sort = { key: field.fetchStoreKey ?? "", order: "asc" as const };
+			const filter: RSQLFilter[] = [{ key: field.fetchStoreKey ?? "", compareMethod: "=like=", value: inputText }];
+			const sort: RSQLSort = { key: field.fetchStoreKey ?? "", order: "asc" };
 			await field.fetchFunction(10, 0, [], filter, sort, false);
 		},
-		getFetchSelectOptions(field: FormLabel) {
+		getFetchSelectOptions(field: FormLabel): [string | number, string][] {
 			if (!field.fetchStore) {
 				return [];
 			}
@@ -541,35 +542,35 @@ export default {
 			return Object.values(field.fetchStore).filter((item) => {
 				const inputText = this.fetchSelectState[field.key]?.inputText || "";
 				return String(item[field.fetchStoreKey ?? ""]).toLowerCase().includes(inputText.toLowerCase());
-			}).map((item) => [item[fetchValueKey], item[field.fetchStoreKey ?? ""]]);
+			}).map((item): [string | number, string] => [item[fetchValueKey], item[field.fetchStoreKey ?? ""]]);
 		},
-		getSortedOptions(field: FormLabel) {
+		getSortedOptions(field: FormLabel): SortedOption[] {
 			if (!field.options) {
 				return [];
 			}
-			
-			const entries = Object.entries(field.options).map(([key, value]: [string, any]) => {
+
+			const entries = Object.entries(field.options).map(([key, value]): SortedOption => {
 				// Supporter les deux formats
 				if (typeof value === "object" && value !== null) {
 					return [key, value.label || "", value.disabled || false, value.hidden || false];
 				}
-				return [key, value, false, false]; // [key, label, disabled, hidden]
+				return [key, String(value), false, false]; // [key, label, disabled, hidden]
 			});
-			
+
 			if (!field?.sort) {
 				return entries;
 			}
-			
+
 			return entries.sort((a, b) => {
 				const valueA = a[1]; // label
 				const valueB = b[1]; // label
-				
+
 				if (field.sort === "asc") {
 					return String(valueA).localeCompare(String(valueB));
 				} else if (field.sort === "desc") {
 					return String(valueB).localeCompare(String(valueA));
 				}
-				
+
 				return 0;
 			});
 		},
@@ -580,7 +581,7 @@ export default {
 			dropdownOpen: {} as Record<string, boolean>,
 			dropdownPositions: {} as Record<string, { top: number; left: number; width: number }>,
 			fetchSelectState: {} as Record<string, { inputText: string; isOpen: boolean; position: { top: number; left: number; width: number } | null }>,
-			fetchSelectDebouncers: {} as Record<string, (...args: any[]) => void>,
+			fetchSelectDebouncers: {} as Record<string, (field: FormLabel) => void>,
 		};
 	},
 	mounted() {

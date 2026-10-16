@@ -132,8 +132,23 @@ import { useI18n } from "vue-i18n";
 import { StorePositionMode, LedBorderSide } from "@/enums";
 import type { PropType } from "vue";
 import type { useNotification } from "@/composables";
+import type { StateTree } from "pinia";
+import type { StoreGridElementType, StoreGridFunction } from "@/types/store";
+
+// nothing selected: key is an empty object, it is never equal to a led or a box
+function emptySelection() {
+	return {
+		type: null as StoreGridElementType | null,
+		// the led, the box, or the box of the border being selected
+		key: {} as StateTree,
+		// position of the box when it is selected, the moves and the resizes are applied from it
+		temp: { xstart_box: 0, ystart_box: 0, xend_box: 0, yend_box: 0, direction: null as string | null },
+		status: null as string | null,
+	};
+}
+
 export default {
-	name: "Tableau",
+	name: "Store",
 	mounted() {
 		document.addEventListener("click", this.hideMenu);
 		document.addEventListener("mouseup", this.stopDragging);
@@ -144,15 +159,15 @@ export default {
 	},
 	props: {
 		storeData: {
-			type: Object as PropType<Record<string, any>>,
+			type: Object as PropType<StateTree>,
 			required: true,
 		},
 		ledEdition: {
-			type: Object as PropType<Record<string, any>>,
+			type: Object as PropType<StateTree>,
 			required: true,
 		},
 		boxEdition: {
-			type: Object as PropType<Record<string, any>>,
+			type: Object as PropType<StateTree>,
 			required: true,
 		},
 		canEdit: {
@@ -160,14 +175,14 @@ export default {
 			required: true,
 		},
 		storeFunc: {
-			type: Object as PropType<Record<string, any>>,
+			type: Object as PropType<StoreGridFunction>,
 			required: true,
 		},
 	},
 	methods: {
 		addLed() {
 			const newId = this.getLastLedId() + 1;
-			const newLed: any = {
+			const newLed: StateTree = {
 				id_led: newId,
 				mqtt_id_led: this.getLastLedMqttId() + 1,
 				status: "new",
@@ -221,7 +236,7 @@ export default {
 			}
 			return max;
 		},
-		isNumber(value: any) {
+		isNumber(value: unknown) {
 			return typeof value === "number" && !Number.isNaN(value);
 		},
 		nearestSide(x: number, y: number, currentSide: number | null = null) {
@@ -244,7 +259,7 @@ export default {
 			distances.sort((a, b) => a.dist - b.dist);
 			return { side: distances[0].side, index: distances[0].index };
 		},
-		ledPixelStyle(led: Record<string, any>, isLabel = false) {
+		ledPixelStyle(led: StateTree, isLabel = false) {
 			const cellX = this.gridSize.cellSizeX;
 			const cellY = this.gridSize.cellSizeY;
 			const offsetLabelX = isLabel ? 10 : 0;
@@ -313,9 +328,9 @@ export default {
 				document.querySelector(".grid")?.classList.remove("cursor-s-resize");
 				document.querySelector(".grid")?.classList.remove("cursor-w-resize");
 			}
-			this.selectedElement = { type: null, key: null, temp: {}, status: null };
+			this.selectedElement = emptySelection();
 		},
-		selectLed(led: Record<string, any>, event: MouseEvent | null = null) {
+		selectLed(led: StateTree, event: MouseEvent | null = null) {
 			if (event) {
 				this.showMenuModal(event);
 			} // if right click show the menu
@@ -332,7 +347,7 @@ export default {
 			const ledHtml = (this.$refs["LED" + led.id_led] as HTMLElement[])[0];
 			ledHtml.classList.add("selectedElement");
 		},
-		selectBox(box: Record<string, any>, event: MouseEvent | null = null) {
+		selectBox(box: StateTree, event: MouseEvent | null = null) {
 			if (event) {
 				this.showMenuModal(event);
 			} // if right click show the menu
@@ -355,7 +370,7 @@ export default {
 			const boxHtml = (this.$refs["BOX" + box.id_box] as HTMLElement[])[0];
 			boxHtml.classList.add("selectedElement","diagonal-hatch");
 		},
-		selectBorder(border: any, direction: string | null) {
+		selectBorder(border: StateTree, direction: string | null) {
 			if (this.selectedElement.key === border) {
 				this.stopSelecting(); // unselect if click on the selectedElement element
 				return;
@@ -416,7 +431,7 @@ export default {
 				this.addNotification({ message: e, type: "error" });
 			}
 		},
-		startDragging(element: any, type: string, direction: string | null = null) {
+		startDragging(element: StateTree, type: StoreGridElementType, direction: string | null = null) {
 			if (!this.canEdit) {
 				return;
 			}
@@ -507,12 +522,12 @@ export default {
 				this.checkBoxConflict();
 			}
 		},
-		checkBoxConflict(validate = false) {
-			for (const box of Object.values(this.boxEdition) as any[]) {
+		checkBoxConflict(validate = false): boolean | undefined {
+			for (const box of Object.values<StateTree>(this.boxEdition)) {
 				(this.$refs["BOX" + box.id_box] as HTMLElement[])[0].classList.remove("conflict");
 			}
-			for (const box1 of Object.values(this.boxEdition) as any[]) {
-				for (const box2 of Object.values(this.boxEdition) as any[]) {
+			for (const box1 of Object.values<StateTree>(this.boxEdition)) {
+				for (const box2 of Object.values<StateTree>(this.boxEdition)) {
 					if (box1.id_box !== box2.id_box) {
 						if ((box1.xstart_box < box2.xend_box) &&
 						(box1.xend_box > box2.xstart_box) &&
@@ -527,7 +542,7 @@ export default {
 			if (validate) {
 				let BreakException = {};
 				try {
-					for (const box of Object.values(this.boxEdition) as any[]) {
+					for (const box of Object.values<StateTree>(this.boxEdition)) {
 						if ((this.$refs["BOX" + box.id_box] as HTMLElement[])[0].classList.contains("conflict")) {
 							this.addNotification({ message: this.t("store.BoxConflict"), type: "error" });
 							throw BreakException;
@@ -605,7 +620,7 @@ export default {
 			mouseClick: { X: 0, Y: 0 },
 			gridSize: { cellSizeX: 40, cellSizeY: 40 },
 			showLedId: true,
-			selectedElement: { type: null as string | null, key: null as any, temp: {} as any, status: null as string | null },
+			selectedElement: emptySelection(),
 			hasDragElement: false,
 		};
 	},

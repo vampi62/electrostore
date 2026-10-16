@@ -22,7 +22,7 @@
 <script lang="ts">
 import { defineAsyncComponent } from "vue";
 import type { PropType } from "vue";
-import type { FilterLabel } from "@/types/filter";
+import type { FilterLabel, FilterState, FilterValue } from "@/types/filter";
 export default {
 	name: "FilterContainer",
 	props: {
@@ -63,14 +63,14 @@ export default {
 					filter._originalTypeData = filter.typeData;
 				}
 				if (filter.disableLocalFilter) {
-					filter._disableLocalFilter = filter.disableLocalFilter;
+					filter._originalDisableLocalFilter = filter.disableLocalFilter;
 				}
 			}
 		}
 		if (this.saveState) {
 			const saved = sessionStorage.getItem(this._filterStateKey());
 			if (saved) {
-				const savedValues = JSON.parse(saved);
+				const savedValues: Record<string, FilterState> = JSON.parse(saved);
 				for (const filter of this.filters) {
 					if (filter.key in savedValues) {
 						//prevent malformed saved values from breaking the component
@@ -104,7 +104,7 @@ export default {
 			return `filter_state_${this.$route?.path || ""}_${this.stateKey || "default"}`;
 		},
 		_persistFilters() {
-			const values: Record<string, { value: any; preset: any; strictModeEnabled: boolean }> = {};
+			const values: Record<string, FilterState> = {};
 			for (const filter of this.filters) {
 				if (filter.key !== undefined) {
 					if (filter.strictMode) {
@@ -116,78 +116,76 @@ export default {
 			}
 			sessionStorage.setItem(this._filterStateKey(), JSON.stringify(values));
 		},
-		_validateValue(filter: any, value: any) {
+		_validateValue(filter: FilterLabel, rawValue: FilterValue) {
+			// the inputs give a string, the checkbox a boolean
+			const text = String(rawValue ?? "");
+			let value: FilterValue = rawValue;
 			switch (filter.type) {
 			case "number":
-				value = Number.parseFloat(value);
+				value = Number.parseFloat(text);
 				if (Number.isNaN(value)) {
 					value = "";
 				}
 				break;
 			case "text":
-				value = value.toLowerCase();
+				value = text.toLowerCase();
 				break;
 			case "select":
 			case "datalist":
 			case "hidden":
 				switch (filter?.typeData) {
 				case "number":
-					value = Number.parseInt(value);
+					value = Number.parseInt(text);
 					if (Number.isNaN(value)) {
 						value = "";
 					}
 					break;
 				case "float":
-					value = Number.parseFloat(value);
+					value = Number.parseFloat(text);
 					break;
 				case "string":
-					value = value.toLowerCase();
+					value = text.toLowerCase();
 					break;
 				case "bool":
-					value = value === "true";
+					value = text === "true";
 					break;
 				}
 				break;
 			case "checkbox":
-				value = value ? filter.valueIfTrue : filter.valueIfFalse;
+				value = rawValue ? filter.valueIfTrue : filter.valueIfFalse;
 				break;
 			}
 			filter.value = value;
 		},
-		updateText(key: string | number, value: any[], mode = "text") {
-			for (const [index, filter] of this.filters.entries()) {
-				if (index === key) {
-					if (mode === "select") {
-						if (filter.strictMode) {
-							filter.strictModeEnabled = true;
-							filter.key = filter.strictMode.key;
-							filter.compareMethod = "==";
-							filter.typeData = filter.strictMode.typeData;
-							filter.disableLocalFilter = filter.strictMode.disableLocalFilter || false;
-						}
-					}
-					if (mode === "text" || (mode === "select" && !filter?.strictModeEnabled)) {
-						if (filter.strictModeEnabled) {
-							filter.strictModeEnabled = false;
-							filter.key = filter._originalKey ?? filter.key;
-							filter.compareMethod = filter._originalCompareMethod ?? filter.compareMethod;
-							if (filter._originalTypeData) {
-								filter.typeData = filter._originalTypeData;
-							} else {
-								delete filter.typeData;
-							}
-							if (filter._disableLocalFilter) {
-								filter.disableLocalFilter = filter._disableLocalFilter;
-							} else {
-								delete filter.disableLocalFilter;
-							}
-						}
-					}
-					this._validateValue(filter, value[0]);
-					filter.preset = value[1] || null;
-					break;
+		updateText(filter: FilterLabel, value: [FilterValue, FilterValue], mode: "text" | "select" = "text") {
+			if (mode === "select") {
+				if (filter.strictMode) {
+					filter.strictModeEnabled = true;
+					filter.key = filter.strictMode.key;
+					filter.compareMethod = "==";
+					filter.typeData = filter.strictMode.typeData;
+					filter.disableLocalFilter = filter.strictMode.disableLocalFilter || false;
 				}
 			}
+			if (mode === "text" || (mode === "select" && !filter?.strictModeEnabled)) {
+				if (filter.strictModeEnabled) {
+					filter.strictModeEnabled = false;
+					filter.key = filter._originalKey ?? filter.key;
+					filter.compareMethod = filter._originalCompareMethod ?? filter.compareMethod;
+					if (filter._originalTypeData) {
+						filter.typeData = filter._originalTypeData;
+					} else {
+						delete filter.typeData;
+					}
+					if (filter._originalDisableLocalFilter) {
+						filter.disableLocalFilter = filter._originalDisableLocalFilter;
+					} else {
+						delete filter.disableLocalFilter;
+					}
+				}
+			}
+			this._validateValue(filter, value[0]);
+			filter.preset = value[1] || null;
 			if (this.saveState) {
 				this._persistFilters();
 			}
