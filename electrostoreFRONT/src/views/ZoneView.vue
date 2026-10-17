@@ -6,6 +6,7 @@ import * as Yup from "yup";
 
 import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
+import type FormContainer from "@/components/FormContainer.vue";
 import { isNewId } from "@/utils";
 import { useConfigsStore, useZonesStore, useAuthStore } from "@/stores";
 
@@ -21,18 +22,18 @@ const zonesStore = useZonesStore();
 const authStore = useAuthStore();
 
 const zoneId = ref(route.params.id as string);
-const preset = ref(route.query.preset || null);
+const preset = ref(typeof route.query.preset === "string" ? route.query.preset : null);
 
 // every new element has its own edition space in the store, so several tabs can create an element at the same time
 if (isNewId(zoneId.value)) {
 	zoneId.value = zonesStore.getAvailableNewZoneId();
 }
 
-const formContainer = ref<any>(null);
+const formContainer = ref<InstanceType<typeof FormContainer> | null>(null);
 
 async function fetchAllData() {
 	if (isNewId(zoneId.value)) {
-		zonesStore.loadToEdition(zoneId.value, preset.value as any);
+		zonesStore.loadToEdition(zoneId.value, preset.value);
 	} else {
 		zonesStore.setLoadingEdition(zoneId.value, true);
 		try {
@@ -82,7 +83,7 @@ const removeImage = () => {
 		URL.revokeObjectURL(localImagePreviewUrl.value);
 		localImagePreviewUrl.value = null;
 	}
-	zonesStore.zoneEdition[zoneId.value].img_file = null;
+	delete zonesStore.zoneEdition[zoneId.value].img_file;
 	zonesStore.zoneEdition[zoneId.value].unset_img_zone = true;
 };
 const resetImageSelection = () => {
@@ -145,17 +146,17 @@ const zoneDelete = async() => {
 
 const createSchema = () => {
 	const edition = zonesStore.zoneEdition[zoneId.value];
-	const shape: any = {};
+	const shape: Record<string, Yup.AnySchema> = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
 	shape.name_zone = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("zone.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("zone.NameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("zone.NameRequired"));
 	shape.description_zone = Yup.string()
 		.nullable()
 		.optional()
-		.max(configsStore.getConfigByKey("max_length_description"), t("zone.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }));
+		.max(configsStore.getConfigNumber("max_length_description"), t("zone.DescriptionMaxLength", { count: configsStore.getConfigNumber("max_length_description") }));
 	shape.xlength_zone = Yup.number()
 		.min(1, t("zone.XLengthMin"))
 		.typeError(t("zone.XLengthType"))
@@ -166,7 +167,7 @@ const createSchema = () => {
 		.required(t("zone.YLengthRequired"));
 	shape.img_file = Yup.mixed()
 		.nullable()
-		.test("fileSize", t("zone.ImageSize") + " " + configsStore.getConfigByKey("max_size_image_in_mb") + "Mo", (value: any) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_image_in_mb"))) * 1024 * 1024);
+		.test("fileSize", t("zone.ImageSize") + " " + configsStore.getConfigNumber("max_size_image_in_mb") + "Mo", (value) => !value || (value as File).size <= (Number(configsStore.getConfigNumber("max_size_image_in_mb"))) * 1024 * 1024);
 	return Yup.object().shape(shape);
 };
 
@@ -201,7 +202,7 @@ useTabGuard(zonesStore, () => zoneId.value, "zoneEdition", "zones");
 			@button-create="zoneSave" @button-update="zoneSave" @button-delete="zoneDeleteModalShow = true"/>
 	</div>
 	<div v-if="zonesStore.zones[zoneId] || isNewId(zoneId)" class="w-full">
-		<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="zonesStore.zoneEdition[zoneId]" :store-user="authStore.user"
+		<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-edition="zonesStore.zoneEdition[zoneId]" :store-data="zonesStore.zones[zoneId]" :store-user="authStore.user"
 			:store-function="{ hasPermission: (validPerm: number[]) => authStore.hasPermission(validPerm) }">
 			<template #img_file>
 				<div class="flex flex-col items-center gap-2">
@@ -210,17 +211,17 @@ useTabGuard(zonesStore, () => zoneId.value, "zoneEdition", "zones");
 						@click="triggerImageInput">
 						<img v-if="localImagePreviewUrl" :src="localImagePreviewUrl" alt="Preview"
 							class="w-48 h-48 object-cover rounded" />
-						<img v-else-if="!zonesStore.zoneEdition[zoneId]?.unset_img_zone && zonesStore.zoneEdition[zoneId]?.url_thumbnail_zone && zonesStore.thumbnailsURL[zoneId]"
+						<img v-else-if="!zonesStore.zoneEdition[zoneId]?.unset_img_zone && zonesStore.zones[zoneId]?.url_thumbnail_zone && zonesStore.thumbnailsURL[zoneId]"
 							:src="zonesStore.thumbnailsURL[zoneId]" alt="Main"
 							class="w-48 h-48 object-cover rounded" />
-						<span v-else-if="!zonesStore.zoneEdition[zoneId]?.unset_img_zone && zonesStore.zoneEdition[zoneId]?.url_thumbnail_zone"
+						<span v-else-if="!zonesStore.zoneEdition[zoneId]?.unset_img_zone && zonesStore.zones[zoneId]?.url_thumbnail_zone"
 							class="w-48 h-48 object-cover rounded flex items-center justify-center">
 							{{ $t('zone.Loading') }}
 						</span>
 						<img v-else src="../assets/nopicture.webp" alt="Not Found"
 							class="w-48 h-48 object-cover rounded" />
 					</div>
-					<button v-if="localImagePreviewUrl || (!zonesStore.zoneEdition[zoneId]?.unset_img_zone && zonesStore.zoneEdition[zoneId]?.url_thumbnail_zone)"
+					<button v-if="localImagePreviewUrl || (!zonesStore.zoneEdition[zoneId]?.unset_img_zone && zonesStore.zones[zoneId]?.url_thumbnail_zone)"
 						type="button" @click="removeImage"
 						class="text-sm text-red-500 hover:text-red-600">
 						{{ $t('zone.ImageRemove') }}

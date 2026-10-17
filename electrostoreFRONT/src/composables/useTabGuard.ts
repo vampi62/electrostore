@@ -5,12 +5,13 @@ import { isEditionDirty, snapshotEdition, applyDraft } from "@/helpers/editionDr
 import { useTabsStore } from "@/stores";
 import type { TabGuard } from "@/stores/tabs.store";
 import type { useNotification } from "./useNotification";
+import type { StoreGeneric } from "pinia";
 
 // Watches the unsaved changes of the view displayed in a tab (new element, edition different from the saved element, changes staged in the *Ready of the store):
 // the tab asks for a confirmation before being closed and the changes are kept in a draft when the application is closed.
 // The draft of the tab is restored once the edition of the view is loaded.
 // id: the id of the edited element (a new element has a "new-x" id), mainKey / sourceKey: keys of the store holding the edition and the saved elements.
-export function useTabGuard(store: any, id: () => string, mainKey: string, sourceKey: string) {
+export function useTabGuard(store: StoreGeneric, id: () => string, mainKey: string, sourceKey: string) {
 	const tabId = inject<string | null>("tabId", null);
 	if (!tabId) {
 		return;

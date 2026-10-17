@@ -6,6 +6,7 @@ import * as Yup from "yup";
 
 import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
+import type FormContainer from "@/components/FormContainer.vue";
 import { downloadFile, viewFile, isNewId } from "@/utils";
 import CommandStatus from "@/enums/CommandStatus";
 import TrackingStatus from "@/enums/TrackingStatus";
@@ -16,6 +17,7 @@ import type { FilterLabel } from "@/types/filter";
 import type { FormLabel } from "@/types/form";
 import type { TableauLabel, TableauRowData } from "@/types/tableau";
 import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+import type { RoadMapHistoryEntry } from "@/types/roadmap";
 
 const { addNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 const { t } = useI18n();
@@ -30,21 +32,21 @@ const carriersStore = useCarriersStore();
 const authStore = useAuthStore();
 
 const commandId = ref(route.params.id as string);
-const preset = ref(route.query.preset || null);
+const preset = ref(typeof route.query.preset === "string" ? route.query.preset : null);
 
 // every new element has its own edition space in the store, so several tabs can create an element at the same time
 if (isNewId(commandId.value)) {
 	commandId.value = commandsStore.getAvailableNewCommandId();
 }
 
-const formContainer = ref<any>(null);
+const formContainer = ref<InstanceType<typeof FormContainer> | null>(null);
 
 async function fetchAllData() {
 	if (isNewId(commandId.value)) {
 		if (Object.keys(carriersStore.carriers).length === 0) {
 			carriersStore.getCarrierByInterval(200, 0, [], [], {});
 		}
-		commandsStore.loadToEdition(commandId.value, preset.value as any);
+		commandsStore.loadToEdition(commandId.value, preset.value);
 	} else {
 		commandsStore.setLoadingEdition(commandId.value, true);
 		try {
@@ -183,7 +185,7 @@ const trackingRoadmapStepColors = {
 	Unknown: { completed: "bg-gray-400 text-white", current: "bg-gray-500 text-white", pending: "bg-gray-100 text-gray-500", border: "border-gray-500", badge: "bg-gray-300 text-gray-800", text: "text-gray-600", historyBorder: "border-gray-500" },
 };
 const trackingCurrentStep = computed(() => {
-	const status = commandsStore.commandEdition[commandId.value]?.last_status_command;
+	const status = commandsStore.commands[commandId.value]?.last_status_command;
 	if (status === null || status === undefined) {
 		return 0;
 	}
@@ -191,20 +193,22 @@ const trackingCurrentStep = computed(() => {
 	return Math.max(idx, 0);
 });
 const trackingHistory = computed(() => {
-	const result: Record<string, any[]> = {};
+	const result: Record<string, RoadMapHistoryEntry[]> = {};
 	const historyData = commandsStore.history[commandId.value];
 	if (!historyData) {
 		return result;
 	}
-	for (const entry of Object.values(historyData) as any[]) {
-		if (entry.status !== null && entry.status !== undefined) {
-			if (!result[entry.status]) {
-				result[entry.status] = [];
+	for (const entry of Object.values(historyData)) {
+		const status = entry.status_command_history;
+		if (status !== null && status !== undefined) {
+			if (!result[status]) {
+				result[status] = [];
 			}
-			result[entry.status].push({
-				action: entry.description || entry.sub_status || "",
+			const subStatus = entry.sub_status_command_history;
+			result[status].push({
+				action: entry.description_command_history || (subStatus === undefined ? "" : trackingSubStatusOptions[subStatus]) || "",
 				date: entry.event_time_utc || entry.created_at,
-				comment: entry.location || "",
+				comment: entry.location_command_history || "",
 			});
 		}
 	}
@@ -322,6 +326,7 @@ const trackingRefresh = async() => {
 };
 const trackingOptionalConfig = computed(() => {
 	const ed = commandsStore.commandEdition[commandId.value];
+	const command = commandsStore.commands[commandId.value];
 	const base = !isNewId(commandId.value) && !!ed?.tracking_number_command && !!ed?.id_carrier;
 	return [
 		{
@@ -335,7 +340,7 @@ const trackingOptionalConfig = computed(() => {
 		{
 			label: "command.TrackingStop",
 			action: trackingStop,
-			showCondition: base && !!ed?.is_tracking_validated && !!ed?.is_active,
+			showCondition: base && !!command?.is_tracking_validated && !!command?.is_active,
 			bgColor: "bg-orange-500",
 			hoverColor: "hover:bg-orange-600",
 			loading: trackingStopLoading.value,
@@ -343,7 +348,7 @@ const trackingOptionalConfig = computed(() => {
 		{
 			label: "command.TrackingResume",
 			action: trackingResume,
-			showCondition: base && !!ed?.is_tracking_validated && !ed?.is_active,
+			showCondition: base && !!command?.is_tracking_validated && !command?.is_active,
 			bgColor: "bg-green-500",
 			hoverColor: "hover:bg-green-600",
 			loading: trackingResumeLoading.value,
@@ -351,7 +356,7 @@ const trackingOptionalConfig = computed(() => {
 		{
 			label: "command.TrackingDelete",
 			action: trackingDelete,
-			showCondition: base && !!ed?.is_tracking_validated,
+			showCondition: base && !!command?.is_tracking_validated,
 			bgColor: "bg-red-500",
 			hoverColor: "hover:bg-red-600",
 			loading: trackingDeleteLoading.value,
@@ -359,7 +364,7 @@ const trackingOptionalConfig = computed(() => {
 		{
 			label: "command.TrackingRefresh",
 			action: trackingRefresh,
-			showCondition: base && !!ed?.is_tracking_validated && !!ed?.is_active,
+			showCondition: base && !!command?.is_tracking_validated && !!command?.is_active,
 			bgColor: "bg-blue-500",
 			hoverColor: "hover:bg-blue-600",
 			loading: trackingRefreshLoading.value,
@@ -389,7 +394,7 @@ const documentEdit = (row: TableauRowData) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		commandsStore.valideDocumentEditionById(commandId.value, row.id_command_document,
-			commandsStore.documentEdition[commandId.value][row.id_command_document]?.status === "created" ? "created" : "modified");
+			commandsStore.documentReady[commandId.value]?.[row.id_command_document]?.status === "created" ? "created" : "modified");
 		delete commandsStore.documentEdition[commandId.value][row.id_command_document];
 		addNotification({ message: t("command.DocumentUpdated"), type: "success" });
 	} catch (e) {
@@ -465,7 +470,7 @@ const filterItem = ref<FilterLabel[]>([
 
 const createSchema = () => {
 	const edition = commandsStore.commandEdition[commandId.value];
-	const shape: any = {};
+	const shape: Record<string, Yup.AnySchema> = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
@@ -477,7 +482,7 @@ const createSchema = () => {
 	shape.url_command = Yup.string()
 		.nullable()
 		.optional()
-		.max(configsStore.getConfigByKey("max_length_url"), t("command.UrlMaxLength", { count: configsStore.getConfigByKey("max_length_url") }))
+		.max(configsStore.getConfigNumber("max_length_url"), t("command.UrlMaxLength", { count: configsStore.getConfigNumber("max_length_url") }))
 		.url(t("command.UrlInvalid"));
 	shape.date_command = Yup.date()
 		.typeError(t("command.DateInvalid"))
@@ -488,7 +493,7 @@ const createSchema = () => {
 		.nullable()
 		.optional();
 	shape.tracking_number_command = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("command.TrackingNumberMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("command.TrackingNumberMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.nullable()
 		.optional();
 	return Yup.object().shape(shape);
@@ -496,15 +501,15 @@ const createSchema = () => {
 
 const schemaAddDocument = Yup.object().shape({
 	name_command_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("command.DocumentNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("command.DocumentNameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("command.DocumentNameRequired")),
 	document: Yup.mixed()
 		.required(t("command.DocumentRequired"))
-		.test("fileSize", t("command.DocumentSize", { count: configsStore.getConfigByKey("max_size_document_in_mb") }), (value: any) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
+		.test("fileSize", t("command.DocumentSize", { count: configsStore.getConfigNumber("max_size_document_in_mb") }), (value) => !value || (value as File).size <= (Number(configsStore.getConfigNumber("max_size_document_in_mb"))) * 1024 * 1024),
 });
 const schemaEditDocument = Yup.object().shape({
 	name_command_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("command.DocumentNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("command.DocumentNameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("command.DocumentNameRequired")),
 });
 const schemaItem = Yup.object().shape({
@@ -611,7 +616,6 @@ const labelTableauItem = ref<TableauLabel[]>([
 			action: (row) => {
 				commandsStore.itemEdition[commandId.value][row.id_item] = { ...row };
 			},
-			type: "button",
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
@@ -619,7 +623,6 @@ const labelTableauItem = ref<TableauLabel[]>([
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_item",
 			action: (row) => itemSave(commandsStore.itemEdition[commandId.value][row.id_item]),
-			type: "button",
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -630,7 +633,6 @@ const labelTableauItem = ref<TableauLabel[]>([
 			action: (row) => {
 				delete commandsStore.itemEdition[commandId.value][row.id_item];
 			},
-			type: "button",
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
 		},
 		{
@@ -638,7 +640,6 @@ const labelTableauItem = ref<TableauLabel[]>([
 			showCondition: "ready?.status === 'deleted'",
 			icon: "fa-solid fa-rotate-left",
 			action: (row) => itemRestore(row),
-			type: "button",
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
@@ -646,7 +647,6 @@ const labelTableauItem = ref<TableauLabel[]>([
 			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
 			action: (row) => itemDelete(row),
-			type: "button",
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
 		},
@@ -737,9 +737,9 @@ useTabGuard(commandsStore, () => commandId.value, "commandEdition", "commands");
 			mode="horizontal-bottom"
 		/>
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="commandsStore.commandEdition[commandId]" />
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-edition="commandsStore.commandEdition[commandId]" :store-data="commandsStore.commands[commandId]" />
 			<RoadMap
-				v-if="!isNewId(commandId) && commandsStore.commandEdition[commandId]?.last_status_command !== null && commandsStore.commandEdition[commandId]?.last_status_command !== undefined"
+				v-if="!isNewId(commandId) && commandsStore.commands[commandId]?.last_status_command !== null && commandsStore.commands[commandId]?.last_status_command !== undefined"
 				:steps="trackingRoadmapSteps"
 				:current-step="trackingCurrentStep"
 				:step-colors="trackingRoadmapStepColors"
@@ -791,7 +791,12 @@ useTabGuard(commandsStore, () => commandId.value, "commandEdition", "commands");
 				<Comment :meta="{ contenu: 'content_command_comment', key: 'id_command_comment', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[commandsStore.comments[commandId], usersStore.users]"
 					:store-user="authStore.user" :store-config="configsStore"
-					:store-function="{ create: (data: Record<string, any>) => commandsStore.createComment(commandId, data), update: (id: string | number, data: Record<string, any>) => commandsStore.updateComment(commandId, id, data), delete: (id: string | number) => commandsStore.deleteComment(commandId, id) }"
+					:store-edition="commandsStore.commentEdition[commandId]"
+					:store-function="{
+						create: (data: Record<string, string>) => commandsStore.createComment(commandId, { content_command_comment: data.content_command_comment }),
+						update: (id: string, data: Record<string, string>) => commandsStore.updateComment(commandId, id, { content_command_comment: data.content_command_comment }),
+						delete: (id: string) => commandsStore.deleteComment(commandId, id),
+					}"
 					:loading="commandsStore.commentsLoading" :texte-modal-delete="{ textTitle: 'command.CommentDeleteTitle', textP: 'command.CommentDeleteText' }"
 					:total-count="Number(commandsStore.commentsTotalCount[commandId] || 0)"
 					:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => commandsStore.getCommentByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"

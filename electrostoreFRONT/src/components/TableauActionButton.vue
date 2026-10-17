@@ -23,15 +23,17 @@
 </template>
 
 <script lang="ts">
+import type { PropType } from "vue";
+import type { TableauButton, TableauRowData } from "@/types/tableau";
 export default {
 	name: "TableauActionButton",
 	props: {
 		button: {
-			type: Object,
+			type: Object as PropType<TableauButton>,
 			required: true,
 		},
 		row: {
-			type: Object,
+			type: Object as PropType<TableauRowData>,
 			required: true,
 		},
 		disabled: {
@@ -59,12 +61,12 @@ export default {
 
 <style scoped>
 .disabled-button {
-	background-color: #9ca3af !important;
-	cursor: not-allowed !important;
+	background-color: #9ca3af;
+	cursor: not-allowed;
 	opacity: 0.6;
 }
 
 .disabled-button:hover {
-	background-color: #9ca3af !important;
+	background-color: #9ca3af;
 }
 </style>

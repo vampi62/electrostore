@@ -6,6 +6,7 @@ import * as Yup from "yup";
 
 import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
+import type FormContainer from "@/components/FormContainer.vue";
 import { isNewId } from "@/utils";
 import { useConfigsStore, useTagsStore, useStoresStore, useItemsStore, useEquipementsStore, useAuthStore } from "@/stores";
 
@@ -26,18 +27,18 @@ const equipementsStore = useEquipementsStore();
 const authStore = useAuthStore();
 
 const tagId = ref(route.params.id as string);
-const preset = ref(route.query.preset || null);
+const preset = ref(typeof route.query.preset === "string" ? route.query.preset : null);
 
 // every new element has its own edition space in the store, so several tabs can create an element at the same time
 if (isNewId(tagId.value)) {
 	tagId.value = tagsStore.getAvailableNewTagId();
 }
 
-const formContainer = ref<any>(null);
+const formContainer = ref<InstanceType<typeof FormContainer> | null>(null);
 
 async function fetchAllData() {
 	if (isNewId(tagId.value)) {
-		tagsStore.loadToEdition(tagId.value, preset.value as any);
+		tagsStore.loadToEdition(tagId.value, preset.value);
 	} else {
 		tagsStore.setLoadingEdition(tagId.value, true);
 		try {
@@ -222,7 +223,7 @@ const filterStore = ref<FilterLabel[]>([
 const boxModalShow = ref(false);
 const boxSave = async(box: TableauRowData) => {
 	try {
-		await tagsStore.createTagBox(tagId.value, box);
+		await tagsStore.createTagBox(tagId.value, { id_box: box.id_box });
 		addNotification({ message: t("tag.BoxAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -306,12 +307,12 @@ const filterEquipement = ref<FilterLabel[]>([
 
 const createSchema = () => {
 	const edition = tagsStore.tagEdition[tagId.value];
-	const shape: any = {};
+	const shape: Record<string, Yup.AnySchema> = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
 	shape.name_tag = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("tag.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("tag.NameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("tag.NameRequired"));
 	shape.weight_tag = Yup.number()
 		.min(0, t("tag.PoidsMin"))
@@ -517,7 +518,7 @@ useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags");
 	</div>
 	<div v-if="tagsStore.tags[tagId] || isNewId(tagId)" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="tagsStore.tagEdition[tagId]"/>
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-edition="tagsStore.tagEdition[tagId]" :store-data="tagsStore.tags[tagId]"/>
 		</div>
 		<CollapsibleSection title="tag.Items"
 			:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)">

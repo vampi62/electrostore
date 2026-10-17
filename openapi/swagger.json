@@ -21741,16 +21741,6 @@
           "is_enabled": {
             "type": "boolean",
             "nullable": true
-          },
-          "last_run_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "next_run_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
           }
         },
         "additionalProperties": false

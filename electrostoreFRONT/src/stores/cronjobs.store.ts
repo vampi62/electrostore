@@ -3,12 +3,16 @@ import { defineStore } from "pinia";
 import { fetchWrapper, createMainResource } from "@/helpers";
 import { isNewId } from "@/utils";
 
+import type { Edition } from "@/types/resource";
 import type { components } from "@/types/api";
 type ReadCronJobDto = components["schemas"]["ReadCronJobDto"];
+type CreateCronJobDto = components["schemas"]["CreateCronJobDto"];
+type UpdateCronJobDto = components["schemas"]["UpdateCronJobDto"];
+type ReadCronJobStatusDto = components["schemas"]["ReadCronJobStatusDto"];
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-const cronJobResource = createMainResource({
+const cronJobResource = createMainResource<{ readExtended: ReadCronJobDto, create: CreateCronJobDto, update: UpdateCronJobDto }>({
 	path: () => "/cronjob",
 	idField: "id_cronjob",
 	stateKey: "cronJobs",
@@ -22,7 +26,7 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		cronJobsLoading: false,
 		cronJobsTotalCount: 0,
 		cronJobs: {} as Record<string, ReadCronJobDto>,
-		cronJobEdition: {} as Record<string | number, any>,
+		cronJobEdition: {} as Record<string, Edition<{ create: CreateCronJobDto, update: UpdateCronJobDto }>>,
 	}),
 	actions: {
 		getCronJobByList: cronJobResource.getByList,
@@ -32,19 +36,15 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		getAvailableNewCronJobId: cronJobResource.getAvailableNewId,
 		updateCronJob: cronJobResource.update,
 		deleteCronJob: cronJobResource.remove,
-		loadToEdition(id: string, preset = null) {
+		loadToEdition(id: string, preset: string | null = null) {
 			if (!isNewId(id) && this.cronJobs[id]) {
 				this.cronJobEdition[id] = {
 					loading: false,
-					name_cronjob: this.cronJobs[id].name_cronjob,
-					cron_expression_cronjob: this.cronJobs[id].cron_expression_cronjob,
+					name_cronjob: this.cronJobs[id].name_cronjob ?? undefined,
+					cron_expression_cronjob: this.cronJobs[id].cron_expression_cronjob ?? undefined,
 					action_cronjob: this.cronJobs[id].action_cronjob,
 					params_cronjob: this.cronJobs[id].params_cronjob,
 					is_enabled: this.cronJobs[id].is_enabled,
-					last_run_at: this.cronJobs[id].last_run_at,
-					next_run_at: this.cronJobs[id].next_run_at,
-					status_cronjob: this.cronJobs[id].status_cronjob,
-					last_error_cronjob: this.cronJobs[id].last_error_cronjob,
 				};
 			} else {
 				this.cronJobEdition[id] = {
@@ -66,7 +66,7 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		async saveAllChanges(id: string) {
 			let realId = id;
 			if (isNewId(id)) {
-				realId = await this.createCronJob(this.cronJobEdition[id]);
+				realId = await this.createCronJob(this.cronJobEdition[id] as CreateCronJobDto);
 			} else {
 				await this.updateCronJob(id, this.cronJobEdition[id]);
 			}
@@ -74,7 +74,7 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		},
 
 		async getCronJobStatus(id: string) {
-			const status = await fetchWrapper.get({ url: `${baseUrl}/cronjob/${id}/status`, useToken: "access" });
+			const status = await fetchWrapper.get<ReadCronJobStatusDto>({ url: `${baseUrl}/cronjob/${id}/status`, useToken: "access" });
 			if (this.cronJobs[id]) {
 				this.cronJobs[id].status_cronjob = status.status_cronjob;
 				this.cronJobs[id].last_error_cronjob = status.last_error_cronjob;

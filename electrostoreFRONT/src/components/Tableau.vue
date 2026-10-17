@@ -52,8 +52,11 @@ import { useRouter } from "vue-router";
 import { debounce } from "lodash-es";
 import { toLowerCaseWithoutAccents } from "@/utils";
 import { useTabsStore } from "@/stores";
-import type { TableauLabel, TableauMeta, TableauCss } from "@/types/tableau";
+import type { TableauLabel, TableauMeta, TableauCss, TableauRowData } from "@/types/tableau";
+import type { FetchFunction, FetchPage, ListFetchFunction } from "@/types/fetch";
 import type { FilterLabel } from "@/types/filter";
+import type { FormSchema } from "@/types/form";
+import type { StateTree } from "pinia";
 
 export default {
 	name: "Tableau",
@@ -93,19 +96,19 @@ export default {
 			// linkEditionKey is a string to identify the key to link edition and ready stores to the main store, if not provided it will use the main key
 		},
 		storeData: {
-			type: Array as PropType<Record<number, any>[]>,
+			type: Array as PropType<StateTree[]>,
 			required: true,
 			// storeData is an array of objects, each object should contain the data for a row
 			// storeData[0] is the main data array
 		},
 		storeEdition: {
-			type: Object as PropType<Record<string, any>>,
+			type: Object as PropType<StateTree>,
 			required: false,
 			default: () => ({}),
 			// storeEdition is an object containing the store to edit a resource
 		},
 		storeReady: {
-			type: Object as PropType<Record<string, any>>,
+			type: Object as PropType<StateTree>,
 			required: false,
 			default: () => ({}),
 			// storeReady is an object containing the ready state of the store for editing a resource
@@ -127,15 +130,15 @@ export default {
 			default: 0,
 		},
 		fetchFunction: {
-			type: Function,
-			default: (limit: number, offset: number, expand: string[], filter: Record<string, any>, sort: Record<string, any>, clear: boolean) => {
+			type: Function as PropType<FetchFunction>,
+			default: (): FetchPage => {
 				return [0, false];
 			},
 			// fetchFunction is a function that will be called to fetch the data for the table, it should accept the parameters limit, offset, expand, filter, sort, and clear
 			// e.g. (limit, offset, expand, filter, sort, clear) => { store.fetchData(limit, offset, expand, filter, sort, clear) }
 		},
 		listFetchFunction: {
-			type: Array as PropType<any[]>,
+			type: Array as PropType<ListFetchFunction[]>,
 			default: () => [],
 		},
 		tableauCss: {
@@ -153,10 +156,10 @@ export default {
 			}),
 		},
 		schema: {
-			type: Object,
+			type: Object as PropType<FormSchema>,
 			required: false,
 			// schema for vee-validate, used for validation of the form inputs in TableauRow
-			default: () => ({}),
+			default: undefined,
 		},
 	},
 	components: {
@@ -180,7 +183,7 @@ export default {
 			// Filters are only ever evaluated against storeData[0]/storeReady values: rows that only
 			// exist in storeEdition are unvalidated drafts and are always shown regardless of filters.
 			const seen: Set<string> = new Set();
-			const rows: any[] = [];
+			const rows: TableauRowData[] = [];
 			this.collectSavedRows(seen, rows);
 			this.collectReadyOnlyRows(seen, rows);
 			this.collectEditionOnlyRows(seen, rows);
@@ -272,7 +275,7 @@ export default {
 			}
 		}
 		let intervalOffset = this.nextOffset;
-		[this.nextOffset, this.hasMore] = await this.fetchFunction(100, this.nextOffset, this.meta?.expand || [], this.filters, { key: this.sort.key ?? undefined, order: this.sort.order });
+		[this.nextOffset, this.hasMore] = await this.fetchFunction(100, this.nextOffset, this.meta?.expand || [], this.filters, { key: this.sort.key ?? undefined, order: this.sort.order }, false);
 		await this.refetchListData(intervalOffset, this.nextOffset);
 		this.isInitializing = false;
 		if (this.meta?.saveState && savedScrollTop > 0) {
@@ -298,7 +301,7 @@ export default {
 		},
 	},
 	methods: {
-		openRow(row: any) {
+		openRow(row: TableauRowData) {
 			if (!this.meta?.path) {
 				return;
 			}
@@ -312,11 +315,11 @@ export default {
 		_sessionStateKey() {
 			return `tableau_state_${this.$route?.path}_${this.meta?.stateKey || this.meta?.path + this.meta?.key || "default"}`;
 		},
-		_saveState(updates: Record<string, any>) {
+		_saveState(updates: Record<string, unknown>) {
 			const current = JSON.parse(sessionStorage.getItem(this._sessionStateKey()) || "{}");
 			sessionStorage.setItem(this._sessionStateKey(), JSON.stringify({ ...current, ...updates }));
 		},
-		rowStatusClass(row: Record<string, any>) {
+		rowStatusClass(row: TableauRowData) {
 			// Colors are driven by the ready entry's own status rather than by "is this id also in
 			// storeData[0]": some tables (e.g. a picker browsing a full catalog) always have the id in
 			// storeData[0] regardless of whether it's actually linked/pending, so presence alone can't
@@ -340,7 +343,7 @@ export default {
 			}
 			return "";
 		},
-		trClass(row: Record<string, any>) {
+		trClass(row: TableauRowData) {
 			const statusClass = this.rowStatusClass(row);
 			if (!statusClass) {
 				return this.mergedCss.tr;
@@ -351,30 +354,30 @@ export default {
 				.join(" ");
 			return `${baseWithoutBackground} ${statusClass}`.trim();
 		},
-		extractReadyFields(readyEntry: Record<string, any>) {
+		extractReadyFields(readyEntry: StateTree) {
 			// storeReady entries carry bookkeeping fields (status, isFormData, pushChange) alongside
 			// the actual resource fields, only the resource fields are relevant for display/filtering.
 			const { status, isFormData, pushChange, ...data } = readyEntry;
 			return data;
 		},
-		collectSavedRows(seen: Set<string>, rows: Record<string, any>[]) {
+		collectSavedRows(seen: Set<string>, rows: TableauRowData[]) {
 			if (!this.storeData[0]) {
 				return;
 			}
-			for (const [id, row] of Object.entries(this.storeData[0])) {
+			for (const [id, row] of Object.entries<TableauRowData>(this.storeData[0])) {
 				seen.add(id);
 				const readyEntry = this.storeReady?.[id];
-				const merged = readyEntry ? { ...(row as any), ...this.extractReadyFields(readyEntry) } : row;
+				const merged = readyEntry ? { ...row, ...this.extractReadyFields(readyEntry) } : row;
 				if (this.matchesFilters(merged)) {
 					rows.push(merged);
 				}
 			}
 		},
-		collectReadyOnlyRows(seen: Set<string>, rows: Record<string, any>[]) {
+		collectReadyOnlyRows(seen: Set<string>, rows: TableauRowData[]) {
 			if (!this.storeReady) {
 				return;
 			}
-			for (const [id, readyEntry] of Object.entries(this.storeReady)) {
+			for (const [id, readyEntry] of Object.entries<StateTree>(this.storeReady)) {
 				if (seen.has(id)) {
 					continue;
 				}
@@ -385,19 +388,19 @@ export default {
 				}
 			}
 		},
-		collectEditionOnlyRows(seen: Set<string>, rows: Record<string, any>[]) {
+		collectEditionOnlyRows(seen: Set<string>, rows: TableauRowData[]) {
 			if (!this.storeEdition) {
 				return;
 			}
-			for (const [id, edition] of Object.entries(this.storeEdition)) {
+			for (const [id, edition] of Object.entries<StateTree>(this.storeEdition)) {
 				if (seen.has(id)) {
 					continue;
 				}
 				seen.add(id);
-				rows.push({ [this.meta.key]: id, ...(edition as any) });
+				rows.push({ [this.meta.key]: id, ...edition });
 			}
 		},
-		matchesFilters(element: Record<string, any>) {
+		matchesFilters(element: TableauRowData) {
 			if (!this.filters || this.filters.length === 0) {
 				return true;
 			}
@@ -406,20 +409,21 @@ export default {
 					return true;
 				}
 				const elementValue = this.getDataValue(element, f.key);
+				const filterValue = String(f.value);
 				switch (f.compareMethod) {
 				case "==":
 					switch (f?.typeData || f.type) {
 					case "bool":
 						return elementValue === (f.value === "true");
 					case "number":
-						return Number.parseInt(elementValue) === Number.parseInt(f.value);
+						return Number.parseInt(elementValue) === Number.parseInt(filterValue);
 					case "string":
 						if (Array.isArray(elementValue)) {
 							return elementValue.some((item) =>
-								toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(f.value)),
+								toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(filterValue)),
 							);
 						}
-						return toLowerCaseWithoutAccents(elementValue) === toLowerCaseWithoutAccents(f.value);
+						return toLowerCaseWithoutAccents(elementValue) === toLowerCaseWithoutAccents(filterValue);
 					}
 					return elementValue === f.value;
 				case "=ge=":
@@ -429,14 +433,14 @@ export default {
 				case "=like=":
 					if (Array.isArray(elementValue)) {
 						return elementValue.some((item) =>
-							toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(f.value)),
+							toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(filterValue)),
 						);
 					}
-					return toLowerCaseWithoutAccents(elementValue).includes(toLowerCaseWithoutAccents(f.value));
+					return toLowerCaseWithoutAccents(elementValue).includes(toLowerCaseWithoutAccents(filterValue));
 				}
 			});
 		},
-		getDataValue(row: Record<string, any>, labelKey: string) {
+		getDataValue(row: TableauRowData, labelKey: string) {
 			const label = this.labels.find((l) => l.key === labelKey);
 			if (!label) {
 				return row?.[labelKey];
@@ -446,7 +450,7 @@ export default {
 				if (storeLinkId === undefined || sourceKey === undefined) {
 					return [];
 				}
-				return (Object.values(this.storeData[storeLinkId]?.[row[sourceKey]] || {}) as Record<string, any>[]).map((linkedItem) => {
+				return Object.values<TableauRowData>(this.storeData[storeLinkId]?.[row[sourceKey]] || {}).map((linkedItem) => {
 					let printedRessource = "";
 					if (!label.ressourcePrint || label.ressourcePrint.length === 0) {
 						return "";
@@ -507,7 +511,7 @@ export default {
 				return row?.[valueKey];
 			}
 		},
-		evaluateCondition(condition: string, rowData: Record<string, any>) {
+		evaluateCondition(condition: string, rowData: TableauRowData) {
 			try {
 				return new Function("store", "rowData", `return ${condition}`)(this.storeData,rowData);
 			} catch (error) {
@@ -539,7 +543,7 @@ export default {
 					return;
 				}
 				let intervalOffset = this.nextOffset;
-				[this.nextOffset, this.hasMore] = await this.fetchFunction(100, this.nextOffset, this.meta?.expand || [], this.filters, { key: this.sort.key ?? undefined, order: this.sort.order });
+				[this.nextOffset, this.hasMore] = await this.fetchFunction(100, this.nextOffset, this.meta?.expand || [], this.filters, { key: this.sort.key ?? undefined, order: this.sort.order }, false);
 				await this.refetchListData(intervalOffset, this.nextOffset);
 			}
 		},

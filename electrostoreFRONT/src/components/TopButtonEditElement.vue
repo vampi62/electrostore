@@ -3,7 +3,7 @@
 		<!-- Desktop -->
 		<template v-for="(button, index) in optionalConfig" :key="index">
 			<div v-if="button.showCondition" class="relative">
-				<button type="button" @click="button.action"
+				<button type="button" @click="() => button.action?.()"
 					:disabled="button.enableCondition === false"
 					:class="['text-white px-4 py-2 rounded flex items-center',
 					button.bgColor ? button.bgColor : 'bg-gray-500',
@@ -79,7 +79,7 @@
 			class="absolute right-0 mt-2 w-48 rounded-md shadow-lg border border-gray-200">
 			<template v-for="(button, index) in optionalConfig" :key="index">
 				<div v-if="button.showCondition" class="relative">
-					<button @click="button.action"
+					<button @click="() => button.action?.()"
 						:disabled="button.enableCondition === false"
 						:class="['relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white text-gray-700 border-b border-gray-200',
 						button.bgColor ? button.bgColor : 'bg-gray-500',
@@ -135,11 +135,12 @@
 <script lang="ts">
 import { useRouter } from "vue-router";
 import type { PropType } from "vue";
+import type { TopButton, TopButtonMainConfig } from "@/types/button";
 export default {
 	name: "TopButtonEditElement",
 	props: {
 		mainConfig: {
-			type: Object,
+			type: Object as PropType<TopButtonMainConfig>,
 			required: true,
 			// main configuration object with properties:
 			// path: string (default "/"),
@@ -148,15 +149,9 @@ export default {
 			// delete: { showCondition: boolean, enableCondition: boolean, loading: boolean } // configuration for delete button
 			// showCondition: boolean (if true, the button is only visible if the user has the required role, this should be handled in the parent component by checking the user's roles and passing the appropriate value)
 			// loading: boolean (if true, the button shows a loading spinner) must be linked to a boolean that indicates if the function is currently processing
-			default: () => ({
-				path: "/",
-				create: { showCondition: false, loading: false },
-				update: { showCondition: false, loading: false },
-				delete: { showCondition: false, loading: false },
-			}),
 		},
 		optionalConfig: {
-			type: Array as PropType<any[]>,
+			type: Array as PropType<TopButton[]>,
 			required: false,
 			// array of optional buttons with properties: label, action, showCondition, enableCondition, bgColor, hoverColor, loading
 			// Example: [{ label: 'components.VModalTopButtonCustom', action: customFucntionCall, showCondition: false, enableCondition: true, bgColor: 'bg-green-500', hoverColor: 'hover:bg-green-600', loading: false }]

@@ -52,7 +52,14 @@ function writeDrafts(drafts: Record<string, TabDraft>) {
 	}
 }
 
-function createTabRouter(tabs: any, tabId: string, fullPath: string) {
+interface TabRouterStore {
+	isDirty(tabId: string): boolean;
+	askLeave(tabId: string, path: string): Promise<LeaveChoice>;
+	open(path?: string): void;
+	setPath(tabId: string, fullPath: string): void;
+}
+
+function createTabRouter(tabs: TabRouterStore, tabId: string, fullPath: string) {
 	const router = createRouter({
 		history: createTabHistory(),
 		linkActiveClass: "active",
@@ -78,7 +85,7 @@ function createTabRouter(tabs: any, tabId: string, fullPath: string) {
 		tabs.setPath(tabId, to.fullPath);
 	});
 	// the first navigation of a memory router replaces the initial location
-	router.replace(fullPath);
+	void router.replace(fullPath);
 	return router;
 }
 

@@ -1,7 +1,9 @@
 /// <reference lib="webworker" />
 import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching";
 
-declare const self: ServiceWorkerGlobalScope & { __WB_MANIFEST: any };
+declare const self: ServiceWorkerGlobalScope & {
+	__WB_MANIFEST: Parameters<typeof precacheAndRoute>[0];
+};
 
 // Injecté automatiquement par vite-plugin-pwa
 precacheAndRoute(self.__WB_MANIFEST);
@@ -13,7 +15,11 @@ self.addEventListener("push", (event: PushEvent) => {
 		return;
 	}
 
-	let data: any;
+	let data: {
+		title?: string;
+		body?: string;
+		data?: { url?: string; [key: string]: unknown };
+	};
 	try {
 		data = event.data.json();
 	} catch {

@@ -1,37 +1,66 @@
 import { defineStore } from "pinia";
 
-import { buildFormData, fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
+import { fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
 import { isNewId } from "@/utils";
 
 import { useTagsStore, useStoresStore, useUsersStore } from "@/stores";
 
-import type { components } from "@/types/api";
+import type { StoreGeneric } from "pinia";
+import type { Ready, Edition, WithFile } from "@/types/resource";
+import type { components, paths } from "@/types/api";
 type ReadEquipementDto = components["schemas"]["ReadEquipementDto"];
+type ReadExtendedEquipementDto = components["schemas"]["ReadExtendedEquipementDto"];
+type CreateEquipementDto = WithFile<NonNullable<paths["/api/equipement"]["post"]["requestBody"]>["content"]["multipart/form-data"], "img_file">;
+type UpdateEquipementDto = WithFile<NonNullable<paths["/api/equipement/{id_equipement}"]["put"]["requestBody"]>["content"]["multipart/form-data"], "img_file">;
+
 type ReadEquipementTagDto = components["schemas"]["ReadEquipementTagDto"];
+type ReadExtendedEquipementTagDto = components["schemas"]["ReadExtendedEquipementTagDto"];
+type CreateEquipementTagByEquipementDto = components["schemas"]["CreateEquipementTagByEquipementDto"];
+
 type ReadEquipementBoxDto = components["schemas"]["ReadEquipementBoxDto"];
+type ReadExtendedEquipementBoxDto = components["schemas"]["ReadExtendedEquipementBoxDto"];
+type CreateEquipementBoxByEquipementDto = components["schemas"]["CreateEquipementBoxByEquipementDto"];
+
 type ReadEquipementDocumentDto = components["schemas"]["ReadEquipementDocumentDto"];
+type CreateEquipementDocumentByEquipementDto = WithFile<NonNullable<paths["/api/equipement/{id_equipement}/document"]["post"]["requestBody"]>["content"]["multipart/form-data"], "document">;
+type UpdateEquipementDocumentByEquipementDto = components["schemas"]["UpdateEquipementDocumentDto"];
+
 type ReadEquipementMaintenanceDto = components["schemas"]["ReadEquipementMaintenanceDto"];
+type ReadExtendedEquipementMaintenanceDto = components["schemas"]["ReadExtendedEquipementMaintenanceDto"];
+type CreateEquipementMaintenanceByEquipementDto = components["schemas"]["CreateEquipementMaintenanceByEquipementDto"];
+type UpdateEquipementMaintenanceByEquipementDto = components["schemas"]["UpdateEquipementMaintenanceDto"];
+
 type ReadEquipementCommentDto = components["schemas"]["ReadEquipementCommentDto"];
+type ReadExtendedEquipementCommentDto = components["schemas"]["ReadExtendedEquipementCommentDto"];
+type CreateEquipementCommentByEquipementDto = components["schemas"]["CreateEquipementCommentByEquipementDto"];
+type UpdateEquipementCommentByEquipementDto = components["schemas"]["UpdateEquipementCommentDto"];
+
 type ReadEquipementStatusDto = components["schemas"]["ReadEquipementStatusDto"];
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-const EXPAND_HANDLERS: Record<string, (store: any, idEquipement: any, data: any) => void> = {
+const EXPAND_HANDLERS: Record<string, (store: StoreGeneric, idEquipement: string, data: ReadExtendedEquipementDto) => void> = {
 	equipement_tags: (store, idEquipement, data) => {
 		store.equipementTags[idEquipement] = {};
-		for (const equipementTag of data) {
+		for (const equipementTag of data.equipement_tags ?? []) {
+			if (!equipementTag.id_tag) {
+				continue;
+			}
 			store.equipementTags[idEquipement][equipementTag.id_tag] = equipementTag;
 		}
 	},
 	equipement_boxs: (store, idEquipement, data) => {
 		store.equipementBoxs[idEquipement] = {};
-		for (const equipementBox of data) {
+		for (const equipementBox of data.equipement_boxs ?? []) {
+			if (!equipementBox.id_box) {
+				continue;
+			}
 			store.equipementBoxs[idEquipement][equipementBox.id_box] = equipementBox;
 		}
 	},
 };
 
-function hydrateEquipement(store: any, idEquipement: string, equipement: any, expand: string[] = []) {
+function hydrateEquipement(store: StoreGeneric, idEquipement: string, equipement: ReadExtendedEquipementDto, expand: string[] = []) {
 	if (equipement.url_thumbnail_equipement && !store.thumbnailsURL[idEquipement]) {
 		store.showThumbnailById(idEquipement);
 	}
@@ -43,24 +72,24 @@ function hydrateEquipement(store: any, idEquipement: string, equipement: any, ex
 	store.equipementCommentsTotalCount[idEquipement] = equipement.equipement_comments_count;
 	for (const key of expand) {
 		if (EXPAND_HANDLERS[key]) {
-			EXPAND_HANDLERS[key](store, idEquipement, equipement[key]);
+			EXPAND_HANDLERS[key](store, idEquipement, equipement);
 		}
 	}
 }
 
-const equipementResource = createMainResource({
+const equipementResource = createMainResource<{ readExtended: ReadExtendedEquipementDto, readBasic: ReadEquipementDto, create: CreateEquipementDto, update: UpdateEquipementDto }>({
 	path: () => "/equipement",
 	idField: "id_equipement",
 	stateKey: "equipements",
 	countKey: "equipementsTotalCount",
 	loadingKey: "equipementsLoading",
 	editionKey: "equipementEdition",
-	onHydrate: (store, entity, expand) => {
-		hydrateEquipement(store, entity.id_equipement, entity, expand);
+	onHydrate: (store, entity: ReadExtendedEquipementDto, expand) => {
+		hydrateEquipement(store, String(entity.id_equipement), entity, expand);
 	},
 });
 
-const equipementTagResource = createNestedResource({
+const equipementTagResource = createNestedResource<{ readExtended: ReadExtendedEquipementTagDto, readBasic: ReadEquipementTagDto, create: CreateEquipementTagByEquipementDto }>({
 	path: (idEquipement) => `/equipement/${idEquipement}/tag`,
 	idField: "id_tag",
 	stateKey: "equipementTags",
@@ -68,15 +97,15 @@ const equipementTagResource = createNestedResource({
 	loadingKey: "equipementTagsLoading",
 	editionKey: "equipementTagEdition",
 	readyKey: "equipementTagReady",
-	onHydrate: (store, entity, expand) => {
-		if (expand.includes("tag")) {
+	onHydrate: (store, entity: ReadExtendedEquipementTagDto, expand) => {
+		if (expand.includes("tag") && entity.tag && entity.id_tag) {
 			const tagsStore = useTagsStore();
 			tagsStore.tags[entity.id_tag] = entity.tag;
 		}
 	},
 });
 
-const equipementBoxResource = createNestedResource({
+const equipementBoxResource = createNestedResource<{ readExtended: ReadExtendedEquipementBoxDto, readBasic: ReadEquipementBoxDto, create: CreateEquipementBoxByEquipementDto }>({
 	path: (idEquipement) => `/equipement/${idEquipement}/box`,
 	idField: "id_box",
 	stateKey: "equipementBoxs",
@@ -84,8 +113,8 @@ const equipementBoxResource = createNestedResource({
 	loadingKey: "equipementBoxsLoading",
 	editionKey: "equipementBoxEdition",
 	readyKey: "equipementBoxReady",
-	onHydrate: (store, entity, expand) => {
-		if (expand.includes("box") && entity.box) {
+	onHydrate: (store, entity: ReadExtendedEquipementBoxDto, expand) => {
+		if (expand.includes("box") && entity.box && entity.id_box && entity.box.id_store) {
 			const storesStore = useStoresStore();
 			storesStore.boxs[entity.box.id_store] ??= {};
 			storesStore.boxs[entity.box.id_store][entity.id_box] = entity.box;
@@ -93,7 +122,7 @@ const equipementBoxResource = createNestedResource({
 	},
 });
 
-const equipementDocumentResource = createNestedResource({
+const equipementDocumentResource = createNestedResource<{ readBasic: ReadEquipementDocumentDto, create: CreateEquipementDocumentByEquipementDto, update: UpdateEquipementDocumentByEquipementDto }>({
 	path: (idEquipement) => `/equipement/${idEquipement}/document`,
 	idField: "id_equipement_document",
 	stateKey: "equipementDocuments",
@@ -103,7 +132,7 @@ const equipementDocumentResource = createNestedResource({
 	readyKey: "equipementDocumentReady",
 });
 
-const equipementMaintenanceResource = createNestedResource({
+const equipementMaintenanceResource = createNestedResource<{ readExtended: ReadExtendedEquipementMaintenanceDto, readBasic: ReadEquipementMaintenanceDto, create: CreateEquipementMaintenanceByEquipementDto, update: UpdateEquipementMaintenanceByEquipementDto }>({
 	path: (idEquipement) => `/equipement/${idEquipement}/maintenance`,
 	idField: "id_equipement_maintenance",
 	stateKey: "equipementMaintenances",
@@ -112,14 +141,14 @@ const equipementMaintenanceResource = createNestedResource({
 	editionKey: "equipementMaintenanceEdition",
 	readyKey: "equipementMaintenanceReady",
 	onHydrate: (store, entity, expand) => {
-		if (expand.includes("user") && entity.user) {
+		if (expand.includes("user") && entity.user && entity.id_user) {
 			const usersStore = useUsersStore();
 			usersStore.users[entity.id_user] = entity.user;
 		}
 	},
 });
 
-const equipementCommentResource = createNestedResource({
+const equipementCommentResource = createNestedResource<{ readExtended: ReadExtendedEquipementCommentDto, readBasic: ReadEquipementCommentDto, create: CreateEquipementCommentByEquipementDto, update: UpdateEquipementCommentByEquipementDto }>({
 	path: (idEquipement) => `/equipement/${idEquipement}/comment`,
 	idField: "id_equipement_comment",
 	stateKey: "equipementComments",
@@ -127,14 +156,14 @@ const equipementCommentResource = createNestedResource({
 	loadingKey: "equipementCommentsLoading",
 	editionKey: "equipementCommentEdition",
 	onHydrate: (store, entity, expand) => {
-		if (expand.includes("user") && entity.user) {
+		if (expand.includes("user") && entity.user && entity.id_user) {
 			const usersStore = useUsersStore();
 			usersStore.users[entity.id_user] = entity.user;
 		}
 	},
 });
 
-const equipementStatusHistoryResource = createNestedResource({
+const equipementStatusHistoryResource = createNestedResource<{ readBasic: ReadEquipementStatusDto }>({
 	path: (idEquipement) => `/equipement/${idEquipement}/status-history`,
 	idField: "id_equipement_status",
 	stateKey: "equipementStatusHistory",
@@ -147,43 +176,43 @@ export const useEquipementsStore = defineStore("equipements", {
 		equipementsLoading: false,
 		equipementsTotalCount: 0,
 		equipements: {} as Record<string, ReadEquipementDto>,
-		equipementEdition: {} as Record<string, any>,
+		equipementEdition: {} as Record<string, Edition<{ create: CreateEquipementDto, update: UpdateEquipementDto }>>,
 
 		equipementTagsLoading: false,
 		equipementTagsTotalCount: {} as Record<string, number>,
-		equipementTags: {} as Record<string, ReadEquipementTagDto>,
-		equipementTagEdition: {} as Record<string, any>,
-		equipementTagReady: {} as Record<string, any>,
+		equipementTags: {} as Record<string, Record<string, ReadEquipementTagDto>>,
+		equipementTagEdition: {} as Record<string, Record<string, Edition<{ create: CreateEquipementTagByEquipementDto }>>>,
+		equipementTagReady: {} as Record<string, Record<string, Ready<{ create: CreateEquipementTagByEquipementDto }>>>,
 
 		equipementBoxsLoading: false,
 		equipementBoxsTotalCount: {} as Record<string, number>,
-		equipementBoxs: {} as Record<string, ReadEquipementBoxDto>,
-		equipementBoxEdition: {} as Record<string, any>,
-		equipementBoxReady: {} as Record<string, any>,
+		equipementBoxs: {} as Record<string, Record<string, ReadEquipementBoxDto>>,
+		equipementBoxEdition: {} as Record<string, Record<string, Edition<{ create: CreateEquipementBoxByEquipementDto }>>>,
+		equipementBoxReady: {} as Record<string, Record<string, Ready<{ create: CreateEquipementBoxByEquipementDto }>>>,
 
 		equipementDocumentsLoading: false,
 		equipementDocumentsTotalCount: {} as Record<string, number>,
-		equipementDocuments: {} as Record<string, ReadEquipementDocumentDto>,
-		equipementDocumentEdition: {} as Record<string, any>,
-		equipementDocumentReady: {} as Record<string, any>,
+		equipementDocuments: {} as Record<string, Record<string, ReadEquipementDocumentDto>>,
+		equipementDocumentEdition: {} as Record<string, Record<string, Edition<{ create: CreateEquipementDocumentByEquipementDto, update: UpdateEquipementDocumentByEquipementDto }>>>,
+		equipementDocumentReady: {} as Record<string, Record<string, Ready<{ create: CreateEquipementDocumentByEquipementDto, update: UpdateEquipementDocumentByEquipementDto }>>>,
 
 		equipementMaintenancesLoading: false,
 		equipementMaintenancesTotalCount: {} as Record<string, number>,
-		equipementMaintenances: {} as Record<string, ReadEquipementMaintenanceDto>,
-		equipementMaintenanceEdition: {} as Record<string, any>,
-		equipementMaintenanceReady: {} as Record<string, any>,
+		equipementMaintenances: {} as Record<string, Record<string, ReadEquipementMaintenanceDto>>,
+		equipementMaintenanceEdition: {} as Record<string, Record<string, Edition<{ create: CreateEquipementMaintenanceByEquipementDto, update: UpdateEquipementMaintenanceByEquipementDto }>>>,
+		equipementMaintenanceReady: {} as Record<string, Record<string, Ready<{ create: CreateEquipementMaintenanceByEquipementDto, update: UpdateEquipementMaintenanceByEquipementDto }>>>,
 
 		equipementCommentsLoading: false,
 		equipementCommentsTotalCount: {} as Record<string, number>,
-		equipementComments: {} as Record<string, ReadEquipementCommentDto>,
-		equipementCommentEdition: {} as Record<string, any>,
+		equipementComments: {} as Record<string, Record<string, ReadEquipementCommentDto>>,
+		equipementCommentEdition: {} as Record<string, Record<string, Record<string, Edition<{ create: CreateEquipementCommentByEquipementDto, update: UpdateEquipementCommentByEquipementDto }>>>>,
 
 		equipementStatusHistoryLoading: false,
 		equipementStatusHistoryTotalCount: {} as Record<string, number>,
-		equipementStatusHistory: {} as Record<string, ReadEquipementStatusDto>,
+		equipementStatusHistory: {} as Record<string, Record<string, ReadEquipementStatusDto>>,
 
-		imagesURL: {} as Record<string, any>,
-		thumbnailsURL: {} as Record<string, any>,
+		imagesURL: {} as Record<string, string>,
+		thumbnailsURL: {} as Record<string, string>,
 	}),
 	actions: {
 		getEquipementByList: equipementResource.getByList,
@@ -193,15 +222,14 @@ export const useEquipementsStore = defineStore("equipements", {
 		getAvailableNewEquipementId: equipementResource.getAvailableNewId,
 		updateEquipement: equipementResource.update,
 		deleteEquipement: equipementResource.remove,
-		loadToEdition(id: string, preset = null) {
+		loadToEdition(id: string, preset: string | null = null) {
 			if (!isNewId(id) && this.equipements[id]) {
 				this.equipementEdition[id] = {
 					loading: false,
-					reference_name_equipement: this.equipements[id].reference_name_equipement,
-					friendly_name_equipement: this.equipements[id].friendly_name_equipement,
-					description_equipement: this.equipements[id].description_equipement,
+					reference_name_equipement: this.equipements[id].reference_name_equipement ?? undefined,
+					friendly_name_equipement: this.equipements[id].friendly_name_equipement ?? undefined,
+					description_equipement: this.equipements[id].description_equipement ?? undefined,
 					status_equipement: this.equipements[id].status_equipement,
-					url_thumbnail_equipement: this.equipements[id].url_thumbnail_equipement,
 				};
 			} else {
 				this.equipementEdition[id] = {
@@ -210,6 +238,8 @@ export const useEquipementsStore = defineStore("equipements", {
 				};
 				equipementResource.loadEditionPreset.call(this, id, preset);
 			}
+			// a comment being edited is saved on its own, saving the element must not discard it
+			this.equipementCommentEdition[id] ??= {};
 			this.equipementTagEdition[id] = {};
 			this.equipementTagReady[id] = {};
 			this.equipementBoxEdition[id] = {};
@@ -227,6 +257,7 @@ export const useEquipementsStore = defineStore("equipements", {
 		},
 		clearEdition(id: string) {
 			delete this.equipementEdition[id];
+			delete this.equipementCommentEdition[id];
 			delete this.equipementTagEdition[id];
 			delete this.equipementTagReady[id];
 			delete this.equipementBoxEdition[id];
@@ -238,16 +269,16 @@ export const useEquipementsStore = defineStore("equipements", {
 		},
 		async saveAllChanges(id: string) {
 			let realId = id;
-			const { isFormData, ...data } = this.equipementEdition[id];
+			const { ...data } = this.equipementEdition[id];
 			const imageChanged = !!data.img_file || !!data.unset_img_equipement;
 			if (isNewId(id)) {
-				realId = await this.createEquipement(isFormData ? buildFormData(data) : data);
+				realId = await this.createEquipement(data as CreateEquipementDto, true);
 				this.copyEquipementTagAllId(id, realId);
 				this.copyEquipementBoxAllId(id, realId);
 				this.copyEquipementDocumentAllId(id, realId);
 				this.copyEquipementMaintenanceAllId(id, realId);
 			} else {
-				await this.updateEquipement(id, isFormData ? buildFormData(data) : data);
+				await this.updateEquipement(id, data as UpdateEquipementDto, true);
 			}
 			await Promise.all([
 				this.pushEquipementTagChange(realId),
@@ -258,8 +289,8 @@ export const useEquipementsStore = defineStore("equipements", {
 			if (imageChanged) {
 				delete this.thumbnailsURL[realId];
 				delete this.imagesURL[realId];
-				this.showThumbnailById(realId);
-				this.showImageById(realId);
+				void this.showThumbnailById(realId);
+				void this.showImageById(realId);
 			}
 			return realId;
 		},

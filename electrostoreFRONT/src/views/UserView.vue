@@ -6,6 +6,7 @@ import * as Yup from "yup";
 
 import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
+import type FormContainer from "@/components/FormContainer.vue";
 import { isNewId } from "@/utils";
 import { UserRole } from "@/enums";
 import { useConfigsStore, useUsersStore, useCommandsStore, useProjectsStore, useEquipementsStore, useAuthStore } from "@/stores";
@@ -14,6 +15,9 @@ import type { FilterLabel } from "@/types/filter";
 import type { FormLabel } from "@/types/form";
 import type { TableauLabel, TableauRowData } from "@/types/tableau";
 import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+import type { components } from "@/types/api";
+
+type CreateUserDto = components["schemas"]["CreateUserDto"];
 
 const { addNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 const { t } = useI18n();
@@ -28,14 +32,14 @@ const equipementsStore = useEquipementsStore();
 const authStore = useAuthStore();
 
 const userId = ref(route.params.id as string || authStore.user?.id_user);
-const preset = ref(route.query.preset || null);
+const preset = ref(typeof route.query.preset === "string" ? route.query.preset : null);
 
 // every new element has its own edition space in the store, so several tabs can create an element at the same time
 if (isNewId(userId.value)) {
 	userId.value = usersStore.getAvailableNewUserId();
 }
 
-const formContainer = ref<any>(null);
+const formContainer = ref<InstanceType<typeof FormContainer> | null>(null);
 
 if ((!authStore.hasPermission([1, 2])) && authStore.user?.id_user !== Number(userId.value)) {
 	addNotification({ message: t("user.noAccess"), type: "error" });
@@ -48,7 +52,7 @@ if ((!authStore.hasPermission([1, 2])) && authStore.user?.id_user !== Number(use
 
 async function fetchAllData() {
 	if (isNewId(userId.value)) {
-		usersStore.loadToEdition(userId.value, preset.value as any);
+		usersStore.loadToEdition(userId.value, preset.value);
 	} else {
 		usersStore.setLoadingEdition(userId.value, true);
 		try {
@@ -71,7 +75,7 @@ onBeforeUnmount(() => {
 });
 
 const userDeleteModalShow = ref(false);
-const userTypeRole = ref({ [UserRole.User]: t("user.FilterRole0"), [UserRole.Moderator]: t("user.FilterRole1"), [UserRole.Admin]: t("user.FilterRole2") });
+const userTypeRole = { [UserRole.User]: t("user.FilterRole0"), [UserRole.Moderator]: t("user.FilterRole1"), [UserRole.Admin]: t("user.FilterRole2") };
 const userSave = async() => {
 	try {
 		usersStore.setLoadingEdition(userId.value, true);
@@ -95,7 +99,7 @@ const userSave = async() => {
 			if (authStore.user?.isSSOUser) {
 				delete data.current_password_user;
 			}
-			const newId = await usersStore.createUser(data);
+			const newId = await usersStore.createUser(data as CreateUserDto);
 			usersStore.loadToEdition(newId);
 			addNotification({ message: t("user.Created"), type: "success" });
 			const tempId = userId.value;
@@ -135,7 +139,7 @@ const userDelete = async() => {
 	userDeleteModalShow.value = false;
 };
 
-const revokeToken = async(tokenId: string | number) => {
+const revokeToken = async(tokenId: string) => {
 	try {
 		await usersStore.updateToken(userId.value, tokenId, { "revoked_reason": "Revoked by user" });
 		usersStore.getTokenById(userId.value, tokenId);
@@ -147,21 +151,21 @@ const revokeToken = async(tokenId: string | number) => {
 
 const createSchema = () => {
 	const edition = usersStore.userEdition[userId.value];
-	const shape: any = {};
+	const shape: Record<string, Yup.AnySchema> = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
 	shape.name_user = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("user.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("user.NameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("user.NameRequired"));
 	shape.firstname_user = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("user.FirstNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("user.FirstNameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("user.FirstNameRequired"));
 	shape.email_user = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_email"), t("user.EmailMaxLength", { count: configsStore.getConfigByKey("max_length_email") }))
+		.max(configsStore.getConfigNumber("max_length_email"), t("user.EmailMaxLength", { count: configsStore.getConfigNumber("max_length_email") }))
 		.required(t("user.EmailRequired"))
 		.email(t("user.EmailInvalid"));
-	if (edition?._check) {
+	if (edition?.unset_check) {
 		shape.password_user = Yup.string()
 			.required(t("user.PasswordRequired")).notOneOf([Yup.ref("current_password_user"), null], t("user.PasswordMatch")).matches(
 				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
@@ -188,11 +192,11 @@ const labelForm = ref<FormLabel[]>([
 	{ key: "firstname_user", label: "user.FirstName", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
 	{ key: "email_user", label: "user.Email", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
 	{ key: "role_user", label: "user.Role", type: "select", options: userTypeRole, enableCondition: "func.hasPermission([2])" },
-	{ key: "_check", label: "user.Check", type: "checkbox", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])",
+	{ key: "unset_check", label: "user.Check", type: "checkbox", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
-	{ key: "password_user", label: "user.Password", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && edition?._check",
+	{ key: "password_user", label: "user.Password", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && edition?.unset_check",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
-	{ key: "confirm_password_user", label: "user.ConfirmPassword", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && edition?._check",
+	{ key: "confirm_password_user", label: "user.ConfirmPassword", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && edition?.unset_check",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
 	{ key: "current_password_user", label: "user.CurrentPassword", type: "password", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
@@ -235,7 +239,7 @@ const notificationPermission = ref(typeof Notification !== "undefined" ? Notific
 
 function urlBase64ToUint8Array(base64String: string) {
 	const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-	const base64 = (base64String + padding).replaceAll(/-/g, "+").replaceAll(/_/g, "/");
+	const base64 = (base64String + padding).replaceAll("-","+").replaceAll("_", "/");
 	const rawData = window.atob(base64);
 	const outputArray = new Uint8Array(rawData.length);
 	for (let i = 0; i < rawData.length; ++i) {
@@ -262,10 +266,10 @@ async function checkExistingSubscription() {
 			return;
 		}
 		// Cherche si cet endpoint est déjà enregistré côté API pour cet utilisateur
-		await usersStore.getPushSubscriptionsByInterval(userId.value, 100, 0, [], "", "", true);
+		await usersStore.getPushSubscriptionsByInterval(userId.value, 100, 0, [], [], {}, true);
 		const subs = usersStore.pushSubscriptions[userId.value] || {};
-		const match: any = Object.values(subs).find((s: any) => s.endpoint === sub.endpoint);
-		pushSubscriptionId.value = match ? match.id_user_push_subscription : null;
+		const match = Object.values(subs).find((s) => s.endpoint === sub.endpoint);
+		pushSubscriptionId.value = match?.id_user_push_subscription ?? null;
 	} catch (e) {
 		pushSubscriptionId.value = null;
 	}
@@ -305,7 +309,7 @@ async function subscribePush() {
 			auth: json.keys.auth,
 			device_name: pushDeviceName.value || undefined,
 		});
-		pushSubscriptionId.value = created.id_user_push_subscription;
+		pushSubscriptionId.value = Number(created);
 		addNotification({ message: t("user.PushSubscribed"), type: "success" });
 	} catch (e) {
 		addNotification({ message: t("user.PushSubscribeError"), type: "error" });
@@ -326,7 +330,7 @@ async function unsubscribePush() {
 		if (sub) {
 			await sub.unsubscribe();
 		}
-		await usersStore.deletePushSubscription(userId.value, pushSubscriptionId.value);
+		await usersStore.deletePushSubscription(userId.value, String(pushSubscriptionId.value));
 		pushSubscriptionId.value = null;
 	} catch (e) {
 		addNotification({ message: t("user.PushDeleteError"), type: "error" });
@@ -364,7 +368,7 @@ const deletePushSubscriptionFromTable = async(subscriptionId: number) => {
 			}
 			pushSubscriptionId.value = null;
 		}
-		await usersStore.deletePushSubscription(userId.value, subscriptionId);
+		await usersStore.deletePushSubscription(userId.value, String(subscriptionId));
 		addNotification({ message: t("user.PushDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: t("user.PushDeleteError"), type: "error" });
@@ -395,15 +399,15 @@ onMounted(() => {
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('user.Title') }}</h2>
 		<TopButtonEditElement
 			:main-config="{ path: '/users',
-				create: { sameUserId: true, showCondition: isNewId(userId) && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
-				update: { sameUserId: true, showCondition: !isNewId(userId) && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
-				delete: { sameUserId: true, showCondition: !isNewId(userId) && authStore.hasPermission([1, 2]) }
+				create: { showCondition: isNewId(userId) && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
+				update: { showCondition: !isNewId(userId) && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
+				delete: { showCondition: !isNewId(userId) && authStore.hasPermission([1, 2]) }
 			}"
 			@button-create="userSave" @button-update="userSave" @button-delete="userDeleteModalShow = true"/>
 	</div>
 	<div v-if="usersStore.users[userId] || isNewId(userId)" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="usersStore.userEdition[userId]" :store-user="authStore.user"
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-edition="usersStore.userEdition[userId]" :store-data="usersStore.users[userId]" :store-user="authStore.user"
 				:store-function="{ hasPermission: (validPerm: number[]) => authStore.hasPermission(validPerm) }"/>
 		</div>
 		<CollapsibleSection title="user.Participation" :permission="!isNewId(userId)">
@@ -471,7 +475,7 @@ onMounted(() => {
 				<div v-if="pushSupported" class="flex flex-col gap-4 py-2">
 					<div v-if="!pushSubscriptionId" class="flex items-end gap-3 flex-wrap">
 						<div class="flex flex-col gap-1">
-							<label class="text-sm font-medium text-gray-700">{{ $t('user.PushDeviceName') }}</label>
+							<span class="text-sm font-medium text-gray-700">{{ $t('user.PushDeviceName') }}</span>
 							<input v-model="pushDeviceName" type="text" maxlength="255"
 								class="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
 								:placeholder="$t('user.PushDeviceName')" />

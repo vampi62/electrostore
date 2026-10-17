@@ -5,37 +5,70 @@ import { isNewId } from "@/utils";
 
 import { useStoresStore, useItemsStore, useEquipementsStore } from "@/stores";
 
+import type { StoreGeneric } from "pinia";
+import type { Ready, Edition } from "@/types/resource";
 import type { components } from "@/types/api";
 type ReadTagDto = components["schemas"]["ReadTagDto"];
+type ReadExtendedTagDto = components["schemas"]["ReadExtendedTagDto"];
+type CreateTagDto = components["schemas"]["CreateTagDto"];
+type UpdateTagDto = components["schemas"]["UpdateTagDto"];
 
-const EXPAND_HANDLERS: Record<string, (store: any, idTag: any, data: any) => void> = {
+type ReadStoreTagDto = components["schemas"]["ReadStoreTagDto"];
+type ReadExtendedStoreTagDto = components["schemas"]["ReadExtendedStoreTagDto"];
+type CreateStoreTagByTagDto = components["schemas"]["CreateStoreTagByTagDto"];
+
+type ReadBoxTagDto = components["schemas"]["ReadBoxTagDto"];
+type ReadExtendedBoxTagDto = components["schemas"]["ReadExtendedBoxTagDto"];
+type CreateBoxTagByTagDto = components["schemas"]["CreateBoxTagByTagDto"];
+
+type ReadItemTagDto = components["schemas"]["ReadItemTagDto"];
+type ReadExtendedItemTagDto = components["schemas"]["ReadExtendedItemTagDto"];
+type CreateItemTagByTagDto = components["schemas"]["CreateItemTagByTagDto"];
+
+type ReadEquipementTagDto = components["schemas"]["ReadEquipementTagDto"];
+type ReadExtendedEquipementTagDto = components["schemas"]["ReadExtendedEquipementTagDto"];
+type CreateEquipementTagByTagDto = components["schemas"]["CreateEquipementTagByTagDto"];
+
+const EXPAND_HANDLERS: Record<string, (store: StoreGeneric, idTag: string, data: ReadExtendedTagDto) => void> = {
 	stores_tags: (store, idTag, tag) => {
 		store.tagsStore[idTag] = {};
-		for (const tagStore of tag.stores_tags) {
+		for (const tagStore of tag.stores_tags ?? []) {
+			if (!tagStore.id_store) {
+				continue;
+			}
 			store.tagsStore[idTag][tagStore.id_store] = tagStore;
 		}
 	},
 	boxs_tags: (store, idTag, tag) => {
 		store.tagsBox[idTag] = {};
-		for (const tagBox of tag.boxs_tags) {
+		for (const tagBox of tag.boxs_tags ?? []) {
+			if (!tagBox.id_box) {
+				continue;
+			}
 			store.tagsBox[idTag][tagBox.id_box] = tagBox;
 		}
 	},
 	items_tags: (store, idTag, tag) => {
 		store.tagsItem[idTag] = {};
-		for (const tagItem of tag.items_tags) {
+		for (const tagItem of tag.items_tags ?? []) {
+			if (!tagItem.id_item) {
+				continue;
+			}
 			store.tagsItem[idTag][tagItem.id_item] = tagItem;
 		}
 	},
 	equipement_tags: (store, idTag, tag) => {
 		store.tagsEquipement[idTag] = {};
-		for (const tagEquipement of tag.equipement_tags) {
+		for (const tagEquipement of tag.equipement_tags ?? []) {
+			if (!tagEquipement.id_equipement) {
+				continue;
+			}
 			store.tagsEquipement[idTag][tagEquipement.id_equipement] = tagEquipement;
 		}
 	},
 };
 
-function hydrateTag(store: any, idTag: string, tag: any, expand: string[] = []) {
+function hydrateTag(store: StoreGeneric, idTag: string, tag: ReadExtendedTagDto, expand: string[] = []) {
 	store.tagsStoreTotalCount[idTag] = tag.stores_tags_count;
 	store.tagsBoxTotalCount[idTag] = tag.boxs_tags_count;
 	store.tagsItemTotalCount[idTag] = tag.items_tags_count;
@@ -47,19 +80,22 @@ function hydrateTag(store: any, idTag: string, tag: any, expand: string[] = []) 
 	}
 }
 
-const tagResource = createMainResource({
+const tagResource = createMainResource<{ readExtended: ReadExtendedTagDto, readBasic: ReadTagDto, create: CreateTagDto, update: UpdateTagDto, createBulk: CreateTagDto[] }>({
 	path: () => "/tag",
 	idField: "id_tag",
 	stateKey: "tags",
 	countKey: "tagsTotalCount",
 	loadingKey: "tagsLoading",
 	editionKey: "tagEdition",
-	onHydrate: (store, entity, expand) => {
-		hydrateTag(store, entity.id_tag, entity, expand);
+	onHydrate: (store, entity: ReadExtendedTagDto, expand) => {
+		if (entity.id_tag === undefined) {
+			return;
+		}
+		hydrateTag(store, String(entity.id_tag), entity, expand);
 	},
 });
 
-const tagStoreResource = createNestedResource({
+const tagStoreResource = createNestedResource<{ readExtended: ReadExtendedStoreTagDto, readBasic: ReadStoreTagDto, create: CreateStoreTagByTagDto }>({
 	path: (idTag) => `/tag/${idTag}/store`,
 	idField: "id_store",
 	stateKey: "tagsStore",
@@ -67,14 +103,14 @@ const tagStoreResource = createNestedResource({
 	loadingKey: "tagsStoreLoading",
 	editionKey: "tagStoreEdition",
 	readyKey: "tagStoreReady",
-	onHydrate: (store, entity, expand) => {
-		if (expand.includes("store")) {
+	onHydrate: (store, entity: ReadExtendedStoreTagDto, expand) => {
+		if (expand.includes("store") && entity.store && entity.id_store) {
 			const storesStore = useStoresStore();
 			storesStore.stores[entity.id_store] = entity.store;
 		}
 	},
 });
-const tagBoxResource = createNestedResource({
+const tagBoxResource = createNestedResource<{ readExtended: ReadExtendedBoxTagDto, readBasic: ReadBoxTagDto, create: CreateBoxTagByTagDto }>({
 	path: (idTag) => `/tag/${idTag}/box`,
 	idField: "id_box",
 	stateKey: "tagsBox",
@@ -82,15 +118,16 @@ const tagBoxResource = createNestedResource({
 	loadingKey: "tagsBoxLoading",
 	editionKey: "tagBoxEdition",
 	readyKey: "tagBoxReady",
-	onHydrate: (store, entity, expand) => {
-		if (expand.includes("box")) {
+	onHydrate: (store, entity: ReadExtendedBoxTagDto, expand) => {
+		if (expand.includes("box") && entity.box && entity.id_box && entity.box.id_store) {
 			const storesStore = useStoresStore();
-			storesStore.boxs[entity.id_box] = entity.box;
+			storesStore.boxs[entity.box.id_store] ??= {};
+			storesStore.boxs[entity.box.id_store][entity.id_box] = entity.box;
 		}
 	},
 });
 
-const tagItemResource = createNestedResource({
+const tagItemResource = createNestedResource<{ readExtended: ReadExtendedItemTagDto, readBasic: ReadItemTagDto, create: CreateItemTagByTagDto }>({
 	path: (idTag) => `/tag/${idTag}/item`,
 	idField: "id_item",
 	stateKey: "tagsItem",
@@ -98,15 +135,15 @@ const tagItemResource = createNestedResource({
 	loadingKey: "tagsItemLoading",
 	editionKey: "tagItemEdition",
 	readyKey: "tagItemReady",
-	onHydrate: (store, entity, expand) => {
-		if (expand.includes("item")) {
+	onHydrate: (store, entity: ReadExtendedItemTagDto, expand) => {
+		if (expand.includes("item") && entity.item && entity.id_item) {
 			const itemsStore = useItemsStore();
 			itemsStore.items[entity.id_item] = entity.item;
 		}
 	},
 });
 
-const tagEquipementResource = createNestedResource({
+const tagEquipementResource = createNestedResource<{ readExtended: ReadExtendedEquipementTagDto, readBasic: ReadEquipementTagDto, create: CreateEquipementTagByTagDto }>({
 	path: (idTag) => `/tag/${idTag}/equipement`,
 	idField: "id_equipement",
 	stateKey: "tagsEquipement",
@@ -114,8 +151,8 @@ const tagEquipementResource = createNestedResource({
 	loadingKey: "tagsEquipementLoading",
 	editionKey: "tagEquipementEdition",
 	readyKey: "tagEquipementReady",
-	onHydrate: (store, entity, expand) => {
-		if (expand.includes("equipement")) {
+	onHydrate: (store, entity: ReadExtendedEquipementTagDto, expand) => {
+		if (expand.includes("equipement") && entity.equipement && entity.id_equipement) {
 			const equipementsStore = useEquipementsStore();
 			equipementsStore.equipements[entity.id_equipement] = entity.equipement;
 		}
@@ -127,31 +164,31 @@ export const useTagsStore = defineStore("tags",{
 		tagsLoading: false,
 		tagsTotalCount: 0,
 		tags: {} as Record<string, ReadTagDto>,
-		tagEdition: {} as Record<string, any>,
+		tagEdition: {} as Record<string, Edition<{ create: CreateTagDto, update: UpdateTagDto }>>,
 
 		tagsStoreLoading: false,
 		tagsStoreTotalCount: {} as Record<string, number>,
-		tagsStore: {} as Record<string, Record<string, any>>,
-		tagStoreEdition: {} as Record<string, any>,
-		tagStoreReady: {} as Record<string, any>,
+		tagsStore: {} as Record<string, Record<string, ReadStoreTagDto>>,
+		tagStoreEdition: {} as Record<string, Record<string, Edition<{ create: CreateStoreTagByTagDto }>>>,
+		tagStoreReady: {} as Record<string, Record<string, Ready<{ create: CreateStoreTagByTagDto }>>>,
 
 		tagsBoxLoading: false,
 		tagsBoxTotalCount: {} as Record<string, number>,
-		tagsBox: {} as Record<string, Record<string, any>>,
-		tagBoxEdition: {} as Record<string, any>,
-		tagBoxReady: {} as Record<string, any>,
+		tagsBox: {} as Record<string, Record<string, ReadBoxTagDto>>,
+		tagBoxEdition: {} as Record<string, Record<string, Edition<{ create: CreateBoxTagByTagDto }>>>,
+		tagBoxReady: {} as Record<string, Record<string, Ready<{ create: CreateBoxTagByTagDto }>>>,
 
 		tagsItemLoading: false,
 		tagsItemTotalCount: {} as Record<string, number>,
-		tagsItem: {} as Record<string, Record<string, any>>,
-		tagItemEdition: {} as Record<string, any>,
-		tagItemReady: {} as Record<string, any>,
+		tagsItem: {} as Record<string, Record<string, ReadItemTagDto>>,
+		tagItemEdition: {} as Record<string, Record<string, Edition<{ create: CreateItemTagByTagDto }>>>,
+		tagItemReady: {} as Record<string, Record<string, Ready<{ create: CreateItemTagByTagDto }>>>,
 
 		tagsEquipementLoading: false,
 		tagsEquipementTotalCount: {} as Record<string, number>,
-		tagsEquipement: {} as Record<string, Record<string, any>>,
-		tagEquipementEdition: {} as Record<string, any>,
-		tagEquipementReady: {} as Record<string, any>,
+		tagsEquipement: {} as Record<string, Record<string, ReadEquipementTagDto>>,
+		tagEquipementEdition: {} as Record<string, Record<string, Edition<{ create: CreateEquipementTagByTagDto }>>>,
+		tagEquipementReady: {} as Record<string, Record<string, Ready<{ create: CreateEquipementTagByTagDto }>>>,
 	}),
 	actions: {
 		getTagByList: tagResource.getByList,
@@ -162,10 +199,10 @@ export const useTagsStore = defineStore("tags",{
 		updateTag: tagResource.update,
 		deleteTag: tagResource.remove,
 		createTagBulk: tagResource.createBulk,
-		loadToEdition(id: string, preset = null) {
+		loadToEdition(id: string, preset: string | null = null) {
 			if (!isNewId(id) && this.tags[id]) {
 				this.tagEdition[id] = {
-					name_tag: this.tags[id].name_tag,
+					name_tag: this.tags[id].name_tag ?? undefined,
 					weight_tag: this.tags[id].weight_tag,
 					loading: false,
 				};
@@ -204,7 +241,7 @@ export const useTagsStore = defineStore("tags",{
 		async saveAllChanges(id: string) {
 			let realId = id;
 			if (isNewId(id)) {
-				realId = await this.createTag(this.tagEdition[id]);
+				realId = await this.createTag(this.tagEdition[id] as CreateTagDto);
 				this.copyTagStoreAllId(id, realId);
 				this.copyTagBoxAllId(id, realId);
 				this.copyTagItemAllId(id, realId);

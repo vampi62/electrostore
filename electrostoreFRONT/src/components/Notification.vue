@@ -34,11 +34,14 @@
 </template>
 
 <script lang="ts">
+import type { PropType } from "vue";
+import type { NotificationErrorBody } from "@/types/notification";
+
 export default {
 	name: "Notification",
 	props: {
 		message: {
-			type: [String, Object],
+			type: [String, Object] as PropType<string | NotificationErrorBody>,
 			required: true,
 		},
 		type: {

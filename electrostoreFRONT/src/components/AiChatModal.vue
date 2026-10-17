@@ -19,7 +19,8 @@
 					@drop.prevent="onDrop">
 					<font-awesome-icon icon="fa-solid fa-download" class="mr-2" />{{ $t('common.VAiDropAudio') }}
 					<span class="block text-xs text-gray-400">{{ audioExtensions.join(' ') }} - max {{ maxAudioSize }} MB</span>
-					<input ref="audioInput" type="file" class="hidden" :accept="audioExtensions.join(',')" @change="onFileSelected" />
+					<label for="audio-input" class="sr-only">{{ $t('common.VAiDropAudio') }}</label>
+					<input id="audio-input" ref="audioInput" type="file" class="hidden" :accept="audioExtensions.join(',')" @change="onFileSelected" />
 				</div>
 				<div v-if="audioBlob || recording" class="flex items-center gap-2 mt-2 text-sm text-gray-600">
 					<span v-if="recording" class="flex items-center gap-2 text-red-500">
@@ -60,6 +61,7 @@
 <script lang="ts">
 import { fetchWrapper } from "@/helpers";
 import { useConfigsStore } from "@/stores";
+import { ApiError, getMessage } from "@/utils";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -69,7 +71,6 @@ export default {
 		showModal: {
 			type: Boolean,
 			required: true,
-			default: false,
 		},
 	},
 	emits: ["closeModal"],
@@ -100,13 +101,13 @@ export default {
 				&& !!navigator.mediaDevices?.getUserMedia;
 		},
 		audioExtensions(): string[] {
-			return this.configsStore.getConfigByKey("allowed_audio_extensions") || [];
+			return (this.configsStore.getConfigByKey("allowed_audio_extensions") as string[]) || [];
 		},
 		audioMimeTypes(): string[] {
-			return this.configsStore.getConfigByKey("allowed_audio_mime_types") || [];
+			return (this.configsStore.getConfigByKey("allowed_audio_mime_types") as string[]) || [];
 		},
 		maxAudioSize(): number {
-			return this.configsStore.getConfigByKey("max_size_audio_in_mb") || 25;
+			return (this.configsStore.getConfigNumber("max_size_audio_in_mb") as number) || 25;
 		},
 		canSend(): boolean {
 			return !this.loading && !this.recording && (this.message.trim() !== "" || this.audioBlob !== null);
@@ -175,9 +176,9 @@ export default {
 				}
 				const data = await fetchWrapper.post({ url: `${baseUrl}/ai/chat/messages`, useToken: "access", body: formData, contentFile: true });
 				this.response = JSON.stringify(data, null, 2);
-			} catch (error: any) {
-				const detail = error?.data !== undefined ? JSON.stringify(error.data, null, 2) : "";
-				this.response = `${this.$t("common.VAiError")}: ${error?.message ?? error}${detail ? "\n" + detail : ""}`;
+			} catch (error) {
+				const detail = error instanceof ApiError && error.data !== undefined ? JSON.stringify(error.data, null, 2) : "";
+				this.response = `${this.$t("common.VAiError")}: ${getMessage(error)}${detail ? "\n" + detail : ""}`;
 			} finally {
 				this.loading = false;
 			}

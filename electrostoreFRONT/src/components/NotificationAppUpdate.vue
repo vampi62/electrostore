@@ -20,6 +20,8 @@
 </template>
 
 <script lang="ts">
+import type { VersionInfo } from "@/types/version";
+
 export default {
 	name: "NotificationAppUpdate",
 	data() {
@@ -32,7 +34,7 @@ export default {
 		};
 	},
 	async mounted() {
-		this.startPolling((newVersion: any) => {
+		this.startPolling(() => {
 			this.showBanner = true;
 		});
 	},
@@ -43,7 +45,7 @@ export default {
 		_sessionStateKey() {
 			return "versionManager";
 		},
-		_saveState(updates: Record<string, any>) {
+		_saveState(updates: Record<string, string | null>) {
 			const current = JSON.parse(sessionStorage.getItem(this._sessionStateKey()) || "{}");
 			sessionStorage.setItem(this._sessionStateKey(), JSON.stringify({ ...current, ...updates }));
 		},
@@ -54,7 +56,7 @@ export default {
 			this.showBanner = false;
 			this.forceReload();
 		},
-		async fetchVersion() {
+		async fetchVersion(): Promise<VersionInfo | null> {
 			// block fetch if where in development mode to avoid caching issues
 			if (import.meta.env.DEV) {
 				return { version: "dev" };
@@ -66,7 +68,7 @@ export default {
 				if (!res.ok) {
 					return null;
 				}
-				return await res.json();
+				return await res.json() as VersionInfo;
 			} catch (e) {
 				console.warn("Failed to fetch version info:", e);
 				return null;
@@ -90,14 +92,14 @@ export default {
 				}
 			}
 		},
-		async checkForUpdate(onUpdateAvailable: (newVersion: any) => void) {
+		async checkForUpdate(onUpdateAvailable: (newVersion: VersionInfo) => void) {
 			const data = await this.fetchVersion();
 			if (data && this.currentVersion && data.version !== this.currentVersion) {
 				this._saveState({ availableVersion: data.version });
 				onUpdateAvailable(data);
 			}
 		},
-		startPolling(onUpdateAvailable: (newVersion: any) => void) {
+		startPolling(onUpdateAvailable: (newVersion: VersionInfo) => void) {
 			this.initVersion();
 			this.intervalId = setInterval(() => {
 				this.checkForUpdate(onUpdateAvailable);

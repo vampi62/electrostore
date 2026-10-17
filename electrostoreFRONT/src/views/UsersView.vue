@@ -24,7 +24,7 @@ if (!authStore.hasPermission([1, 2])) {
 	router.push("/");
 }
 
-const userTypeRole = ref({ [UserRole.User]: t("users.FilterRole0"), [UserRole.Moderator]: t("users.FilterRole1"), [UserRole.Admin]: t("users.FilterRole2") });
+const userTypeRole = { [UserRole.User]: t("users.FilterRole0"), [UserRole.Moderator]: t("users.FilterRole1"), [UserRole.Admin]: t("users.FilterRole2") };
 
 const filter = ref<FilterLabel[]>([
 	{ key: "name_user", value: "", type: "text", label: "users.FilterName", compareMethod: "=like=" },

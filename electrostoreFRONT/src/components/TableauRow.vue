@@ -78,8 +78,10 @@
 <script lang="ts">
 import { defineAsyncComponent } from "vue";
 import type { PropType } from "vue";
+import type { StateTree } from "pinia";
 import { Form, Field } from "vee-validate";
-import type { TableauLabel } from "@/types/tableau";
+import type { FormSchema } from "@/types/form";
+import type { TableauLabel, TableauRowData } from "@/types/tableau";
 export default {
 	name: "TableauRow",
 	props: {
@@ -89,7 +91,7 @@ export default {
 			// labels for the columns, each object should have a key and type property
 		},
 		row: {
-			type: Object,
+			type: Object as PropType<TableauRowData>,
 			required: true,
 			// row pass by the parent component, containing the data for the current row
 		},
@@ -100,28 +102,28 @@ export default {
 			default: "border border-gray-300 px-4 py-2 text-sm text-gray-700",
 		},
 		schema: {
-			type: Object,
+			type: Object as PropType<FormSchema>,
 			required: false,
 			// Validation schema for vee-validate
-			default: () => ({}),
+			default: undefined,
 		},
 		storeData: {
-			type: Object,
+			type: Array as PropType<StateTree[]>,
 			required: false,
 			// storeData pass by the parent component, containing the data from the stores, used for link-list and image types
-			default: () => ({}),
+			default: () => [],
 		},
 		storeEdition: {
-			type: Object,
+			type: Object as PropType<StateTree>,
 			required: false,
 			default: () => ({}),
-			// storeEdition is an object containing the store and key to edit a resource when clicking on a row, it should have the properties storeEditionKey and storeEditionStore
+			// storeEdition is the edition of the row (the fields being edited), pass by the parent component
 		},
 		storeReady: {
-			type: Object,
+			type: Object as PropType<StateTree>,
 			required: false,
 			default: () => ({}),
-			// storeReady is an object containing the store and key containing unsaved changes to prevent leaving the page, it should have the properties storeReadyKey and storeReadyStore
+			// storeReady is the unsaved change of the row (status and fields), pass by the parent component
 		},
 	},
 	components: {
@@ -143,7 +145,7 @@ export default {
 		},
 	},
 	methods: {
-		evaluateCondition(condition: string, rowData: Record<string, any>) {
+		evaluateCondition(condition: string, rowData: TableauRowData) {
 			try {
 				return new Function("store", "edition", "ready", "rowData", `return ${condition}`)(this.storeData, this.storeEdition, this.storeReady, rowData);
 			} catch (error) {
@@ -151,28 +153,28 @@ export default {
 				return false;
 			}
 		},
-		formatCellValue(column: any, data: any) {
+		formatCellValue(column: TableauLabel, data: unknown) {
 			switch (column.type) {
 			case "text":
 				return data;
 			case "enum":
-				return column.options[data];
+				return column.options?.[String(data)];
 			case "date":
-				return data ? new Date(data).toLocaleDateString() : "";
+				return data ? new Date(data as string | number).toLocaleDateString() : "";
 			case "datetime":
-				return data ? new Date(data).toLocaleString() : "";
+				return data ? new Date(data as string | number).toLocaleString() : "";
 			default:
 				return data;
 			}
 		},
-		getImageLinkId(row: Record<string, any>, label: TableauLabel) {
+		getImageLinkId(row: TableauRowData, label: TableauLabel) {
 			const { storeLinkId, sourceKey, storeLinkKeyJoinRessource } = label;
 			if (!storeLinkId || !sourceKey || !storeLinkKeyJoinRessource) {
 				return undefined;
 			}
 			return this.storeData[storeLinkId]?.[row[sourceKey]]?.[storeLinkKeyJoinRessource];
 		},
-		getImageSrc(row: Record<string, any>, label: TableauLabel) {
+		getImageSrc(row: TableauRowData, label: TableauLabel) {
 			const { storeRessourceId, storeLinkId, sourceKey } = label;
 			if (!storeRessourceId || !sourceKey) {
 				return undefined;
@@ -183,7 +185,7 @@ export default {
 			}
 			return this.storeData[storeRessourceId]?.[key];
 		},
-		printRessource(label: TableauLabel, linkedItem: Record<string, any> | undefined) {
+		printRessource(label: TableauLabel, linkedItem: TableauRowData | undefined) {
 			const { storeRessourceId, storeLinkKeyJoinRessource } = label;
 			let printedRessource = "";
 			for (const print of label.ressourcePrint ?? []) {
@@ -197,21 +199,21 @@ export default {
 			}
 			return printedRessource;
 		},
-		getDataLinkListValue(row: Record<string, any>, label: TableauLabel) {
+		getDataLinkListValue(row: TableauRowData, label: TableauLabel) {
 			const { storeLinkId, sourceKey } = label;
 			if (!storeLinkId || !sourceKey) {
 				return [];
 			}
-			return (Object.values(this.storeData[storeLinkId]?.[row[sourceKey]] || {}) as Record<string, any>[]).map((linkedItem) => this.printRessource(label, linkedItem));
+			return Object.values<TableauRowData>(this.storeData[storeLinkId]?.[row[sourceKey]] || {}).map((linkedItem) => this.printRessource(label, linkedItem));
 		},
-		getDataLinkValue(row: Record<string, any>, label: TableauLabel) {
+		getDataLinkValue(row: TableauRowData, label: TableauLabel) {
 			const { storeLinkId, sourceKey } = label;
 			if (!storeLinkId || !sourceKey) {
 				return "";
 			}
 			return this.printRessource(label, this.storeData[storeLinkId]?.[row[sourceKey]]);
 		},
-		getDataValue(row: Record<string, any>, label: TableauLabel) {
+		getDataValue(row: TableauRowData, label: TableauLabel) {
 			const { storeRessourceId, storeLinkId, sourceKey, valueKey, storeLinkKeyJoinRessource } = label;
 			if (!valueKey) {
 				return undefined;
