@@ -19,7 +19,8 @@
 					@drop.prevent="onDrop">
 					<font-awesome-icon icon="fa-solid fa-download" class="mr-2" />{{ $t('common.VAiDropAudio') }}
 					<span class="block text-xs text-gray-400">{{ audioExtensions.join(' ') }} - max {{ maxAudioSize }} MB</span>
-					<input ref="audioInput" type="file" class="hidden" :accept="audioExtensions.join(',')" @change="onFileSelected" />
+					<label for="audio-input" class="sr-only">{{ $t('common.VAiDropAudio') }}</label>
+					<input id="audio-input" ref="audioInput" type="file" class="hidden" :accept="audioExtensions.join(',')" @change="onFileSelected" />
 				</div>
 				<div v-if="audioBlob || recording" class="flex items-center gap-2 mt-2 text-sm text-gray-600">
 					<span v-if="recording" class="flex items-center gap-2 text-red-500">
