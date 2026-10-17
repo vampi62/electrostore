@@ -1,12 +1,10 @@
-interface RSQLFilter {
+export interface RSQLFilter {
 	key: string;
 	compareMethod: string;
-	value: any;
+	value: string | number | boolean | null | undefined;
 }
 
-interface RSQLSort {
+export interface RSQLSort {
 	key?: string;
 	order?: "asc" | "desc";
 }
-
-export type { RSQLFilter, RSQLSort };

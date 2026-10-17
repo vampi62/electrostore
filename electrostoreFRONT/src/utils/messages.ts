@@ -1,8 +1,8 @@
 export class ApiError extends Error {
 	status: number;
-	data: any;
+	data: unknown;
 
-	constructor(message: string, status = 0, data: any = null) {
+	constructor(message: string, status = 0, data: unknown = null) {
 		super(message);
 		this.name = "ApiError";
 		this.status = status;
@@ -22,14 +22,18 @@ function formatValidationErrors(errors: unknown): string {
 }
 
 // Extract a displayable message from an API response body ({ error }, { details }, ProblemDetails...)
-export function extractApiMessage(data: any, fallback = ""): string {
+export function extractApiMessage(data: unknown, fallback = ""): string {
 	if (!data) {
 		return fallback;
 	}
 	if (typeof data === "string") {
 		return data;
 	}
-	for (const candidate of [data.error, data.details, data.detail, data.message]) {
+	if (typeof data !== "object") {
+		return fallback;
+	}
+	const body = data as Record<string, unknown>;
+	for (const candidate of [body.error, body.details, body.detail, body.message]) {
 		if (typeof candidate === "string" && candidate) {
 			return candidate;
 		}
@@ -40,7 +44,7 @@ export function extractApiMessage(data: any, fallback = ""): string {
 			}
 		}
 	}
-	return formatValidationErrors(data.errors) || data.title || fallback;
+	return formatValidationErrors(body.errors) || (typeof body.title === "string" ? body.title : fallback);
 }
 
 // Convert anything thrown (ApiError, Error, string, API body...) into a displayable string

@@ -6,6 +6,7 @@ import * as Yup from "yup";
 
 import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
+import type FormContainer from "@/components/FormContainer.vue";
 import { isNewId } from "@/utils";
 import { useConfigsStore, useProjectTagsStore, useProjectsStore, useAuthStore } from "@/stores";
 
@@ -24,18 +25,18 @@ const projectsStore = useProjectsStore();
 const authStore = useAuthStore();
 
 const projectTagId = ref(route.params.id as string);
-const preset = ref(route.query.preset || null);
+const preset = ref(typeof route.query.preset === "string" ? route.query.preset : null);
 
 // every new element has its own edition space in the store, so several tabs can create an element at the same time
 if (isNewId(projectTagId.value)) {
 	projectTagId.value = projectTagsStore.getAvailableNewProjectTagId();
 }
 
-const formContainer = ref<any>(null);
+const formContainer = ref<InstanceType<typeof FormContainer> | null>(null);
 
 async function fetchAllData() {
 	if (isNewId(projectTagId.value)) {
-		projectTagsStore.loadToEdition(projectTagId.value, preset.value as any);
+		projectTagsStore.loadToEdition(projectTagId.value, preset.value);
 	} else {
 		projectTagsStore.setLoadingEdition(projectTagId.value, true);
 		try {
@@ -160,12 +161,12 @@ const filterProject = ref<FilterLabel[]>([
 
 const createSchema = () => {
 	const edition = projectTagsStore.projectTagEdition[projectTagId.value];
-	const shape: any = {};
+	const shape: Record<string, Yup.AnySchema> = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
 	shape.name_project_tag = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("projectTag.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("projectTag.NameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("projectTag.NameRequired"));
 	shape.weight_project_tag = Yup.number()
 		.min(0, t("projectTag.PoidsMin"))
@@ -247,7 +248,7 @@ useTabGuard(projectTagsStore, () => projectTagId.value, "projectTagEdition", "pr
 	</div>
 	<div v-if="projectTagsStore.projectTags[projectTagId] || isNewId(projectTagId)" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="projectTagsStore.projectTagEdition[projectTagId]"/>
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-edition="projectTagsStore.projectTagEdition[projectTagId]" :store-data="projectTagsStore.projectTags[projectTagId]"/>
 		</div>
 		<CollapsibleSection title="projectTag.Projects"
 			:total-count="Number(projectTagsStore.projectTagsProjectTotalCount[projectTagId] || 0)" :permission="!isNewId(projectTagId)">

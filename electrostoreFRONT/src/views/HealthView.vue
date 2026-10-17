@@ -3,6 +3,9 @@ import { onMounted, computed } from "vue";
 import { useI18n } from "vue-i18n";
 
 import { useConfigsStore } from "@/stores";
+import type { components } from "@/types/api";
+
+type SsoAvailableProvider = components["schemas"]["SsoAvailableProvider"];
 
 const { t } = useI18n();
 const configsStore = useConfigsStore();
@@ -72,9 +75,9 @@ function statusBadge(key: string, type: string) {
 		return value ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
 	}
 	if (type === "int") {
-		return value > 0 ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800";
+		return Number(value) > 0 ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800";
 	}
-	const v = (value || "").toLowerCase();
+	const v = String(value || "").toLowerCase();
 	if (["healthy", "ok", "online", "running"].includes(v)) {
 		return "bg-green-100 text-green-800";
 	}
@@ -90,23 +93,25 @@ function statusLabel(key: string, type: string) {
 		return value ? t("health.StatusTrue") : t("health.StatusFalse");
 	}
 	if (type === "int") {
-		return value > 0 ? t("health.StatusInProgress", value) : t("health.StatusIdle");
+		return Number(value) > 0 ? t("health.StatusInProgress", Number(value)) : t("health.StatusIdle");
 	}
-	return value || t("health.StatusUnknown");
+	return value ? String(value) : t("health.StatusUnknown");
 }
 
-function configValue(key: string, type: string, unit: string | null = null) {
+// config displayed as a value, followed by its unit
+function configValue(key: string, unit: string | null = null) {
 	const value = configsStore.getConfigByKey(key);
-	if (type === "bool") {
-		return null;
-	}
-	if (type === "list") {
-		return Array.isArray(value) ? value : [];
-	}
-	if (type === "sso") {
-		return Array.isArray(value) ? value : [];
-	}
 	return unit ? `${value} ${unit}` : value;
+}
+
+function configList(key: string): string[] {
+	const value = configsStore.getConfigByKey(key);
+	return Array.isArray(value) ? value.map(String) : [];
+}
+
+function configSsoProviders(key: string): SsoAvailableProvider[] {
+	const value = configsStore.getConfigByKey(key);
+	return Array.isArray(value) ? value as SsoAvailableProvider[] : [];
 }
 
 function configBool(key: string) {
@@ -185,13 +190,13 @@ const isConfigLoading = computed(() => configsStore.configs?.loading);
 							<!-- Simple value -->
 							<span v-else-if="item.type === 'value'"
 								class="text-sm font-mono bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
-								{{ configValue(item.key, item.type, item.unit) }}
+								{{ configValue(item.key, item.unit) }}
 							</span>
 
 							<!-- List of extensions -->
 							<div v-else-if="item.type === 'list'"
 								class="flex flex-wrap gap-1 justify-end max-w-xs">
-								<span v-for="ext in configValue(item.key, item.type)" :key="ext"
+								<span v-for="ext in configList(item.key)" :key="ext"
 									class="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded font-mono">
 									{{ ext }}
 								</span>
@@ -199,11 +204,11 @@ const isConfigLoading = computed(() => configsStore.configs?.loading);
 
 							<!-- SSO providers -->
 							<div v-else-if="item.type === 'sso'" class="flex flex-col gap-1 items-end">
-								<span v-if="configValue(item.key, item.type).length === 0"
+								<span v-if="configSsoProviders(item.key).length === 0"
 									class="text-sm text-gray-400 italic">{{ $t('health.ConfigSsoNone') }}</span>
-								<div v-for="provider in configValue(item.key, item.type)" :key="provider.provider"
+								<div v-for="provider in configSsoProviders(item.key)" :key="provider.provider ?? undefined"
 									class="flex items-center gap-2 text-sm bg-gray-50 border border-gray-200 px-2 py-1 rounded">
-									<img v-if="provider.icon_url" :src="provider.icon_url" :alt="provider.display_name" class="h-4 w-4" />
+									<img v-if="provider.icon_url" :src="provider.icon_url" :alt="provider.display_name ?? undefined" class="h-4 w-4" />
 									<span class="font-medium">{{ provider.display_name }}</span>
 									<span class="text-gray-400 text-xs font-mono">({{ provider.provider }})</span>
 								</div>

@@ -156,11 +156,12 @@
 
 <script lang="ts">
 import type { PropType } from "vue";
+import type { RoadMapHistoryEntry, RoadMapMode, RoadMapStep, RoadMapStepColor } from "@/types/roadmap";
 export default {
 	name: "RoadMap",
 	props: {
 		steps: {
-			type: Array as PropType<any[]>,
+			type: Array as PropType<RoadMapStep[]>,
 			required: true,
 			// Format: [{ id: 1, name: 'NotStarted' }, { id: 2, name: 'InProgress' }, ...]
 		},
@@ -170,17 +171,17 @@ export default {
 			// Index de l'étape actuelle (0-based)
 		},
 		mode: {
-			type: String,
+			type: String as PropType<RoadMapMode>,
 			default: "horizontal-bottom",
-			validator: (value: any) => ["horizontal-top", "horizontal-bottom", "horizontal-left", "horizontal-right", "vertical-top", "vertical-bottom", "vertical-left", "vertical-right"].includes(value),
+			validator: (value: string) => ["horizontal-top", "horizontal-bottom", "horizontal-left", "horizontal-right", "vertical-top", "vertical-bottom", "vertical-left", "vertical-right"].includes(value),
 		},
 		history: {
-			type: Object,
+			type: Object as PropType<Record<string | number, RoadMapHistoryEntry[]>>,
 			default: () => ({}),
 			// Format: { stepId: [{ action: '', date: '', user: '', comment: '' }] }
 		},
 		stepColors: {
-			type: Object,
+			type: Object as PropType<Record<string, RoadMapStepColor>>,
 			default: () => ({
 				NotStarted: {
 					completed: "bg-gray-300 text-gray-700",
@@ -256,7 +257,7 @@ export default {
 		},
 	},
 	methods: {
-		showHistory(step: any, index: number) {
+		showHistory(step: RoadMapStep, index: number) {
 			this.hoveredStep = index;
 			window.addEventListener("scroll", this.updatePosition, true);
 			window.addEventListener("resize", this.updatePosition);
@@ -308,15 +309,13 @@ export default {
 				targetY <= rect.bottom + marginBottom
 			);
 		},
-		resolveRefElement(refValue: any) {
+		resolveRefElement(refValue: unknown): HTMLElement | null {
 			if (!refValue) {
 				return null;
 			}
-			const candidate = Array.isArray(refValue) ? refValue[0] : refValue;
-			if (candidate?.$el) {
-				return candidate.$el;
-			}
-			return candidate;
+			const candidate: unknown = Array.isArray(refValue) ? refValue[0] : refValue;
+			const element = candidate instanceof HTMLElement ? candidate : (candidate as { $el?: unknown } | null | undefined)?.$el;
+			return element instanceof HTMLElement ? element : null;
 		},
 		updatePosition() {
 			const inputElement = this.resolveRefElement(this.$refs?.[`step-${this.hoveredStep}`]);
@@ -326,7 +325,8 @@ export default {
 				const rect = inputElement.getBoundingClientRect();
 				const tipRect = listElement.getBoundingClientRect();
 				const gap = this.historyGap;
-				let top, left;
+				let top: number;
+				let left: number;
 
 				switch (this.tooltipDirection) {
 				case "bottom":
@@ -354,9 +354,10 @@ export default {
 				listElement.style.left = `${left}px`;
 			}
 		},
-		getCurrentStepColors() {
+		getCurrentStepColors(): RoadMapStepColor {
 			const currentStepName = this.steps[this.currentStep]?.name;
-			return this.stepColors[currentStepName];
+			// a step without colors takes the first colors, instead of breaking the display
+			return this.stepColors[currentStepName] ?? Object.values(this.stepColors)[0];
 		},
 		getSegmentClass(index: number) {
 			const colors = this.getCurrentStepColors();
@@ -391,13 +392,13 @@ export default {
 			return this.getCurrentStepColors().text;
 		},
 
-		getStepHistory(step: any) { // pinia store with history or history array table
+		getStepHistory(step: RoadMapStep): RoadMapHistoryEntry[] | null {
 			return this.history[step.id] || null;
 		},
 		toggleHistory(index: number) {
 			this.expandedStep = this.expandedStep === index ? null : index;
 		},
-		formatDate(date: string | Date | null) {
+		formatDate(date: string | Date | null | undefined) {
 			if (!date) {
 				return "";
 			}

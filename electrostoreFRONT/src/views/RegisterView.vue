@@ -25,8 +25,8 @@ const schema = Yup.object().shape({
 		.required(t("common.VRegisterConfirmPasswordRequired")),
 });
 
-function onSubmit(values: Record<string, any>, { setErrors }: { setErrors: (errors: Record<string, string | undefined>) => void }) {
-	const { email, firstName, lastName, password } = values;
+function onSubmit(values: Record<string, unknown>, { setErrors }: { setErrors: (errors: Record<string, string | undefined>) => void }) {
+	const { email, firstName, lastName, password } = values as Record<string, string>;
 	return authStore.register(email, password, firstName, lastName)
 		.catch((errors) => setErrors({ apiError: errors }))
 		.then(() => setErrors({ apiConfirm: t("common.VRegisterSuccess") }));

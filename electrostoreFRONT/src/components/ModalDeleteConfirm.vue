@@ -26,6 +26,7 @@
 </template>
 
 <script lang="ts">
+import type { PropType } from "vue";
 export default {
 	name: "ModalDeleteConfirm",
 	props: {
@@ -33,22 +34,17 @@ export default {
 			type: Boolean,
 			required: true,
 			// This should be a boolean to control the visibility of the modal
-			default: false,
 		},
 		textTitle: {
 			type: String,
 			required: true,
-			// This should be a translation key for the modal title
-			default: "common.VALLMissingTranslateLink",
 		},
 		textP: {
 			type: String,
 			required: true,
-			// This should be a translation key for the modal paragraph text
-			default: "common.VALLMissingTranslateLink",
 		},
 		deleteAction: {
-			type: Function,
+			type: Function as PropType<() => unknown>,
 			required: false,
 			// This function will be called when the delete is confirmed
 			default: null,

@@ -5,20 +5,31 @@ import { isNewId } from "@/utils";
 
 import { useProjectsStore } from "@/stores";
 
+import type { StoreGeneric } from "pinia";
+import type { Ready, Edition } from "@/types/resource";
 import type { components } from "@/types/api";
 type ReadProjectTagDto = components["schemas"]["ReadProjectTagDto"];
-type ReadProjectProjectTagDto = components["schemas"]["ReadProjectProjectTagDto"];
+type ReadExtendedProjectTagDto = components["schemas"]["ReadExtendedProjectTagDto"];
+type CreateProjectTagDto = components["schemas"]["CreateProjectTagDto"];
+type UpdateProjectTagDto = components["schemas"]["UpdateProjectTagDto"];
 
-const EXPAND_HANDLERS: Record<string, (store: any, idProjectTag: any, data: any) => void> = {
+type ReadProjectProjectTagDto = components["schemas"]["ReadProjectProjectTagDto"];
+type ReadExtendedProjectProjectTagDto = components["schemas"]["ReadExtendedProjectProjectTagDto"];
+type CreateProjectProjectTagByProjectTagDto = components["schemas"]["CreateProjectProjectTagByProjectTagDto"];
+
+const EXPAND_HANDLERS: Record<string, (store: StoreGeneric, idProjectTag: string, data: ReadExtendedProjectTagDto) => void> = {
 	project_tags: (store, idProjectTag, data) => {
 		store.projectTagsProject[idProjectTag] = {};
-		for (const projectTagProject of data.project_tags) {
+		for (const projectTagProject of data.project_tags ?? []) {
+			if (!projectTagProject.id_project) {
+				continue;
+			}
 			store.projectTagsProject[idProjectTag][projectTagProject.id_project] = projectTagProject;
 		}
 	},
 };
 
-function hydrateProjectTag(store: any, idProjectTag: string, projectTag: any, expand: string[] = []) {
+function hydrateProjectTag(store: StoreGeneric, idProjectTag: string, projectTag: ReadExtendedProjectTagDto, expand: string[] = []) {
 	store.projectTagsProjectTotalCount[idProjectTag] = projectTag.project_tags_count;
 	for (const key of expand) {
 		if (EXPAND_HANDLERS[key]) {
@@ -27,19 +38,22 @@ function hydrateProjectTag(store: any, idProjectTag: string, projectTag: any, ex
 	}
 }
 
-const projectTagResource = createMainResource({
+const projectTagResource = createMainResource<{ readExtended: ReadExtendedProjectTagDto, readBasic: ReadProjectTagDto, create: CreateProjectTagDto, update: UpdateProjectTagDto, createBulk: CreateProjectTagDto[] }>({
 	path: () => "/project-tag",
 	idField: "id_project_tag",
 	stateKey: "projectTags",
 	countKey: "projectTagsTotalCount",
 	loadingKey: "projectTagsLoading",
 	editionKey: "projectTagEdition",
-	onHydrate: (store, entity, expand) => {
-		hydrateProjectTag(store, entity.id_project_tag, entity, expand);
+	onHydrate: (store, entity: ReadExtendedProjectTagDto, expand) => {
+		if (entity.id_project_tag === undefined) {
+			return;
+		}
+		hydrateProjectTag(store, String(entity.id_project_tag), entity, expand);
 	},
 });
 
-const projectTagProjectResource = createNestedResource({
+const projectTagProjectResource = createNestedResource<{ readExtended: ReadExtendedProjectProjectTagDto, readBasic: ReadProjectProjectTagDto, create: CreateProjectProjectTagByProjectTagDto }>({
 	path: (idProjectTag) => `/project-tag/${idProjectTag}/project`,
 	idField: "id_project",
 	stateKey: "projectTagsProject",
@@ -47,8 +61,8 @@ const projectTagProjectResource = createNestedResource({
 	loadingKey: "projectTagsProjectLoading",
 	editionKey: "projectTagProjectEdition",
 	readyKey: "projectTagProjectReady",
-	onHydrate: (store, entity, expand) => {
-		if (expand.includes("project")) {
+	onHydrate: (store, entity: ReadExtendedProjectProjectTagDto, expand) => {
+		if (expand.includes("project") && entity.project && entity.id_project) {
 			const projectsStore = useProjectsStore();
 			projectsStore.projects[entity.id_project] = entity.project;
 		}
@@ -60,13 +74,13 @@ export const useProjectTagsStore = defineStore("projectTags",{
 		projectTagsLoading: false,
 		projectTagsTotalCount: 0,
 		projectTags: {} as Record<string, ReadProjectTagDto>,
-		projectTagEdition: {} as Record<string, any>,
+		projectTagEdition: {} as Record<string, Edition<{ create: CreateProjectTagDto, update: UpdateProjectTagDto }>>,
 
 		projectTagsProjectLoading: false,
 		projectTagsProjectTotalCount: {} as Record<string, number>,
-		projectTagsProject: {} as Record<string, ReadProjectProjectTagDto>,
-		projectTagProjectEdition: {} as Record<string, any>,
-		projectTagProjectReady: {} as Record<string, any>,
+		projectTagsProject: {} as Record<string, Record<string, ReadProjectProjectTagDto>>,
+		projectTagProjectEdition: {} as Record<string, Record<string, Edition<{ create: CreateProjectProjectTagByProjectTagDto }>>>,
+		projectTagProjectReady: {} as Record<string, Record<string, Ready<{ create: CreateProjectProjectTagByProjectTagDto }>>>,
 	}),
 	actions: {
 		getProjectTagByList: projectTagResource.getByList,
@@ -77,11 +91,11 @@ export const useProjectTagsStore = defineStore("projectTags",{
 		updateProjectTag: projectTagResource.update,
 		deleteProjectTag: projectTagResource.remove,
 		createProjectTagBulk: projectTagResource.createBulk,
-		loadToEdition(id: string, preset = null) {
+		loadToEdition(id: string, preset: string | null = null) {
 			if (!isNewId(id) && this.projectTags[id]) {
 				this.projectTagEdition[id] = {
 					loading: false,
-					name_project_tag: this.projectTags[id].name_project_tag,
+					name_project_tag: this.projectTags[id].name_project_tag ?? undefined,
 					weight_project_tag: this.projectTags[id].weight_project_tag,
 				};
 			} else {
@@ -107,14 +121,12 @@ export const useProjectTagsStore = defineStore("projectTags",{
 		async saveAllChanges(id: string) {
 			let realId = id;
 			if (isNewId(id)) {
-				realId = await this.createProjectTag(this.projectTagEdition[id]);
+				realId = await this.createProjectTag(this.projectTagEdition[id] as CreateProjectTagDto);
 				this.copyProjectTagProjectAllId(id, realId);
 			} else {
 				await this.updateProjectTag(realId, this.projectTagEdition[id]);
 			}
-			await Promise.all([
-				this.pushProjectTagProjectChange(realId),
-			]);
+			await this.pushProjectTagProjectChange(realId);
 			await this.getProjectTagById(realId, ["project_tags"]);
 			return realId;
 		},

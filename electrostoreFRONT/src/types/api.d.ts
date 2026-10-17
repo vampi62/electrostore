@@ -11436,10 +11436,6 @@ export interface components {
             action_cronjob?: components["schemas"]["CronJobAction"];
             params_cronjob?: string | null;
             is_enabled?: boolean | null;
-            /** Format: date-time */
-            last_run_at?: string | null;
-            /** Format: date-time */
-            next_run_at?: string | null;
         };
         UpdateEquipementCommentDto: {
             content_equipement_comment?: string | null;

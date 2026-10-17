@@ -33,7 +33,9 @@ watch((): [boolean, string] => [isTabsView.value, route.fullPath], ([tabsView, f
 		tabsStore.ephemeral = true;
 		tabsStore.reset(fullPath);
 	} else if (fullPath === "/") {
-		router.replace(tabsStore.activeTab.fullPath);
+		if (tabsStore.activeTab) {
+			router.replace(tabsStore.activeTab.fullPath);
+		}
 	} else if (fullPath !== tabsStore.activeTab?.fullPath) {
 		tabsStore.open(fullPath);
 	}

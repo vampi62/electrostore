@@ -48,63 +48,60 @@
 </template>
 
 <script lang="ts">
+import type { PropType } from "vue";
+import type { StateTree } from "pinia";
+import type { FetchFunction, FetchPage } from "@/types/fetch";
+import type { FilterLabel } from "@/types/filter";
+import type { TagsMeta, TagsTableauModal } from "@/types/tag";
 export default {
 	name: "Tags",
 	props: {
 		tagsStore: {
-			type: Object,
+			type: Object as PropType<StateTree>,
 			required: true,
-			default: null,
-			//
 		},
 		currentTags: {
-			type: Object,
+			type: Object as PropType<StateTree>,
 			required: true,
-			default: null,
-			//
 		},
 		readyStore: {
-			type: Object,
+			type: Object as PropType<StateTree>,
 			required: false,
 			default: () => ({}),
 			// readyStore is an object containing the tags pending addition/deletion, keyed by id_tag, e.g. { [id_tag]: { status: 'created' | 'deleted', ... } }
 		},
 		deleteFunction: {
-			type: Function,
+			type: Function as PropType<(id: string) => unknown>,
 			default: () => {},
 		},
 		restoreFunction: {
-			type: Function,
+			type: Function as PropType<(id: string) => unknown>,
 			default: () => {},
-			// restoreFunction cancels a pending deletion staged in readyStore
 		},
 		fetchFunction: {
-			type: Function,
-			default: () => {},
+			type: Function as PropType<FetchFunction>,
+			default: (): FetchPage => [0, false],
 		},
 		canEdit: {
 			type: Boolean,
 			default: false,
 		},
 		tableauModal: {
-			type: Object,
+			type: Object as PropType<TagsTableauModal>,
 			required: true,
-			default: null,
 		},
 		filterModal: {
-			type: Object,
+			type: Array as PropType<FilterLabel[]>,
 			required: true,
-			default: null,
 		},
 		otherStore: {
-			type: Array,
+			type: Array as PropType<StateTree[]>,
 			required: false,
 			default: () => [],
 		},
 		meta: {
-			type: Object,
+			type: Object as PropType<TagsMeta>,
 			required: true,
-			default: null,
 		},
 	},
 	computed:{

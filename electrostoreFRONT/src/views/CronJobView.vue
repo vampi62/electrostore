@@ -6,6 +6,7 @@ import * as Yup from "yup";
 
 import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
+import type FormContainer from "@/components/FormContainer.vue";
 import { isNewId } from "@/utils";
 import { CronJobStatus } from "@/enums";
 import { useConfigsStore, useCronJobsStore, useAuthStore } from "@/stores";
@@ -20,7 +21,7 @@ const cronJobsStore = useCronJobsStore();
 const authStore = useAuthStore();
 
 const cronJobId = ref(route.params.id as string);
-const preset = ref(route.query.preset || null);
+const preset = ref(typeof route.query.preset === "string" ? route.query.preset : null);
 
 const cronJobActionOptions = {
 	0: t("cronJob.ActionPackageTracking"),
@@ -34,18 +35,21 @@ const cronJobStatusOptions: Record<number, string> = {
 	[CronJobStatus.Failed]: t("cronJob.StatusFailed"),
 	[CronJobStatus.Stopped]: t("cronJob.StatusStopped"),
 };
-const cronJobStatusLabel = computed(() => cronJobStatusOptions[cronJobsStore.cronJobEdition[cronJobId.value]?.status_cronjob] ?? "");
+const cronJobStatusLabel = computed(() => {
+	const status = cronJobsStore.cronJobs[cronJobId.value]?.status_cronjob;
+	return status === undefined ? "" : (cronJobStatusOptions[status] ?? "");
+});
 
 // every new element has its own edition space in the store, so several tabs can create an element at the same time
 if (isNewId(cronJobId.value)) {
 	cronJobId.value = cronJobsStore.getAvailableNewCronJobId();
 }
 
-const formContainer = ref<any>(null);
+const formContainer = ref<InstanceType<typeof FormContainer> | null>(null);
 
 async function fetchAllData() {
 	if (isNewId(cronJobId.value)) {
-		cronJobsStore.loadToEdition(cronJobId.value, preset.value as any);
+		cronJobsStore.loadToEdition(cronJobId.value, preset.value);
 	} else {
 		cronJobsStore.setLoadingEdition(cronJobId.value, true);
 		try {
@@ -131,12 +135,12 @@ const cronJobForceStop = async() => {
 };
 const createSchema = () => {
 	const edition = cronJobsStore.cronJobEdition[cronJobId.value];
-	const shape: any = {};
+	const shape: Record<string, Yup.AnySchema> = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
 	shape.name_cronjob = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("cronJob.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.max(configsStore.getConfigNumber("max_length_name"), t("cronJob.NameMaxLength", { count: configsStore.getConfigNumber("max_length_name") }))
 		.required(t("cronJob.NameRequired"));
 	shape.cron_expression_cronjob = Yup.string()
 		.required(t("cronJob.CronExpressionRequired"))
@@ -152,14 +156,14 @@ const createSchema = () => {
 	return Yup.object().shape(shape);
 };
 const cronJobLastRun = computed(() => {
-	const value = cronJobsStore.cronJobEdition[cronJobId.value]?.last_run_at;
+	const value = cronJobsStore.cronJobs[cronJobId.value]?.last_run_at;
 	return value ? new Date(value).toLocaleString() : "";
 });
 const cronJobNextRun = computed(() => {
-	const value = cronJobsStore.cronJobEdition[cronJobId.value]?.next_run_at;
+	const value = cronJobsStore.cronJobs[cronJobId.value]?.next_run_at;
 	return value ? new Date(value).toLocaleString() : "";
 });
-const cronJobLastError = computed(() => cronJobsStore.cronJobEdition[cronJobId.value]?.last_error_cronjob || "");
+const cronJobLastError = computed(() => cronJobsStore.cronJobs[cronJobId.value]?.last_error_cronjob || "");
 
 const labelForm = [
 	{ key: "name_cronjob", label: "cronJob.Name", type: "text", enableCondition: "func.hasPermission([2])" },
@@ -188,7 +192,7 @@ useTabGuard(cronJobsStore, () => cronJobId.value, "cronJobEdition", "cronJobs");
 			@button-create="cronJobSave" @button-update="cronJobSave" @button-delete="cronJobDeleteModalShow = true"/>
 	</div>
 	<div v-if="cronJobsStore.cronJobs[cronJobId] || isNewId(cronJobId)" class="w-full">
-		<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="cronJobsStore.cronJobEdition[cronJobId]" :store-user="authStore.user"
+		<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-edition="cronJobsStore.cronJobEdition[cronJobId]" :store-data="cronJobsStore.cronJobs[cronJobId]" :store-user="authStore.user"
 			:store-function="{ hasPermission: (validPerm: number[]) => authStore.hasPermission(validPerm) }"/>
 		<div v-if="!isNewId(cronJobId) && authStore.hasPermission([2])" class="flex space-x-2 mt-4">
 			<button type="button" @click="cronJobForceRun"

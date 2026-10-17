@@ -30,8 +30,8 @@ const schema = Yup.object().shape({
 		.required(t("common.VResetPasswordPasswordConfirmRequired")),
 });
 
-function onSubmit(values: Record<string, any>, { setErrors }: { setErrors: (errors: Record<string, string | undefined>) => void }) {
-	const { email, token, password } = values;
+function onSubmit(values: Record<string, unknown>, { setErrors }: { setErrors: (errors: Record<string, string | undefined>) => void }) {
+	const { email, token, password } = values as Record<string, string>;
 	return authStore.resetPassword(email, token, password)
 		.catch((error) => setErrors({ apiError: error }))
 		.then(() => setErrors({ apiConfirm: t("common.VResetPasswordSuccess") }));

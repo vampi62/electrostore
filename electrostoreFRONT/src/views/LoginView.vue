@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { Form, Field } from "vee-validate";
 import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
@@ -12,6 +12,9 @@ const authStore = useAuthStore();
 
 const showPassword = ref(false);
 
+// the providers are listed by the api, a provider without name cannot be used to login
+const ssoProviders = computed(() => (configsStore.configs.sso_available_providers ?? []).filter((provider): provider is typeof provider & { provider: string } => Boolean(provider.provider)));
+
 const schema = Yup.object().shape({
 	email: Yup.string()
 		.email(t("common.VLoginEmailInvalid"))
@@ -20,7 +23,7 @@ const schema = Yup.object().shape({
 		.required(t("common.VLoginPasswordRequired")),
 });
 
-function onSubmit(values: Record<string, any>, { setErrors }: { setErrors: (errors: Record<string, string>) => void }) {
+function onSubmit(values: Record<string, unknown>, { setErrors }: { setErrors: (errors: Record<string, string>) => void }) {
 	const { email, password } = values as { email: string; password: string };
 	return authStore.login(email, password)
 		.catch((error) => setErrors({ apiError: t("common.VLoginError") }));
@@ -83,12 +86,12 @@ function onSubmit(values: Record<string, any>, { setErrors }: { setErrors: (erro
 			</div>
 		</div>
 		<div v-else>
-			<div v-if="configsStore.configs.sso_available_providers.length > 0" class="space-y-2 mb-4">
-				<div v-for="provider in configsStore.configs.sso_available_providers" :key="provider.provider">
+			<div v-if="ssoProviders.length > 0" class="space-y-2 mb-4">
+				<div v-for="provider in ssoProviders" :key="provider.provider">
 					<button @click="authStore.loginSSO(provider.provider)"
 						class="w-full flex items-center justify-center border border-gray-300 rounded px-4 py-2 hover:bg-gray-100">
-						<img :src="provider.icon_url" :alt="provider.display_name" class="h-6 w-6 mr-2" />
-						<span>{{ $t('common.VLoginSSOLoginWith', { provider: provider.display_name }) }}</span>
+						<img :src="provider.icon_url ?? undefined" :alt="provider.display_name ?? undefined" class="h-6 w-6 mr-2" />
+						<span>{{ $t('common.VLoginSSOLoginWith', { provider: provider.display_name ?? provider.provider }) }}</span>
 					</button>
 				</div>
 			</div>
