@@ -267,5 +267,161 @@ namespace ElectrostoreAPI.Tests.Services
 
             await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.DeleteBoxTag(1, 1));
         }
+
+        // --- expand / bulk operations ---
+
+        private async Task<(int parentId, int tag1Id, int tag2Id)> SeedForBulk(ApplicationDbContext context)
+        {
+            var store = BuildStore();
+            context.Stores.Add(store);
+            await context.SaveChangesAsync();
+            var parent = BuildBox(store.id_store);
+            context.Boxs.Add(parent);
+            await context.SaveChangesAsync();
+            var tag1 = BuildTag("bulk-1");
+            var tag2 = BuildTag("bulk-2");
+            context.Tags.AddRange(tag1, tag2);
+            await context.SaveChangesAsync();
+            return (parent.id_box, tag1.id_tag, tag2.id_tag);
+        }
+
+        [Fact]
+        public async Task GetBoxsTagsByBoxId_ShouldExpandParentAndTag_WhenRequested()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (parentId, tagId, _) = await SeedForBulk(context);
+            context.BoxsTags.Add(new BoxsTags { id_box = parentId, id_tag = tagId });
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.GetBoxsTagsByBoxId(parentId, expand: ["box", "tag"]);
+
+            var link = Assert.Single(result.data);
+            Assert.NotNull(link.box);
+            Assert.NotNull(link.tag);
+        }
+
+        [Fact]
+        public async Task GetBoxsTagsByTagId_ShouldExpandParentAndTag_WhenRequested()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (parentId, tagId, _) = await SeedForBulk(context);
+            context.BoxsTags.Add(new BoxsTags { id_box = parentId, id_tag = tagId });
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.GetBoxsTagsByTagId(tagId, expand: ["box", "tag"]);
+
+            var link = Assert.Single(result.data);
+            Assert.NotNull(link.box);
+            Assert.NotNull(link.tag);
+        }
+
+        [Fact]
+        public async Task GetBoxTagById_ShouldExpandParentAndTag_WhenRequested()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (parentId, tagId, _) = await SeedForBulk(context);
+            context.BoxsTags.Add(new BoxsTags { id_box = parentId, id_tag = tagId });
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.GetBoxTagById(parentId, tagId, ["box", "tag"]);
+
+            Assert.NotNull(result.box);
+            Assert.NotNull(result.tag);
+        }
+
+        [Fact]
+        public async Task CreateBulkBoxTag_ShouldReturnValidAndErrorEntries()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (parentId, tag1Id, _) = await SeedForBulk(context);
+            var service = CreateService(context);
+
+            var result = await service.CreateBulkBoxTag(
+            [
+                new CreateBoxTagDto { id_box = parentId, id_tag = tag1Id },
+                new CreateBoxTagDto { id_box = 9999, id_tag = tag1Id },
+                new CreateBoxTagDto { id_box = parentId, id_tag = tag1Id }
+            ]);
+
+            Assert.Single(result.valide);
+            Assert.Equal(2, result.error.Count());
+            Assert.Equal(1, await context.BoxsTags.CountAsync());
+        }
+
+        [Fact]
+        public async Task CreateBulkBoxTag_ShouldThrowUnauthorizedAccessException_WhenClientIsNotAdmin()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            _sessionService.Setup(s => s.GetClientRole()).Returns(UserRole.User);
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.CreateBulkBoxTag([]));
+        }
+
+        [Fact]
+        public async Task DeleteBulkBoxTag_ShouldReturnValidAndErrorEntries()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (parentId, tag1Id, tag2Id) = await SeedForBulk(context);
+            context.BoxsTags.Add(new BoxsTags { id_box = parentId, id_tag = tag1Id });
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.DeleteBulkBoxTag(
+            [
+                new CreateBoxTagDto { id_box = parentId, id_tag = tag1Id },
+                new CreateBoxTagDto { id_box = parentId, id_tag = tag2Id }
+            ]);
+
+            var deleted = Assert.Single(result.valide);
+            Assert.Equal(tag1Id, deleted.id_tag);
+            Assert.Single(result.error);
+            Assert.Equal(0, await context.BoxsTags.CountAsync());
+        }
+
+        [Fact]
+        public async Task DeleteBulkBoxTag_ShouldThrowUnauthorizedAccessException_WhenClientIsNotAdmin()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            _sessionService.Setup(s => s.GetClientRole()).Returns(UserRole.User);
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.DeleteBulkBoxTag([]));
+        }
+
+        // --- CheckIfStoreExists ---
+
+        [Fact]
+        public async Task CheckIfStoreExists_ShouldSucceed_WhenBoxBelongsToStore()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var store = BuildStore();
+            context.Stores.Add(store);
+            await context.SaveChangesAsync();
+            var box = BuildBox(store.id_store);
+            context.Boxs.Add(box);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await service.CheckIfStoreExists(store.id_store, box.id_box);
+        }
+
+        [Fact]
+        public async Task CheckIfStoreExists_ShouldThrowKeyNotFoundException_WhenBoxIsInAnotherStore()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var store = BuildStore();
+            context.Stores.Add(store);
+            await context.SaveChangesAsync();
+            var box = BuildBox(store.id_store);
+            context.Boxs.Add(box);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.CheckIfStoreExists(store.id_store + 1, box.id_box));
+        }
     }
 }

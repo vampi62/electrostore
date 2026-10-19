@@ -312,5 +312,228 @@ namespace ElectrostoreAPI.Tests.Services
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DeleteItem(999));
         }
+
+        // --- additional coverage: lists, expand, images ---
+
+        private static Mock<Microsoft.AspNetCore.Http.IFormFile> BuildImageFile()
+        {
+            var file = new Mock<Microsoft.AspNetCore.Http.IFormFile>();
+            file.Setup(f => f.FileName).Returns("pic.png");
+            file.Setup(f => f.ContentType).Returns("image/png");
+            file.Setup(f => f.OpenReadStream()).Returns(() => new System.IO.MemoryStream([1, 2, 3]));
+            return file;
+        }
+
+        private void SetupImageSaving()
+        {
+            _fileService
+                .Setup(f => f.SaveFile(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<System.IO.Stream>(), It.IsAny<bool>()))
+                .ReturnsAsync(new SaveFileResult { path = "itemImages/1/pic.png", mime_type = "image/png" });
+            _fileService
+                .Setup(f => f.GenerateThumbnail(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()))
+                .ReturnsAsync(new SaveFileResult { path = "itemImagesThumbnails/1/pic.png", mime_type = "image/png" });
+        }
+
+        private async Task<Items> SeedItemWithRelations(ApplicationDbContext context)
+        {
+            var item = BuildItem("full", 10);
+            var tag = new Tags { name_tag = "tag" };
+            var store = new Stores { name_store = "s", mqtt_name_store = "s-mqtt", xlength_store = 10, ylength_store = 10 };
+            var command = new Commands { url_command = "https://x", date_command = DateTime.UtcNow };
+            var project = new Projects { name_project = "p" };
+            context.Items.Add(item);
+            context.Tags.Add(tag);
+            context.Stores.Add(store);
+            context.Commands.Add(command);
+            context.Projects.Add(project);
+            await context.SaveChangesAsync();
+            var box = new Boxs { id_store = store.id_store, xstart_box = 0, ystart_box = 0, xend_box = 1, yend_box = 1 };
+            context.Boxs.Add(box);
+            await context.SaveChangesAsync();
+            context.ItemsTags.Add(new ItemsTags { id_item = item.id_item, id_tag = tag.id_tag });
+            context.ItemsBoxs.Add(new ItemsBoxs { id_item = item.id_item, id_box = box.id_box, quantity_item_box = 4, threshold_max_item_item_box = 10 });
+            context.CommandsItems.Add(new CommandsItems { id_item = item.id_item, id_command = command.id_command, quantity_command_item = 1, price_command_item = 1f });
+            context.ProjectsItems.Add(new ProjectsItems { id_item = item.id_item, id_project = project.id_project, quantity_project_item = 1 });
+            context.ItemsDocuments.Add(new ItemsDocuments
+            {
+                id_item = item.id_item,
+                url_item_document = "i/doc.pdf",
+                name_item_document = "doc",
+                type_item_document = "application/pdf",
+                size_item_document = 1
+            });
+            context.ItemsHistory.Add(new ItemsHistory { id_item = item.id_item, type_item_history = ItemHistoryType.ItemCreated });
+            await context.SaveChangesAsync();
+            return item;
+        }
+
+        [Fact]
+        public async Task GetItems_ShouldRestrictToIds_WhenIdResearchProvided()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var a = BuildItem("a", 1);
+            var b = BuildItem("b", 1);
+            context.Items.AddRange(a, b);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.GetItems(idResearch: [b.id_item]);
+
+            var single = Assert.Single(result.data);
+            Assert.Equal(b.id_item, single.id_item);
+        }
+
+        [Fact]
+        public async Task GetItems_ShouldReturnCountsQuantityAndExpandedRelations()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            await SeedItemWithRelations(context);
+            using var queryContext = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(queryContext);
+
+            var result = await service.GetItems(expand: ["item_tags", "item_boxs", "command_items", "project_items", "item_documents", "item_history"]);
+
+            var single = Assert.Single(result.data);
+            Assert.Equal(4, single.quantity_item);
+            Assert.Equal(1, single.item_tags_count);
+            Assert.Equal(1, single.item_boxs_count);
+            Assert.Equal(1, single.command_items_count);
+            Assert.Equal(1, single.project_items_count);
+            Assert.Equal(1, single.item_documents_count);
+            Assert.Single(single.item_tags!);
+            Assert.Single(single.item_boxs!);
+            Assert.Single(single.command_items!);
+            Assert.Single(single.project_items!);
+            Assert.Single(single.item_documents!);
+            Assert.Single(single.item_history!);
+        }
+
+        [Fact]
+        public async Task GetItemById_ShouldReturnCountsQuantityAndExpandedRelations()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var item = await SeedItemWithRelations(context);
+            using var queryContext = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(queryContext);
+
+            var result = await service.GetItemById(item.id_item, ["item_tags", "item_boxs", "command_items", "project_items", "item_documents", "item_history"]);
+
+            Assert.Equal(4, result.quantity_item);
+            Assert.Single(result.item_tags!);
+            Assert.Single(result.item_boxs!);
+            Assert.Single(result.command_items!);
+            Assert.Single(result.project_items!);
+            Assert.Single(result.item_documents!);
+            Assert.Single(result.item_history!);
+        }
+
+        [Fact]
+        public async Task CreateItem_ShouldSaveImageAndThumbnail_WhenImageProvided()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            SetupImageSaving();
+            var service = CreateService(context);
+
+            var result = await service.CreateItem(new CreateItemDto
+            {
+                reference_name_item = "img",
+                friendly_name_item = "img",
+                threshold_min_item = 1,
+                img_file = BuildImageFile().Object
+            });
+
+            Assert.Equal("itemImages/1/pic.png", result.url_picture_item);
+            Assert.Equal("itemImagesThumbnails/1/pic.png", result.url_thumbnail_item);
+        }
+
+        [Fact]
+        public async Task UpdateItem_ShouldNotLogHistory_WhenNothingChanges()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var item = BuildItem("a", 10);
+            context.Items.Add(item);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await service.UpdateItem(item.id_item, new UpdateItemDto
+            {
+                reference_name_item = "a",
+                friendly_name_item = "a",
+                threshold_min_item = 10,
+                description_item = string.Empty
+            });
+
+            _itemHistoryService.Verify(h => h.LogHistory(It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<ItemHistoryType>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string?>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task UpdateItem_ShouldUpdateReferenceAndDescription()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var item = BuildItem("a", 10);
+            context.Items.Add(item);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.UpdateItem(item.id_item, new UpdateItemDto { reference_name_item = "b", description_item = "desc" });
+
+            Assert.Equal("b", result.reference_name_item);
+            Assert.Equal("desc", result.description_item);
+        }
+
+        [Fact]
+        public async Task UpdateItem_ShouldReplaceImage_AndDeleteOldFiles()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var item = BuildItem("a", 10);
+            item.url_picture_item = "itemImages/1/old.png";
+            item.url_thumbnail_item = "itemImagesThumbnails/1/old.png";
+            context.Items.Add(item);
+            await context.SaveChangesAsync();
+            SetupImageSaving();
+            var service = CreateService(context);
+
+            var result = await service.UpdateItem(item.id_item, new UpdateItemDto { img_file = BuildImageFile().Object });
+
+            Assert.Equal("itemImages/1/pic.png", result.url_picture_item);
+            _fileService.Verify(f => f.DeleteFile("itemImages/1/old.png"), Times.Once);
+            _fileService.Verify(f => f.DeleteFile("itemImagesThumbnails/1/old.png"), Times.Once);
+            _itemHistoryService.Verify(h => h.LogHistory(item.id_item, null, ItemHistoryType.ItemUpdated, null, null, null), Times.Once);
+        }
+
+        [Fact]
+        public async Task UpdateItem_ShouldAddImage_WhenItemHadNone()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var item = BuildItem("a", 10);
+            context.Items.Add(item);
+            await context.SaveChangesAsync();
+            SetupImageSaving();
+            var service = CreateService(context);
+
+            var result = await service.UpdateItem(item.id_item, new UpdateItemDto { img_file = BuildImageFile().Object });
+
+            Assert.NotNull(result.url_picture_item);
+            _fileService.Verify(f => f.DeleteFile(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task UpdateItem_ShouldRemoveImage_WhenUnsetRequested()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var item = BuildItem("a", 10);
+            item.url_picture_item = "itemImages/1/old.png";
+            item.url_thumbnail_item = "itemImagesThumbnails/1/old.png";
+            context.Items.Add(item);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.UpdateItem(item.id_item, new UpdateItemDto { unset_img_item = true });
+
+            Assert.Null(result.url_picture_item);
+            Assert.Null(result.url_thumbnail_item);
+            _fileService.Verify(f => f.DeleteFile("itemImages/1/old.png"), Times.Once);
+            _fileService.Verify(f => f.DeleteFile("itemImagesThumbnails/1/old.png"), Times.Once);
+        }
     }
 }

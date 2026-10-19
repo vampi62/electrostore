@@ -284,15 +284,17 @@ public static class RsqlParserExtensions
                 {
                     // Expression for non-collection properties
                     object? convertedValue;
+                    // Nullable<T> columns (e.g. int? id_user) must be converted to their underlying type
+                    var targetType = Nullable.GetUnderlyingType(left.Type) ?? left.Type;
                     try
                     {
-                        if (left.Type.IsEnum)
+                        if (targetType.IsEnum)
                         {
-                            convertedValue = Enum.Parse(left.Type, value?.ToString() ?? "", true);
+                            convertedValue = Enum.Parse(targetType, value?.ToString() ?? "", true);
                         }
                         else
                         {
-                            convertedValue = Convert.ChangeType(value, left.Type);
+                            convertedValue = Convert.ChangeType(value, targetType);
                         }
                     }
                     catch (Exception)
@@ -301,7 +303,7 @@ public static class RsqlParserExtensions
                         continue;
                     }
 
-                    Expression right = Expression.Constant(convertedValue);
+                    Expression right = Expression.Constant(convertedValue, left.Type);
 
                     binaryExpression = searchType switch
                     {

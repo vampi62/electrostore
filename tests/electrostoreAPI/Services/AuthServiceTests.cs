@@ -4,6 +4,7 @@ using Moq;
 using Xunit;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using ElectrostoreAPI;
 using ElectrostoreAPI.Dto;
@@ -464,6 +465,289 @@ namespace ElectrostoreAPI.Tests.Services
             {
                 await authService.RefreshJwt();
             });
+        }
+
+        // --- LoginWithSSO ---
+
+        private static Jwt BuildJwt() => new()
+        {
+            token = "sso-access",
+            refresh_token = "sso-refresh",
+            expire_date_token = DateTime.UtcNow.AddMinutes(15),
+            expire_date_refresh_token = DateTime.UtcNow.AddDays(7)
+        };
+
+        private static IConfiguration BuildSsoConfiguration(FakeOidcServer server, Dictionary<string, string?>? extra = null)
+        {
+            var values = new Dictionary<string, string?>
+            {
+                { "OAuth:Authentik:ClientId", "client-id" },
+                { "OAuth:Authentik:ClientSecret", "client-secret" },
+                { "OAuth:Authentik:Authority", server.Authority },
+                { "OAuth:Authentik:RedirectUri", "https://app.example.com/callback" },
+                { "OAuth:Authentik:Scope", "openid email" },
+                { "OAuth:Authentik:GroupMapping:Admin", "admins" },
+                { "OAuth:Authentik:GroupMapping:Moderator", "moderators" }
+            };
+            if (extra is not null)
+            {
+                foreach (var kv in extra)
+                {
+                    values[kv.Key] = kv.Value;
+                }
+            }
+            return BuildConfiguration(values);
+        }
+
+        private async Task<(AuthService service, string state)> PrepareSsoLogin(ApplicationDbContext context, FakeOidcServer server, IConfiguration? configuration = null)
+        {
+            var service = CreateService(context, configuration ?? BuildSsoConfiguration(server));
+            var state = (await service.GetSSOAuthUrl("authentik")).state;
+            _jwtService.Setup(j => j.GenerateToken(It.IsAny<ReadUserDto>(), "sso_authentik")).ReturnsAsync(BuildJwt());
+            return (service, state);
+        }
+
+        [Fact]
+        public async Task LoginWithSSO_ShouldCreateUserWithMappedRole_AndReturnTokens()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            using var server = new FakeOidcServer
+            {
+                UserInfoBody = """{"sub":"1","email":"new@example.com","given_name":"Given","family_name":"Family","groups":["moderators","admins"]}"""
+            };
+            var (service, state) = await PrepareSsoLogin(context, server);
+            _userService
+                .Setup(u => u.CreateUser(It.IsAny<CreateUserDto>(), true))
+                .ReturnsAsync((CreateUserDto dto, bool _) => new ReadUserDto
+                {
+                    id_user = 42,
+                    name_user = dto.name_user,
+                    firstname_user = dto.firstname_user,
+                    email_user = dto.email_user,
+                    role_user = dto.role_user
+                });
+
+            var result = await service.LoginWithSSO("authentik", new SsoLoginRequest { code = "the-code", state = state });
+
+            Assert.Equal("sso-access", result.token);
+            Assert.Equal("sso-refresh", result.refresh_token);
+            Assert.Equal(42, result.user.id_user);
+            _userService.Verify(u => u.CreateUser(It.Is<CreateUserDto>(d =>
+                d.email_user == "new@example.com" && d.name_user == "Family" && d.firstname_user == "Given" && d.role_user == UserRole.Admin), true), Times.Once);
+            _jwiService.Verify(j => j.SaveToken(It.IsAny<Jwt>(), 42, "sso_authentik", null), Times.Once);
+            Assert.Contains("code=the-code", server.LastTokenRequestBody);
+            Assert.Equal("Bearer access", server.LastUserInfoAuthorization);
+            _kafkaProducerService.Verify(k => k.PublishAsync("notification-requests", "new@example.com-sso-login", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task LoginWithSSO_ShouldAssignUserRole_WhenNoGroupMatches()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            using var server = new FakeOidcServer
+            {
+                UserInfoBody = """{"sub":"1","email":"anon@example.com","groups":[]}"""
+            };
+            var (service, state) = await PrepareSsoLogin(context, server);
+            _userService
+                .Setup(u => u.CreateUser(It.IsAny<CreateUserDto>(), true))
+                .ReturnsAsync((CreateUserDto dto, bool _) => new ReadUserDto
+                {
+                    id_user = 1,
+                    name_user = dto.name_user,
+                    firstname_user = dto.firstname_user,
+                    email_user = dto.email_user,
+                    role_user = dto.role_user
+                });
+
+            await service.LoginWithSSO("authentik", new SsoLoginRequest { code = "c", state = state });
+
+            _userService.Verify(u => u.CreateUser(It.Is<CreateUserDto>(d => d.role_user == UserRole.User), true), Times.Once);
+        }
+
+        [Fact]
+        public async Task LoginWithSSO_ShouldReuseExistingUser_AndUpdateRoleFromGroups()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildUser(1, "existing@example.com", "Password1!"));
+            await context.SaveChangesAsync();
+            using var server = new FakeOidcServer
+            {
+                UserInfoBody = """{"sub":"1","email":"existing@example.com","groups":["moderators"]}"""
+            };
+            var (service, state) = await PrepareSsoLogin(context, server);
+
+            var result = await service.LoginWithSSO("authentik", new SsoLoginRequest { code = "c", state = state });
+
+            Assert.Equal(1, result.user.id_user);
+            Assert.Equal(UserRole.Moderator, result.user.role_user);
+            Assert.Equal(UserRole.Moderator, (await context.Users.FindAsync(1))!.role_user);
+            _userService.Verify(u => u.CreateUser(It.IsAny<CreateUserDto>(), It.IsAny<bool>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task LoginWithSSO_ShouldKeepExistingUserUntouched_WhenRoleAlreadyMatches()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildUser(1, "existing@example.com", "Password1!"));
+            await context.SaveChangesAsync();
+            using var server = new FakeOidcServer
+            {
+                UserInfoBody = """{"sub":"1","email":"existing@example.com","groups":[]}"""
+            };
+            var (service, state) = await PrepareSsoLogin(context, server);
+
+            var result = await service.LoginWithSSO("authentik", new SsoLoginRequest { code = "c", state = state });
+
+            Assert.Equal(UserRole.User, result.user.role_user);
+        }
+
+        [Fact]
+        public async Task LoginWithSSO_ShouldStillSucceed_WhenNotificationCannotBePublished()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildUser(1, "sso@example.com", "Password1!"));
+            await context.SaveChangesAsync();
+            using var server = new FakeOidcServer();
+            var (service, state) = await PrepareSsoLogin(context, server);
+            _kafkaProducerService
+                .Setup(k => k.PublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("kafka down"));
+
+            var result = await service.LoginWithSSO("authentik", new SsoLoginRequest { code = "c", state = state });
+
+            Assert.Equal("sso-access", result.token);
+        }
+
+        [Fact]
+        public async Task LoginWithSSO_ShouldRejectReusedState()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildUser(1, "sso@example.com", "Password1!"));
+            await context.SaveChangesAsync();
+            using var server = new FakeOidcServer();
+            var (service, state) = await PrepareSsoLogin(context, server);
+            await service.LoginWithSSO("authentik", new SsoLoginRequest { code = "c", state = state });
+
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+                service.LoginWithSSO("authentik", new SsoLoginRequest { code = "c", state = state }));
+        }
+
+        [Fact]
+        public async Task LoginWithSSO_ShouldThrowArgumentException_WhenConfigurationIsIncomplete()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            using var server = new FakeOidcServer();
+            var configuration = BuildSsoConfiguration(server, new Dictionary<string, string?> { { "OAuth:Authentik:ClientSecret", null } });
+            var (service, state) = await PrepareSsoLogin(context, server, configuration);
+
+            await Assert.ThrowsAsync<ArgumentException>(() => service.LoginWithSSO("authentik", new SsoLoginRequest { code = "c", state = state }));
+        }
+
+        [Fact]
+        public async Task LoginWithSSO_ShouldThrowHttpRequestException_WhenTokenExchangeFails()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            using var server = new FakeOidcServer { TokenStatusCode = 400, TokenBody = """{"error":"invalid_grant"}""" };
+            var (service, state) = await PrepareSsoLogin(context, server);
+
+            await Assert.ThrowsAsync<HttpRequestException>(() => service.LoginWithSSO("authentik", new SsoLoginRequest { code = "bad", state = state }));
+        }
+
+        [Fact]
+        public async Task LoginWithSSO_ShouldThrowInvalidOperationException_WhenTokenResponseIsNull()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            using var server = new FakeOidcServer { TokenBody = "null" };
+            var (service, state) = await PrepareSsoLogin(context, server);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.LoginWithSSO("authentik", new SsoLoginRequest { code = "c", state = state }));
+        }
+
+        [Fact]
+        public async Task LoginWithSSO_ShouldThrowHttpRequestException_WhenUserInfoRequestFails()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            using var server = new FakeOidcServer { UserInfoStatusCode = 401, UserInfoBody = "unauthorized" };
+            var (service, state) = await PrepareSsoLogin(context, server);
+
+            await Assert.ThrowsAsync<HttpRequestException>(() => service.LoginWithSSO("authentik", new SsoLoginRequest { code = "c", state = state }));
+        }
+
+        [Fact]
+        public async Task LoginWithSSO_ShouldThrowInvalidOperationException_WhenUserInfoResponseIsNull()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            using var server = new FakeOidcServer { UserInfoBody = "null" };
+            var (service, state) = await PrepareSsoLogin(context, server);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.LoginWithSSO("authentik", new SsoLoginRequest { code = "c", state = state }));
+        }
+
+        // --- notification failures ---
+
+        [Fact]
+        public async Task ForgotPassword_ShouldStillSetResetToken_WhenNotificationCannotBePublished()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildUser(1, "user@test.com", "Password1!"));
+            await context.SaveChangesAsync();
+            _kafkaProducerService
+                .Setup(k => k.PublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("kafka down"));
+            var service = CreateService(context, BuildEmptyConfiguration());
+
+            await service.ForgotPassword(new ForgotPasswordRequest { email = "user@test.com" });
+
+            Assert.NotNull((await context.Users.FindAsync(1))!.reset_token);
+        }
+
+        [Fact]
+        public async Task ResetPassword_ShouldStillSucceed_WhenNotificationCannotBePublished()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = BuildUser(1, "user@test.com", "OldPassword1!");
+            user.reset_token = Guid.NewGuid();
+            user.reset_token_expiration = DateTime.Now.AddHours(1);
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            _kafkaProducerService
+                .Setup(k => k.PublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("kafka down"));
+            var service = CreateService(context, BuildEmptyConfiguration());
+
+            await service.ResetPassword(new ResetPasswordRequest { email = "user@test.com", token = user.reset_token.ToString()!, password = "NewPassword1!" });
+
+            Assert.True(BCrypt.Net.BCrypt.Verify("NewPassword1!", (await context.Users.FindAsync(1))!.password_user));
+        }
+
+        [Fact]
+        public async Task LoginWithPassword_ShouldStillSucceed_WhenNotificationCannotBePublished()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildUser(1, "user@test.com", "Password1!"));
+            await context.SaveChangesAsync();
+            _jwtService.Setup(j => j.GenerateToken(It.IsAny<ReadUserDto>(), "user_password")).ReturnsAsync(BuildJwt());
+            _kafkaProducerService
+                .Setup(k => k.PublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("kafka down"));
+            var service = CreateService(context, BuildEmptyConfiguration());
+
+            var result = await service.LoginWithPassword(new LoginRequest { email = "user@test.com", password = "Password1!" });
+
+            Assert.Equal("sso-access", result.token);
+        }
+
+        [Fact]
+        public async Task GetSSOAuthUrl_ShouldDiscardExpiredStatesWithoutFailing()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context, BuildOAuthConfiguration("Authentik"));
+
+            var first = await service.GetSSOAuthUrl("authentik");
+            var second = await service.GetSSOAuthUrl("authentik");
+
+            Assert.NotEqual(first.state, second.state);
         }
     }
 }
