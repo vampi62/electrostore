@@ -359,5 +359,17 @@ namespace ElectrostoreAPI.Tests.Services
 
             await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DeleteCommandItem(1, 1));
         }
+
+        [Fact]
+        public async Task UpdateCommandItem_ShouldAcceptZeroPrice()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (command, item) = await Seed(context, link: true);
+            var service = CreateService(context);
+
+            var result = await service.UpdateCommandItem(command.id_command, item.id_item, new UpdateCommandItemDto { price_command_item = 0f });
+
+            Assert.Equal(0f, result.price_command_item);
+        }
     }
 }

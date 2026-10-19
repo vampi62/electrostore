@@ -652,5 +652,90 @@ namespace ElectrostoreAPI.Tests.Services
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>
                 service.UpdateStoreComplete(999, new UpdateStoreCompleteDto { store = new UpdateStoreDto() }));
         }
+
+        // --- UpdateStoreComplete: box overlap checked against the final state (real validator) ---
+
+        private StoreService CreateServiceWithRealValidator(ApplicationDbContext context) =>
+            new(_mapper, context, _configuration, _encryptionService.Object, _sessionService.Object,
+                new ValidateStoreService(context), _kafkaProducerService.Object);
+
+        [Fact]
+        public async Task UpdateStoreComplete_ShouldCreateNewBoxAndReturnItsRealId()
+        {
+            using var context = CreateTransactionalContext();
+            var (store, _, _) = await SeedStoreWithElements(context);
+            var service = CreateServiceWithRealValidator(context);
+
+            var result = await service.UpdateStoreComplete(store.id_store, new UpdateStoreCompleteDto
+            {
+                store = new UpdateStoreDto(),
+                boxs = [new UpdateBulkBoxByStoreDto { id_box = 0, xstart_box = 5, ystart_box = 5, xend_box = 7, yend_box = 7, status = "new" }]
+            });
+
+            Assert.Empty(result.boxs!.error);
+            var created = Assert.Single(result.boxs.valide);
+            Assert.NotEqual(0, created.id_box);
+            Assert.Equal(2, await context.Boxs.CountAsync());
+        }
+
+        [Fact]
+        public async Task UpdateStoreComplete_ShouldReportError_WhenNewBoxOverlapsExistingBox()
+        {
+            using var context = CreateTransactionalContext();
+            var (store, _, _) = await SeedStoreWithElements(context);
+            var service = CreateServiceWithRealValidator(context);
+
+            var result = await service.UpdateStoreComplete(store.id_store, new UpdateStoreCompleteDto
+            {
+                store = new UpdateStoreDto(),
+                boxs = [new UpdateBulkBoxByStoreDto { id_box = 0, xstart_box = 0, ystart_box = 0, xend_box = 1, yend_box = 1, status = "new" }]
+            });
+
+            Assert.Single(result.boxs!.error);
+        }
+
+        [Fact]
+        public async Task UpdateStoreComplete_ShouldReportError_WhenTwoNewBoxesOverlap()
+        {
+            using var context = CreateTransactionalContext();
+            var (store, _, _) = await SeedStoreWithElements(context);
+            var service = CreateServiceWithRealValidator(context);
+
+            var result = await service.UpdateStoreComplete(store.id_store, new UpdateStoreCompleteDto
+            {
+                store = new UpdateStoreDto(),
+                boxs =
+                [
+                    new UpdateBulkBoxByStoreDto { id_box = 0, xstart_box = 5, ystart_box = 5, xend_box = 7, yend_box = 7, status = "new" },
+                    new UpdateBulkBoxByStoreDto { id_box = 0, xstart_box = 6, ystart_box = 6, xend_box = 8, yend_box = 8, status = "new" }
+                ]
+            });
+
+            Assert.NotEmpty(result.boxs!.error);
+        }
+
+        [Fact]
+        public async Task UpdateStoreComplete_ShouldAllowMovingBoxOntoSpotOfDeletedBox()
+        {
+            using var context = CreateTransactionalContext();
+            var (store, box, _) = await SeedStoreWithElements(context);
+            var deleted = new Boxs { id_store = store.id_store, xstart_box = 3, ystart_box = 0, xend_box = 5, yend_box = 1 };
+            context.Boxs.Add(deleted);
+            await context.SaveChangesAsync();
+            var service = CreateServiceWithRealValidator(context);
+
+            var result = await service.UpdateStoreComplete(store.id_store, new UpdateStoreCompleteDto
+            {
+                store = new UpdateStoreDto(),
+                boxs =
+                [
+                    new UpdateBulkBoxByStoreDto { id_box = deleted.id_box, status = "delete" },
+                    new UpdateBulkBoxByStoreDto { id_box = box.id_box, xstart_box = 3, xend_box = 5, status = "modified" }
+                ]
+            });
+
+            Assert.Empty(result.boxs!.error);
+            Assert.Equal(3, (await context.Boxs.FindAsync(box.id_box))!.xstart_box);
+        }
     }
 }

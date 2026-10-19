@@ -541,7 +541,7 @@ namespace ElectrostoreAPI.Tests.Services
         }
 
         [Fact]
-        public async Task LoginWithSSO_ShouldAssignUserRole_WhenNoGroupMatches()
+        public async Task LoginWithSSO_ShouldUseDefaultNamesAndUserRole_WhenProviderOmitsThem()
         {
             using var context = new ApplicationDbContext(_dbContextOptions);
             using var server = new FakeOidcServer
@@ -562,7 +562,8 @@ namespace ElectrostoreAPI.Tests.Services
 
             await service.LoginWithSSO("authentik", new SsoLoginRequest { code = "c", state = state });
 
-            _userService.Verify(u => u.CreateUser(It.Is<CreateUserDto>(d => d.role_user == UserRole.User), true), Times.Once);
+            _userService.Verify(u => u.CreateUser(It.Is<CreateUserDto>(d =>
+                d.role_user == UserRole.User && d.name_user == "SSO" && d.firstname_user == "User"), true), Times.Once);
         }
 
         [Fact]

@@ -583,5 +583,27 @@ namespace ElectrostoreAPI.Tests.Services
 
             await Assert.ThrowsAsync<NotImplementedException>(() => service.ShowLedsByBox(store.id_store, box.id_box, 0, 0, 0, 0, 0));
         }
+
+        [Theory]
+        [InlineData(10, 1)]
+        [InlineData(20, 2)]
+        [InlineData(11, 2)]
+        public async Task ShowLedsByBox_ShouldNotSendEmptyTrailingMessage_WhenLedCountIsMultipleOfTen(int ledCount, int expectedMessages)
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (store, box) = await SeedStoreWithBox(context);
+            for (var i = 0; i < ledCount; i++)
+            {
+                context.Leds.Add(new Leds { id_store = store.id_store, x_led = i % 4, y_led = i % 4, mqtt_id_led = i + 1 });
+            }
+            await context.SaveChangesAsync();
+            var published = CapturePublishedMessages();
+            var service = CreateService(context);
+
+            await service.ShowLedsByBox(store.id_store, box.id_box, 1, 2, 3, 100, 0);
+
+            Assert.Equal(expectedMessages, published.Count);
+            Assert.Equal(ledCount, PublishedIndexes(published).Count);
+        }
     }
 }

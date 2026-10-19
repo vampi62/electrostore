@@ -199,8 +199,8 @@ public class AuthService : IAuthService
         }
         var newUserDto = new CreateUserDto
         {
-            name_user = userInfo.FamilyName ?? "SSO",
-            firstname_user = userInfo.GivenName ?? "User",
+            name_user = string.IsNullOrWhiteSpace(userInfo.FamilyName) ? "SSO" : userInfo.FamilyName,
+            firstname_user = string.IsNullOrWhiteSpace(userInfo.GivenName) ? "User" : userInfo.GivenName,
             email_user = userInfo.Email,
             password_user = GenerateSecureRandomString(32),
             role_user = userRole
