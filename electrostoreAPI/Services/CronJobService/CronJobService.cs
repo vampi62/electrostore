@@ -25,15 +25,9 @@ public class CronJobService : ICronJobService
     }
 
     public async Task<PaginatedResponseDto<ReadCronJobDto>> GetCronJobs(int limit = 100, int offset = 0,
-        List<FilterDto>? rsql = null, SorterDto? sort = null, List<int>? idResearch = null)
+        List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
         var query = _context.CronJobs.AsQueryable();
-        if (idResearch is not null && idResearch.Count > 0)
-        {
-            query = query.Where(c => idResearch.Contains(c.id_cronjob));
-            rsql = null;
-            sort = null;
-        }
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_cronjob", order = "asc" })
             .ToResponseAsync(cronJobs => _mapper.Map<IEnumerable<ReadCronJobDto>>(cronJobs));

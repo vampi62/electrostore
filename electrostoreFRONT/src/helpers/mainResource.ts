@@ -11,24 +11,6 @@ export function createMainResource<T extends EntityTypes>({ path, idField, count
 	type ReadExtended = "readExtended" extends keyof T ? T["readExtended"] : T["readBasic"];
 	type Read = "readBasic" extends keyof T ? T["readBasic"] : T["readExtended"];
 	return {
-		async getByList(this: StoreGeneric, idResearch: string[] = [], expand: string[] = [], clear = false): Promise<FetchPage> {
-			if (!this[stateKey] || clear) {
-				this[stateKey] = {};
-			}
-			this[loadingKey] = true;
-			try {
-				const query = buildQuery({ idResearch, expand });
-				const res = await fetchWrapper.get<PaginatedResponseDto<ReadExtended>>({ url: `${baseUrl}${path()}?${query}`, useToken: "access" });
-				for (const entity of res.data) {
-					this[stateKey][entity[idField]] = entity;
-					onHydrate?.(this, entity, expand);
-				}
-				this[countKey] = res.pagination?.total ?? 0;
-				return [res.pagination?.next_offset ?? 0, res.pagination?.has_more ?? false];
-			} finally {
-				this[loadingKey] = false;
-			}
-		},
 		async getByInterval(this: StoreGeneric, limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false): Promise<FetchPage> {
 			if (!this[stateKey] || clear) {
 				this[stateKey] = {};

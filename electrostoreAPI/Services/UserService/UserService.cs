@@ -35,15 +35,9 @@ public class UserService : IUserService
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0,
-    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         var query = _context.Users.AsQueryable();
-        if (idResearch is not null && idResearch.Count > 0)
-        {
-            query = query.Where(u => idResearch.Contains(u.id_user));
-            rsql = null;
-            sort = null;
-        }
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_user", order = "asc" })
             .ToProjectedResponseAsync(

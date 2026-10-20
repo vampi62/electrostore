@@ -25,7 +25,7 @@ async function fetchItemData(minOffset: number, maxOffset: number) {
 		}
 	}
 	if (itemsNotFound.length > 0) {
-		await itemsStore.getItemByList(itemsNotFound);
+		await itemsStore.getItemByInterval(itemsNotFound.length, 0, [], [{ key: "id_item", compareMethod: "=any=", value: itemsNotFound.join(",") }]);
 	}
 }
 async function fetchTagData(minOffset: number, maxOffset: number) {
@@ -38,7 +38,7 @@ async function fetchTagData(minOffset: number, maxOffset: number) {
 		}
 	}
 	if (tagsNotFound.length > 0) {
-		await projectTagsStore.getProjectTagByList(tagsNotFound);
+		await projectTagsStore.getProjectTagByInterval(tagsNotFound.length, 0, [], [{ key: "id_project_tag", compareMethod: "=any=", value: tagsNotFound.join(",") }]);
 	}
 }
 

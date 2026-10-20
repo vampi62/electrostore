@@ -296,7 +296,7 @@ namespace ElectrostoreAPI.Tests.Services
         }
 
         [Fact]
-        public async Task GetUsers_ShouldRestrictToIds_WhenIdResearchProvided()
+        public async Task GetUsers_ShouldRestrictToIds_WhenAnyFilterProvided()
         {
             using var context = new ApplicationDbContext(_dbContextOptions);
             var a = BuildUser("a@test.com");
@@ -305,7 +305,7 @@ namespace ElectrostoreAPI.Tests.Services
             await context.SaveChangesAsync();
             var service = CreateService(context);
 
-            var result = await service.GetUsers(idResearch: [b.id_user]);
+            var result = await service.GetUsers(rsql: [new FilterDto { field = "id_user", search_type = "any", value = b.id_user.ToString() }]);
 
             var single = Assert.Single(result.data);
             Assert.Equal(b.id_user, single.id_user);

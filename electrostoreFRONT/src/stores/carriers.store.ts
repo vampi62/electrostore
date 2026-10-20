@@ -22,7 +22,6 @@ export const useCarriersStore = defineStore("carriers", {
 		carrierEdition: {} as Record<string, any>,
 	}),
 	actions: {
-		getCarrierByList: carrierResource.getByList,
 		getCarrierByInterval: carrierResource.getByInterval,
 		getCarrierById: carrierResource.getById,
 		loadToEdition(id: string, preset: string | null = null) {

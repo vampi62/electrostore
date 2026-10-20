@@ -191,7 +191,6 @@ export const useTagsStore = defineStore("tags",{
 		tagEquipementReady: {} as Record<string, Record<string, Ready<{ create: CreateEquipementTagByTagDto }>>>,
 	}),
 	actions: {
-		getTagByList: tagResource.getByList,
 		getTagByInterval: tagResource.getByInterval,
 		getTagById: tagResource.getById,
 		createTag: tagResource.create,

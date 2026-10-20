@@ -241,7 +241,7 @@ namespace ElectrostoreAPI.Tests.Services
         };
 
         [Fact]
-        public async Task GetZones_ShouldRestrictToIds_WhenIdResearchProvided()
+        public async Task GetZones_ShouldRestrictToIds_WhenAnyFilterProvided()
         {
             using var context = new ApplicationDbContext(_dbContextOptions);
             var a = BuildZone("a");
@@ -250,7 +250,7 @@ namespace ElectrostoreAPI.Tests.Services
             await context.SaveChangesAsync();
             var service = CreateService(context);
 
-            var result = await service.GetZones(idResearch: [b.id_zone]);
+            var result = await service.GetZones(rsql: [new FilterDto { field = "id_zone", search_type = "any", value = b.id_zone.ToString() }]);
 
             var single = Assert.Single(result.data);
             Assert.Equal(b.id_zone, single.id_zone);

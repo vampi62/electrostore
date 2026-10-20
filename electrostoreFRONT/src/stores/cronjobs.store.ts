@@ -29,7 +29,6 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		cronJobEdition: {} as Record<string, Edition<{ create: CreateCronJobDto, update: UpdateCronJobDto }>>,
 	}),
 	actions: {
-		getCronJobByList: cronJobResource.getByList,
 		getCronJobByInterval: cronJobResource.getByInterval,
 		getCronJobById: cronJobResource.getById,
 		createCronJob: cronJobResource.create,

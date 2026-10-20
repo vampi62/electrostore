@@ -217,7 +217,6 @@ export const useProjectsStore = defineStore("projects",{
 		statusHistory: {} as Record<string, Record<string, ReadProjectStatusDto>>,
 	}),
 	actions: {
-		getProjectByList: projectResource.getByList,
 		getProjectByInterval: projectResource.getByInterval,
 		getProjectById: projectResource.getById,
 		createProject: projectResource.create,

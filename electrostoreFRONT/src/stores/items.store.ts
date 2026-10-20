@@ -251,7 +251,6 @@ export const useItemsStore = defineStore("items",{
 		itemHistory: {} as Record<string, Record<string, ReadItemHistoryDto>>,
 	}),
 	actions: {
-		getItemByList: itemResource.getByList,
 		getItemByInterval: itemResource.getByInterval,
 		getItemById: itemResource.getById,
 		createItem: itemResource.create,
