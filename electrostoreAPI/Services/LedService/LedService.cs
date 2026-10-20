@@ -284,7 +284,7 @@ public class LedService : ILedService
         var topic = "electrostore/" + store.mqtt_name_store + "/leds";
 
         // sent led 10 per 10
-        for (int i = 0; i <= ledsDB.Count; i+=numberLedSentPerMessage)
+        for (int i = 0; i < ledsDB.Count; i += numberLedSentPerMessage)
         {
             var message = new MqttApplicationMessageBuilder()
                 .WithTopic(topic)

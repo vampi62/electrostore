@@ -9,6 +9,7 @@ using ElectrostoreAPI.Services.JwtService;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Web;
 
 namespace ElectrostoreAPI.Services.AuthService;
@@ -198,8 +199,8 @@ public class AuthService : IAuthService
         }
         var newUserDto = new CreateUserDto
         {
-            name_user = userInfo.FamilyName ?? "SSO",
-            firstname_user = userInfo.GivenName ?? "User",
+            name_user = string.IsNullOrWhiteSpace(userInfo.FamilyName) ? "SSO" : userInfo.FamilyName,
+            firstname_user = string.IsNullOrWhiteSpace(userInfo.GivenName) ? "User" : userInfo.GivenName,
             email_user = userInfo.Email,
             password_user = GenerateSecureRandomString(32),
             role_user = userRole
@@ -431,9 +432,12 @@ public class AuthService : IAuthService
     {
         public string Sub { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
+        [JsonPropertyName("given_name")]
         public string GivenName { get; set; } = string.Empty;
+        [JsonPropertyName("family_name")]
         public string FamilyName { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
+        [JsonPropertyName("preferred_username")]
         public string PreferredUsername { get; set; } = string.Empty;
         public string[] Groups { get; set; } = [];
     }

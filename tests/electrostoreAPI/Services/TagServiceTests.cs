@@ -157,5 +157,85 @@ namespace ElectrostoreAPI.Tests.Services
 
             await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DeleteTag(999));
         }
+
+        // --- additional coverage: idResearch, expand, bulk ---
+
+        [Fact]
+        public async Task GetTags_ShouldRestrictToIds_WhenIdResearchProvided()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var a = BuildTag("a");
+            var b = BuildTag("b");
+            context.Tags.AddRange(a, b);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.GetTags(idResearch: [b.id_tag]);
+
+            var single = Assert.Single(result.data);
+            Assert.Equal(b.id_tag, single.id_tag);
+        }
+
+        [Fact]
+        public async Task GetTags_ShouldReturnCountsAndExpandedLinks()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var tag = BuildTag();
+            var item = new Items { reference_name_item = "i", friendly_name_item = "i", threshold_min_item = 0 };
+            var store = new Stores { name_store = "s", mqtt_name_store = "m", xlength_store = 5, ylength_store = 5 };
+            var equipement = new Equipements { reference_name_equipement = "e", friendly_name_equipement = "e" };
+            context.Tags.Add(tag);
+            context.Items.Add(item);
+            context.Stores.Add(store);
+            context.Equipements.Add(equipement);
+            await context.SaveChangesAsync();
+            var box = new Boxs { id_store = store.id_store, xstart_box = 0, ystart_box = 0, xend_box = 1, yend_box = 1 };
+            context.Boxs.Add(box);
+            await context.SaveChangesAsync();
+            context.ItemsTags.Add(new ItemsTags { id_item = item.id_item, id_tag = tag.id_tag });
+            context.StoresTags.Add(new StoresTags { id_store = store.id_store, id_tag = tag.id_tag });
+            context.BoxsTags.Add(new BoxsTags { id_box = box.id_box, id_tag = tag.id_tag });
+            context.EquipementsTags.Add(new EquipementsTags { id_equipement = equipement.id_equipement, id_tag = tag.id_tag });
+            await context.SaveChangesAsync();
+            using var queryContext = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(queryContext);
+
+            var list = await service.GetTags(expand: ["stores_tags", "items_tags", "boxs_tags", "equipement_tags"]);
+            var byId = await service.GetTagById(tag.id_tag, ["stores_tags", "items_tags", "boxs_tags", "equipement_tags"]);
+
+            var single = Assert.Single(list.data);
+            Assert.Equal(1, single.stores_tags_count);
+            Assert.Equal(1, single.items_tags_count);
+            Assert.Equal(1, single.boxs_tags_count);
+            Assert.Equal(1, single.equipement_tags_count);
+            Assert.Single(single.stores_tags!);
+            Assert.Single(single.items_tags!);
+            Assert.Single(single.boxs_tags!);
+            Assert.Single(single.equipement_tags!);
+            Assert.Single(byId.stores_tags!);
+            Assert.Single(byId.items_tags!);
+            Assert.Single(byId.boxs_tags!);
+            Assert.Single(byId.equipement_tags!);
+        }
+
+        [Fact]
+        public async Task CreateBulkTag_ShouldReturnValidAndErrorEntries()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Tags.Add(BuildTag("existing"));
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.CreateBulkTag(
+            [
+                new CreateTagDto { name_tag = "fresh", weight_tag = 1 },
+                new CreateTagDto { name_tag = "existing", weight_tag = 1 },
+                new CreateTagDto { name_tag = "fresh", weight_tag = 2 }
+            ]);
+
+            Assert.Single(result.valide);
+            Assert.Equal(2, result.error.Count);
+            Assert.Equal(2, await context.Tags.CountAsync());
+        }
     }
 }

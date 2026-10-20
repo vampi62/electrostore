@@ -206,5 +206,106 @@ namespace ElectrostoreAPI.Tests.Services
 
             await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DeleteEquipementTag(1, 1));
         }
+
+        // --- expand / bulk operations ---
+
+        private async Task<(int parentId, int tag1Id, int tag2Id)> SeedForBulk(ApplicationDbContext context)
+        {
+            var parent = BuildEquipement();
+            context.Equipements.Add(parent);
+            await context.SaveChangesAsync();
+            var tag1 = BuildTag("bulk-1");
+            var tag2 = BuildTag("bulk-2");
+            context.Tags.AddRange(tag1, tag2);
+            await context.SaveChangesAsync();
+            return (parent.id_equipement, tag1.id_tag, tag2.id_tag);
+        }
+
+        [Fact]
+        public async Task GetEquipementsTagsByEquipementId_ShouldExpandParentAndTag_WhenRequested()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (parentId, tagId, _) = await SeedForBulk(context);
+            context.EquipementsTags.Add(new EquipementsTags { id_equipement = parentId, id_tag = tagId });
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.GetEquipementsTagsByEquipementId(parentId, expand: ["equipement", "tag"]);
+
+            var link = Assert.Single(result.data);
+            Assert.NotNull(link.equipement);
+            Assert.NotNull(link.tag);
+        }
+
+        [Fact]
+        public async Task GetEquipementsTagsByTagId_ShouldExpandParentAndTag_WhenRequested()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (parentId, tagId, _) = await SeedForBulk(context);
+            context.EquipementsTags.Add(new EquipementsTags { id_equipement = parentId, id_tag = tagId });
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.GetEquipementsTagsByTagId(tagId, expand: ["equipement", "tag"]);
+
+            var link = Assert.Single(result.data);
+            Assert.NotNull(link.equipement);
+            Assert.NotNull(link.tag);
+        }
+
+        [Fact]
+        public async Task GetEquipementTagById_ShouldExpandParentAndTag_WhenRequested()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (parentId, tagId, _) = await SeedForBulk(context);
+            context.EquipementsTags.Add(new EquipementsTags { id_equipement = parentId, id_tag = tagId });
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.GetEquipementTagById(parentId, tagId, ["equipement", "tag"]);
+
+            Assert.NotNull(result.equipement);
+            Assert.NotNull(result.tag);
+        }
+
+        [Fact]
+        public async Task CreateBulkEquipementTag_ShouldReturnValidAndErrorEntries()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (parentId, tag1Id, _) = await SeedForBulk(context);
+            var service = CreateService(context);
+
+            var result = await service.CreateBulkEquipementTag(
+            [
+                new CreateEquipementTagDto { id_equipement = parentId, id_tag = tag1Id },
+                new CreateEquipementTagDto { id_equipement = 9999, id_tag = tag1Id },
+                new CreateEquipementTagDto { id_equipement = parentId, id_tag = tag1Id }
+            ]);
+
+            Assert.Single(result.valide);
+            Assert.Equal(2, result.error.Count());
+            Assert.Equal(1, await context.EquipementsTags.CountAsync());
+        }
+
+        [Fact]
+        public async Task DeleteBulkEquipementTag_ShouldReturnValidAndErrorEntries()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (parentId, tag1Id, tag2Id) = await SeedForBulk(context);
+            context.EquipementsTags.Add(new EquipementsTags { id_equipement = parentId, id_tag = tag1Id });
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.DeleteBulkEquipementTag(
+            [
+                new CreateEquipementTagDto { id_equipement = parentId, id_tag = tag1Id },
+                new CreateEquipementTagDto { id_equipement = parentId, id_tag = tag2Id }
+            ]);
+
+            var deleted = Assert.Single(result.valide);
+            Assert.Equal(tag1Id, deleted.id_tag);
+            Assert.Single(result.error);
+            Assert.Equal(0, await context.EquipementsTags.CountAsync());
+        }
     }
 }

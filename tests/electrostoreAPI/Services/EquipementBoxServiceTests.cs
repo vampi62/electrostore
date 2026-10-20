@@ -241,5 +241,83 @@ namespace ElectrostoreAPI.Tests.Services
 
             await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DeleteEquipementBox(1, 1));
         }
+
+        // --- additional coverage: expand and CheckIfStoreExists ---
+
+        private async Task<(Stores store, Boxs box, Equipements equipement)> SeedLink(ApplicationDbContext context)
+        {
+            var store = BuildStore();
+            context.Stores.Add(store);
+            await context.SaveChangesAsync();
+            var box = BuildBox(store.id_store);
+            var equipement = BuildEquipement();
+            context.Boxs.Add(box);
+            context.Equipements.Add(equipement);
+            await context.SaveChangesAsync();
+            context.EquipementsBoxs.Add(new EquipementsBoxs { id_box = box.id_box, id_equipement = equipement.id_equipement });
+            await context.SaveChangesAsync();
+            return (store, box, equipement);
+        }
+
+        [Fact]
+        public async Task GetEquipementsBoxsByBoxId_ShouldExpandEquipementAndBox_WhenRequested()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (_, box, _) = await SeedLink(context);
+            var service = CreateService(context);
+
+            var result = await service.GetEquipementsBoxsByBoxId(box.id_box, expand: ["equipement", "box"]);
+
+            var single = Assert.Single(result.data);
+            Assert.NotNull(single.equipement);
+            Assert.NotNull(single.box);
+        }
+
+        [Fact]
+        public async Task GetEquipementsBoxsByEquipementId_ShouldExpandEquipementAndBox_WhenRequested()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (_, _, equipement) = await SeedLink(context);
+            var service = CreateService(context);
+
+            var result = await service.GetEquipementsBoxsByEquipementId(equipement.id_equipement, expand: ["equipement", "box"]);
+
+            var single = Assert.Single(result.data);
+            Assert.NotNull(single.equipement);
+            Assert.NotNull(single.box);
+        }
+
+        [Fact]
+        public async Task GetEquipementBoxById_ShouldExpandEquipementAndBox_WhenRequested()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (_, box, equipement) = await SeedLink(context);
+            var service = CreateService(context);
+
+            var result = await service.GetEquipementBoxById(equipement.id_equipement, box.id_box, ["equipement", "box"]);
+
+            Assert.NotNull(result.equipement);
+            Assert.NotNull(result.box);
+        }
+
+        [Fact]
+        public async Task CheckIfStoreExists_ShouldSucceed_WhenBoxBelongsToStore()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (store, box, _) = await SeedLink(context);
+            var service = CreateService(context);
+
+            await service.CheckIfStoreExists(store.id_store, box.id_box);
+        }
+
+        [Fact]
+        public async Task CheckIfStoreExists_ShouldThrowKeyNotFoundException_WhenBoxIsInAnotherStore()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (store, box, _) = await SeedLink(context);
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.CheckIfStoreExists(store.id_store + 1, box.id_box));
+        }
     }
 }

@@ -165,5 +165,270 @@ namespace ElectrostoreAPI.Tests.Services
 
             await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DeleteCronJob(999));
         }
+
+        // --- GetCronJobs: idResearch ---
+
+        [Fact]
+        public async Task GetCronJobs_ShouldRestrictToIds_WhenIdResearchProvided()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var a = BuildCronJob("a");
+            var b = BuildCronJob("b");
+            context.CronJobs.AddRange(a, b);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.GetCronJobs(idResearch: [b.id_cronjob]);
+
+            var single = Assert.Single(result.data);
+            Assert.Equal(b.id_cronjob, single.id_cronjob);
+        }
+
+        // --- UpdateCronJob: every field ---
+
+        [Fact]
+        public async Task UpdateCronJob_ShouldUpdateEveryField()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var job = BuildCronJob("old");
+            context.CronJobs.Add(job);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+            var lastRun = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            var nextRun = new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc);
+
+            var result = await service.UpdateCronJob(job.id_cronjob, new UpdateCronJobDto
+            {
+                name_cronjob = "new",
+                cron_expression_cronjob = "0 8 * * *",
+                action_cronjob = CronJobAction.WeeklyItemMovementReport,
+                params_cronjob = "{\"a\":1}",
+                is_enabled = false,
+                last_run_at = lastRun,
+                next_run_at = nextRun
+            });
+
+            Assert.Equal("new", result.name_cronjob);
+            Assert.Equal("0 8 * * *", result.cron_expression_cronjob);
+            Assert.Equal(CronJobAction.WeeklyItemMovementReport, result.action_cronjob);
+            Assert.Equal("{\"a\":1}", result.params_cronjob);
+            Assert.False(result.is_enabled);
+            Assert.Equal(lastRun, result.last_run_at);
+            Assert.Equal(nextRun, result.next_run_at);
+        }
+
+        // --- GetEnabledCronJobsAsync ---
+
+        [Fact]
+        public async Task GetEnabledCronJobsAsync_ShouldReturnOnlyEnabledJobs()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var enabled = BuildCronJob("enabled");
+            enabled.is_enabled = true;
+            var disabled = BuildCronJob("disabled");
+            disabled.is_enabled = false;
+            context.CronJobs.AddRange(enabled, disabled);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.GetEnabledCronJobsAsync(CancellationToken.None);
+
+            var single = Assert.Single(result);
+            Assert.Equal("enabled", single.name_cronjob);
+        }
+
+        // --- UpdateCronJobRunAsync ---
+
+        [Fact]
+        public async Task UpdateCronJobRunAsync_ShouldUpdateProvidedDates()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var job = BuildCronJob();
+            context.CronJobs.Add(job);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+            var lastRun = new DateTime(2026, 3, 1, 10, 0, 0, DateTimeKind.Utc);
+            var nextRun = new DateTime(2026, 3, 2, 10, 0, 0, DateTimeKind.Utc);
+
+            await service.UpdateCronJobRunAsync(job.id_cronjob, lastRun, nextRun, CancellationToken.None);
+
+            var reloaded = await context.CronJobs.FindAsync(job.id_cronjob);
+            Assert.Equal(lastRun, reloaded!.last_run_at);
+            Assert.Equal(nextRun, reloaded.next_run_at);
+        }
+
+        [Fact]
+        public async Task UpdateCronJobRunAsync_ShouldKeepExistingDates_WhenNullProvided()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var job = BuildCronJob();
+            var lastRun = new DateTime(2026, 3, 1, 10, 0, 0, DateTimeKind.Utc);
+            var nextRun = new DateTime(2026, 3, 2, 10, 0, 0, DateTimeKind.Utc);
+            job.last_run_at = lastRun;
+            job.next_run_at = nextRun;
+            context.CronJobs.Add(job);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await service.UpdateCronJobRunAsync(job.id_cronjob, null, null, CancellationToken.None);
+
+            var reloaded = await context.CronJobs.FindAsync(job.id_cronjob);
+            Assert.Equal(lastRun, reloaded!.last_run_at);
+            Assert.Equal(nextRun, reloaded.next_run_at);
+        }
+
+        [Fact]
+        public async Task UpdateCronJobRunAsync_ShouldThrowKeyNotFoundException_WhenCronJobDoesNotExist()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.UpdateCronJobRunAsync(999, null, null, CancellationToken.None));
+        }
+
+        // --- UpdateCronJobStatusAsync ---
+
+        [Fact]
+        public async Task UpdateCronJobStatusAsync_ShouldStoreStatusAndError()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var job = BuildCronJob();
+            context.CronJobs.Add(job);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await service.UpdateCronJobStatusAsync(job.id_cronjob, CronJobStatus.Failed, "boom", CancellationToken.None);
+
+            var reloaded = await context.CronJobs.FindAsync(job.id_cronjob);
+            Assert.Equal(CronJobStatus.Failed, reloaded!.status_cronjob);
+            Assert.Equal("boom", reloaded.last_error_cronjob);
+        }
+
+        [Fact]
+        public async Task UpdateCronJobStatusAsync_ShouldClearError_WhenNullProvided()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var job = BuildCronJob();
+            job.status_cronjob = CronJobStatus.Failed;
+            job.last_error_cronjob = "old error";
+            context.CronJobs.Add(job);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await service.UpdateCronJobStatusAsync(job.id_cronjob, CronJobStatus.Success, null, CancellationToken.None);
+
+            var reloaded = await context.CronJobs.FindAsync(job.id_cronjob);
+            Assert.Equal(CronJobStatus.Success, reloaded!.status_cronjob);
+            Assert.Null(reloaded.last_error_cronjob);
+        }
+
+        [Fact]
+        public async Task UpdateCronJobStatusAsync_ShouldThrowKeyNotFoundException_WhenCronJobDoesNotExist()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.UpdateCronJobStatusAsync(999, CronJobStatus.Running, null, CancellationToken.None));
+        }
+
+        // --- GetCronJobStatus ---
+
+        [Fact]
+        public async Task GetCronJobStatus_ShouldReturnStatusFields()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var job = BuildCronJob();
+            job.status_cronjob = CronJobStatus.Running;
+            job.last_error_cronjob = "previous";
+            job.last_run_at = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            job.next_run_at = new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc);
+            context.CronJobs.Add(job);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.GetCronJobStatus(job.id_cronjob);
+
+            Assert.Equal(job.id_cronjob, result.id_cronjob);
+            Assert.Equal(CronJobStatus.Running, result.status_cronjob);
+            Assert.Equal("previous", result.last_error_cronjob);
+            Assert.Equal(job.last_run_at, result.last_run_at);
+            Assert.Equal(job.next_run_at, result.next_run_at);
+        }
+
+        [Fact]
+        public async Task GetCronJobStatus_ShouldThrowKeyNotFoundException_WhenCronJobDoesNotExist()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.GetCronJobStatus(999));
+        }
+
+        // --- ForceRunCronJob ---
+
+        [Fact]
+        public async Task ForceRunCronJob_ShouldPublishForceRunEvent_WhenJobIsEnabled()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var job = BuildCronJob();
+            job.is_enabled = true;
+            context.CronJobs.Add(job);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await service.ForceRunCronJob(job.id_cronjob);
+
+            _kafkaProducerService.Verify(k => k.PublishAsync("cronjob-events", job.id_cronjob.ToString(),
+                It.Is<string>(m => m.Contains("force_run")), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task ForceRunCronJob_ShouldThrowInvalidOperationException_WhenJobIsDisabled()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var job = BuildCronJob();
+            job.is_enabled = false;
+            context.CronJobs.Add(job);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.ForceRunCronJob(job.id_cronjob));
+            _kafkaProducerService.Verify(k => k.PublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task ForceRunCronJob_ShouldThrowKeyNotFoundException_WhenCronJobDoesNotExist()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.ForceRunCronJob(999));
+        }
+
+        // --- ForceStopCronJob ---
+
+        [Fact]
+        public async Task ForceStopCronJob_ShouldPublishForceStopEvent()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var job = BuildCronJob();
+            context.CronJobs.Add(job);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await service.ForceStopCronJob(job.id_cronjob);
+
+            _kafkaProducerService.Verify(k => k.PublishAsync("cronjob-events", job.id_cronjob.ToString(),
+                It.Is<string>(m => m.Contains("force_stop")), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task ForceStopCronJob_ShouldThrowKeyNotFoundException_WhenCronJobDoesNotExist()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.ForceStopCronJob(999));
+        }
     }
 }

@@ -183,5 +183,54 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.False(result.mqtt_connected);
             Assert.False(result.kafka_connected);
         }
+
+        // --- additional coverage: failures ---
+
+        [Fact]
+        public async Task GetStatus_ShouldReportUnreachable_WhenHealthEndpointsFail()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            SetupHealthFailure(NotifUrl);
+            SetupHealthFailure(CronUrl);
+            SetupHealthFailure(WorkerUrl);
+            var service = CreateService(context, BuildConfiguration());
+
+            var result = await service.GetStatus();
+
+            Assert.Equal("unreachable", result.notif_status);
+            Assert.Equal("unreachable", result.cron_status);
+            Assert.Equal("unreachable", result.worker_status);
+            Assert.False(result.notif_smtp);
+            Assert.False(result.notif_web_push);
+        }
+
+        [Fact]
+        public async Task GetStatus_ShouldReportUnknown_WhenHealthEndpointReturnsJsonNull()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            SetupHealthResponse(NotifUrl, "null");
+            SetupHealthResponse(CronUrl, "{}");
+            SetupHealthResponse(WorkerUrl, "null");
+            var service = CreateService(context, BuildConfiguration());
+
+            var result = await service.GetStatus();
+
+            Assert.Equal("unknown", result.notif_status);
+            Assert.Equal("unknown", result.cron_status);
+            Assert.Equal("unknown", result.worker_status);
+        }
+
+        [Fact]
+        public async Task GetStatus_ShouldReportDatabaseDisconnected_WhenConnectionCheckThrows()
+        {
+            var context = new ApplicationDbContext(_dbContextOptions);
+            SetupAllHealthy();
+            var service = CreateService(context, BuildConfiguration());
+            context.Dispose();
+
+            var result = await service.GetStatus();
+
+            Assert.False(result.db_connected);
+        }
     }
 }
