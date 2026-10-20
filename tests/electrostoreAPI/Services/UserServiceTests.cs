@@ -5,6 +5,7 @@ using Xunit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using ElectrostoreAPI;
 using ElectrostoreAPI.Dto;
@@ -273,6 +274,338 @@ namespace ElectrostoreAPI.Tests.Services
             var service = CreateService(context);
 
             await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DeleteUser(999));
+        }
+
+        // --- additional coverage ---
+
+        private IEnumerable<NotificationMessageView> SentNotifications() =>
+            _kafkaProducerService.Invocations
+                .Where(i => i.Method.Name == nameof(IKafkaProducerService.PublishAsync))
+                .Select(i => new NotificationMessageView((string)i.Arguments[1]!, System.Text.Json.JsonSerializer.Deserialize<ElectrostoreAPI.Kafka.Messages.NotificationMessage>((string)i.Arguments[2]!)!));
+
+        private sealed record NotificationMessageView(string Key, ElectrostoreAPI.Kafka.Messages.NotificationMessage Message);
+
+        private async Task<Users> SeedAuthenticatedUser(ApplicationDbContext context, string email = "a@test.com", string authMethod = "sso_oidc", UserRole role = UserRole.User)
+        {
+            var user = BuildUser(email, role);
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            _sessionService.Setup(s => s.GetClientId()).Returns(user.id_user);
+            _sessionService.Setup(s => s.GetTokenAuthMethod()).Returns(authMethod);
+            return user;
+        }
+
+        [Fact]
+        public async Task GetUsers_ShouldRestrictToIds_WhenIdResearchProvided()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var a = BuildUser("a@test.com");
+            var b = BuildUser("b@test.com");
+            context.Users.AddRange(a, b);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.GetUsers(idResearch: [b.id_user]);
+
+            var single = Assert.Single(result.data);
+            Assert.Equal(b.id_user, single.id_user);
+        }
+
+        [Fact]
+        public async Task GetUsersAndGetUserById_ShouldReturnCommentCountsAndExpandedComments()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = BuildUser("a@test.com");
+            var project = new Projects { name_project = "p" };
+            var command = new Commands { url_command = "https://x", date_command = DateTime.UtcNow };
+            context.Users.Add(user);
+            context.Projects.Add(project);
+            context.Commands.Add(command);
+            await context.SaveChangesAsync();
+            context.ProjectsComments.Add(new ProjectsComments { id_project = project.id_project, id_user = user.id_user, content_project_comment = "p" });
+            context.CommandsComments.Add(new CommandsComments { id_command = command.id_command, id_user = user.id_user, content_command_comment = "c" });
+            await context.SaveChangesAsync();
+            using var queryContext = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(queryContext);
+
+            var list = await service.GetUsers(expand: ["project_comments", "command_comments"]);
+            var byId = await service.GetUserById(user.id_user, ["project_comments", "command_comments"]);
+
+            var single = Assert.Single(list.data);
+            Assert.Equal(1, single.project_comments_count);
+            Assert.Equal(1, single.command_comments_count);
+            Assert.Single(single.project_comments!);
+            Assert.Single(single.command_comments!);
+            Assert.Single(byId.project_comments!);
+            Assert.Single(byId.command_comments!);
+        }
+
+        [Fact]
+        public async Task CreateUser_ShouldPublishAccountCreatedNotification()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            await service.CreateUser(BuildCreateDto("new@test.com"));
+
+            var notification = Assert.Single(SentNotifications());
+            Assert.Equal("new@test.com-account-created", notification.Key);
+            Assert.Equal("account-created", notification.Message.TemplateId);
+            Assert.Equal("new@test.com", notification.Message.RecipientEmail);
+            Assert.Equal("en", notification.Message.Language);
+        }
+
+        [Fact]
+        public async Task CreateUser_ShouldStillSucceed_WhenNotificationCannotBePublished()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            _kafkaProducerService
+                .Setup(k => k.PublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("kafka down"));
+            var service = CreateService(context);
+
+            var result = await service.CreateUser(BuildCreateDto("new@test.com"));
+
+            Assert.Equal("new@test.com", result.email_user);
+            Assert.Equal(1, await context.Users.CountAsync());
+        }
+
+        [Fact]
+        public async Task CreateFirstAdminUser_ShouldPersistUserWithHashedPassword_WithoutNotification()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            var result = await service.CreateFirstAdminUser(BuildCreateDto("root@test.com", UserRole.Admin));
+
+            Assert.Equal(UserRole.Admin, result.role_user);
+            var stored = await context.Users.SingleAsync();
+            Assert.NotEqual("Password1!", stored.password_user);
+            Assert.True(BCrypt.Net.BCrypt.Verify("Password1!", stored.password_user));
+            Assert.Empty(SentNotifications());
+        }
+
+        [Fact]
+        public async Task CreateFirstAdminUser_ShouldThrowInvalidOperationException_WhenEmailAlreadyUsed()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildUser("root@test.com"));
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateFirstAdminUser(BuildCreateDto("root@test.com", UserRole.Admin)));
+        }
+
+        [Fact]
+        public async Task UpdateUser_ShouldRequireCurrentPassword_ForNonSsoUsers()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = await SeedAuthenticatedUser(context, authMethod: "local");
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.UpdateUser(user.id_user, new UpdateUserDto { name_user = "x" }));
+        }
+
+        [Fact]
+        public async Task UpdateUser_ShouldRejectWrongCurrentPassword_ForNonSsoUsers()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = await SeedAuthenticatedUser(context, authMethod: "local");
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                service.UpdateUser(user.id_user, new UpdateUserDto { name_user = "x", current_password_user = "wrong" }));
+        }
+
+        [Fact]
+        public async Task UpdateUser_ShouldAcceptCorrectCurrentPassword_ForNonSsoUsers()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = await SeedAuthenticatedUser(context, authMethod: "local");
+            var service = CreateService(context);
+
+            var result = await service.UpdateUser(user.id_user, new UpdateUserDto { name_user = "x", current_password_user = "Password1!" });
+
+            Assert.Equal("x", result.name_user);
+        }
+
+        [Fact]
+        public async Task UpdateUser_ShouldUpdateEveryField_AndSendEmailChangedNotificationsToBothAddresses()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = await SeedAuthenticatedUser(context, "old@test.com");
+            var service = CreateService(context);
+
+            var result = await service.UpdateUser(user.id_user, new UpdateUserDto
+            {
+                name_user = "N",
+                firstname_user = "F",
+                email_user = "new@test.com",
+                password_user = "NewPassword1!",
+                role_user = UserRole.Moderator
+            });
+
+            Assert.Equal("N", result.name_user);
+            Assert.Equal("F", result.firstname_user);
+            Assert.Equal("new@test.com", result.email_user);
+            Assert.Equal(UserRole.Moderator, result.role_user);
+            Assert.True(BCrypt.Net.BCrypt.Verify("NewPassword1!", (await context.Users.FindAsync(user.id_user))!.password_user));
+            var notifications = SentNotifications().ToList();
+            Assert.Equal(2, notifications.Count);
+            Assert.All(notifications, n => Assert.Equal("email-changed", n.Message.TemplateId));
+            Assert.Contains(notifications, n => n.Message.RecipientEmail == "new@test.com");
+            Assert.Contains(notifications, n => n.Message.RecipientEmail == "old@test.com");
+        }
+
+        [Fact]
+        public async Task UpdateUser_ShouldSendPasswordChangedNotification_WhenOnlyPasswordChanges()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = await SeedAuthenticatedUser(context);
+            var service = CreateService(context);
+
+            await service.UpdateUser(user.id_user, new UpdateUserDto { password_user = "NewPassword1!" });
+
+            var notification = Assert.Single(SentNotifications());
+            Assert.Equal("password-changed", notification.Message.TemplateId);
+            Assert.Equal("a@test.com-password-changed", notification.Key);
+        }
+
+        [Fact]
+        public async Task UpdateUser_ShouldSendAccountUpdatedNotification_WhenOtherFieldsChange()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = await SeedAuthenticatedUser(context);
+            var service = CreateService(context);
+
+            await service.UpdateUser(user.id_user, new UpdateUserDto { name_user = "Renamed" });
+
+            var notification = Assert.Single(SentNotifications());
+            Assert.Equal("account-updated", notification.Message.TemplateId);
+        }
+
+        [Fact]
+        public async Task UpdateUser_ShouldNotSendEmailChangedNotification_WhenEmailIsUnchanged()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = await SeedAuthenticatedUser(context);
+            var service = CreateService(context);
+
+            await service.UpdateUser(user.id_user, new UpdateUserDto { email_user = "a@test.com" });
+
+            var notification = Assert.Single(SentNotifications());
+            Assert.Equal("account-updated", notification.Message.TemplateId);
+        }
+
+        [Fact]
+        public async Task UpdateUser_ShouldStillSucceed_WhenNotificationsCannotBePublished()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = await SeedAuthenticatedUser(context, "old@test.com");
+            _kafkaProducerService
+                .Setup(k => k.PublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("kafka down"));
+            var service = CreateService(context);
+
+            var emailChange = await service.UpdateUser(user.id_user, new UpdateUserDto { email_user = "new@test.com" });
+            var passwordChange = await service.UpdateUser(user.id_user, new UpdateUserDto { password_user = "NewPassword1!" });
+            var otherChange = await service.UpdateUser(user.id_user, new UpdateUserDto { name_user = "x" });
+
+            Assert.Equal("new@test.com", emailChange.email_user);
+            Assert.NotNull(passwordChange);
+            Assert.Equal("x", otherChange.name_user);
+        }
+
+        [Fact]
+        public async Task UpdateUser_ShouldAllowDemotingAnAdmin_WhenAnotherAdminExists()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var admin = await SeedAuthenticatedUser(context, "admin@test.com", role: UserRole.Admin);
+            context.Users.Add(BuildUser("other-admin@test.com", UserRole.Admin));
+            await context.SaveChangesAsync();
+            _sessionService.Setup(s => s.GetClientRole()).Returns(UserRole.Admin);
+            var service = CreateService(context);
+
+            var result = await service.UpdateUser(admin.id_user, new UpdateUserDto { role_user = UserRole.User });
+
+            Assert.Equal(UserRole.User, result.role_user);
+        }
+
+        [Fact]
+        public async Task DeleteUser_ShouldRevokeTokens_AndSendAccountDeletedNotification()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = BuildUser("a@test.com");
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            _sessionService.Setup(s => s.GetClientId()).Returns(user.id_user + 100);
+            var service = CreateService(context);
+
+            await service.DeleteUser(user.id_user);
+
+            _jwiService.Verify(j => j.RevokeAllAccessTokenByUser(user.id_user, It.IsAny<string>()), Times.Once);
+            _jwiService.Verify(j => j.RevokeAllRefreshTokenByUser(user.id_user, It.IsAny<string>()), Times.Once);
+            var notification = Assert.Single(SentNotifications());
+            Assert.Equal("account-deleted", notification.Message.TemplateId);
+            Assert.Equal("a@test.com-account-deleted", notification.Key);
+        }
+
+        [Fact]
+        public async Task DeleteUser_ShouldStillSucceed_WhenNotificationCannotBePublished()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = BuildUser("a@test.com");
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            _sessionService.Setup(s => s.GetClientId()).Returns(user.id_user);
+            _kafkaProducerService
+                .Setup(k => k.PublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("kafka down"));
+            var service = CreateService(context);
+
+            await service.DeleteUser(user.id_user);
+
+            Assert.Equal(0, await context.Users.CountAsync());
+        }
+
+        [Fact]
+        public async Task GetUserByIdAsync_ShouldReturnUser_WhenItExists()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = BuildUser("a@test.com");
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.GetUserByIdAsync(user.id_user);
+
+            Assert.Equal("a@test.com", result!.email_user);
+        }
+
+        [Fact]
+        public async Task GetUserByIdAsync_ShouldReturnNull_WhenUserDoesNotExist()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            Assert.Null(await service.GetUserByIdAsync(999));
+        }
+
+        [Fact]
+        public async Task GetUsersByRoleAsync_ShouldReturnOnlyUsersOfRole_OrderedById()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var admin1 = BuildUser("a1@test.com", UserRole.Admin);
+            var user = BuildUser("u@test.com");
+            var admin2 = BuildUser("a2@test.com", UserRole.Admin);
+            context.Users.AddRange(admin1, user, admin2);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = (await service.GetUsersByRoleAsync(UserRole.Admin)).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Equal([admin1.id_user, admin2.id_user], result.Select(u => u.id_user));
         }
     }
 }

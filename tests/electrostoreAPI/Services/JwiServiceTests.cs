@@ -606,5 +606,260 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.True(revokedAccessToken?.is_revoked);
             Assert.Equal("admin revoke", revokedAccessToken?.revoked_reason_jwi_access);
         }
+
+        // --- additional coverage ---
+
+        [Fact]
+        public void Constructor_ShouldThrowArgumentNullException_WhenSettingsAreMissing()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var options = new Mock<IOptions<JwtSettings>>();
+            options.Setup(o => o.Value).Returns((JwtSettings)null!);
+
+            Assert.Throws<ArgumentNullException>(() => new JwiService(context, options.Object, _sessionService.Object));
+        }
+
+        [Fact]
+        public async Task SaveToken_ShouldReuseProvidedSessionId()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+            var sessionId = Guid.NewGuid();
+            var jwt = new Jwt
+            {
+                token = "a",
+                refresh_token = "r",
+                expire_date_token = DateTime.UtcNow.AddMinutes(15),
+                expire_date_refresh_token = DateTime.UtcNow.AddDays(7)
+            };
+
+            await service.SaveToken(jwt, 1, "sso_oidc", sessionId);
+
+            Assert.Equal(sessionId, (await context.JwiRefreshTokens.SingleAsync()).session_id_jwi_refresh);
+            Assert.Equal(sessionId, (await context.JwiAccessTokens.SingleAsync()).session_id_jwi_access);
+            Assert.Equal("sso_oidc", (await context.JwiAccessTokens.SingleAsync()).auth_method_jwi_access);
+        }
+
+        [Fact]
+        public async Task ValidateToken_ShouldReturnFalse_WhenRoleClaimDoesNotMatch()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var tokenId = Guid.NewGuid();
+            context.JwiAccessTokens.Add(BuildAccessToken(tokenId, 1, isRevoked: false, expiresAt: DateTime.UtcNow.AddMinutes(15)));
+            await context.SaveChangesAsync();
+            var token = GenerateJwtToken(tokenId, "refresh", DateTime.UtcNow.AddMinutes(15));
+            var service = CreateService(context);
+
+            Assert.False(service.ValidateToken(token, "access"));
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        public void ValidateToken_ShouldReturnFalse_WhenTokenIsEmpty(string? token)
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            Assert.False(service.ValidateToken(token!, "access"));
+        }
+
+        [Fact]
+        public async Task IsRevoked_ShouldEvaluateRefreshTokens()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var active = Guid.NewGuid();
+            var revoked = Guid.NewGuid();
+            var expired = Guid.NewGuid();
+            context.JwiRefreshTokens.AddRange(
+                BuildRefreshToken(active, 1, isRevoked: false, expiresAt: DateTime.UtcNow.AddDays(1)),
+                BuildRefreshToken(revoked, 1, isRevoked: true, expiresAt: DateTime.UtcNow.AddDays(1)),
+                BuildRefreshToken(expired, 1, isRevoked: false, expiresAt: DateTime.UtcNow.AddDays(-1)));
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            Assert.False(service.IsRevoked(active.ToString(), "refresh"));
+            Assert.True(service.IsRevoked(revoked.ToString(), "refresh"));
+            Assert.True(service.IsRevoked(expired.ToString(), "refresh"));
+            Assert.True(service.IsRevoked(Guid.NewGuid().ToString(), "refresh"));
+        }
+
+        [Fact]
+        public async Task IsRevoked_ShouldReturnTrue_ForExpiredAccessTokenAndUnknownRole()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var expired = Guid.NewGuid();
+            context.JwiAccessTokens.Add(BuildAccessToken(expired, 1, isRevoked: false, expiresAt: DateTime.UtcNow.AddMinutes(-1)));
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            Assert.True(service.IsRevoked(expired.ToString(), "access"));
+            Assert.True(service.IsRevoked(expired.ToString(), "something-else"));
+        }
+
+        // --- GetTokenSessionsByUserId ---
+
+        private async Task SeedSessions(ApplicationDbContext context, int userId, int count)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                var sessionId = Guid.NewGuid();
+                context.JwiRefreshTokens.Add(BuildRefreshToken(Guid.NewGuid(), userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddDays(7 + i), sessionId: sessionId, createdAt: DateTime.UtcNow.AddMinutes(-i)));
+                context.JwiRefreshTokens.Add(BuildRefreshToken(Guid.NewGuid(), userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddDays(14 + i), sessionId: sessionId, createdAt: DateTime.UtcNow.AddMinutes(-i)));
+            }
+            await context.SaveChangesAsync();
+        }
+
+        [Fact]
+        public async Task GetTokenSessionsByUserId_ShouldGroupTokensBySession_AndOnlyReturnUserSessions()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            await SeedSessions(context, 1, 3);
+            await SeedSessions(context, 2, 2);
+            var service = CreateService(context);
+
+            var result = await service.GetTokenSessionsByUserId(1);
+
+            Assert.Equal(3, result.data.Count());
+            Assert.Equal(3, result.pagination.total);
+            Assert.False(result.pagination.has_more);
+            Assert.All(result.data, s => Assert.Equal(1, s.id_user));
+        }
+
+        [Fact]
+        public async Task GetTokenSessionsByUserId_ShouldPaginate()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            await SeedSessions(context, 1, 3);
+            var service = CreateService(context);
+
+            var result = await service.GetTokenSessionsByUserId(1, limit: 2, offset: 0);
+
+            Assert.Equal(2, result.data.Count());
+            Assert.Equal(3, result.pagination.total);
+            Assert.True(result.pagination.has_more);
+            Assert.Equal(2, result.pagination.next_offset);
+        }
+
+        [Fact]
+        public async Task GetTokenSessionsByUserId_ShouldApplyValidSortAndFallBackOnInvalidSort()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            await SeedSessions(context, 1, 2);
+            var service = CreateService(context);
+
+            var sorted = await service.GetTokenSessionsByUserId(1, sort: new SorterDto { field = "created_at", order = "asc" });
+            var invalid = await service.GetTokenSessionsByUserId(1, sort: new SorterDto { field = "does_not_exist", order = "asc" });
+
+            Assert.Equal(2, sorted.data.Count());
+            Assert.Equal("created_at", sorted.sort!.Single().field);
+            Assert.Equal(2, invalid.data.Count());
+            Assert.Equal("created_at", invalid.sort!.Single().field);
+            Assert.Equal("desc", invalid.sort!.Single().order);
+        }
+
+        [Fact]
+        public async Task GetTokenSessionsByUserId_ShouldAllowAdminToViewOtherUsersSessions()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            await SeedSessions(context, 2, 1);
+            _sessionService.Setup(s => s.GetClientRole()).Returns(UserRole.Admin);
+            var service = CreateService(context);
+
+            var result = await service.GetTokenSessionsByUserId(2);
+
+            Assert.Single(result.data);
+        }
+
+        [Fact]
+        public async Task GetTokenSessionsByUserId_ShouldThrowUnauthorizedAccessException_ForOtherUser()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.GetTokenSessionsByUserId(2));
+        }
+
+        // --- GetSessionIdByTokenId ---
+
+        [Fact]
+        public async Task GetSessionIdByTokenId_ShouldReturnSessionId_WhenTokenExists()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var sessionId = Guid.NewGuid();
+            var tokenId = Guid.NewGuid();
+            context.JwiRefreshTokens.Add(BuildRefreshToken(tokenId, 1, isRevoked: false, expiresAt: DateTime.UtcNow.AddDays(1), sessionId: sessionId));
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            Assert.Equal(sessionId, await service.GetSessionIdByTokenId(tokenId.ToString(), 1));
+        }
+
+        [Fact]
+        public async Task GetSessionIdByTokenId_ShouldReturnEmptyGuid_WhenTokenDoesNotExist()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            Assert.Equal(Guid.Empty, await service.GetSessionIdByTokenId(Guid.NewGuid().ToString(), 1));
+        }
+
+        [Fact]
+        public async Task GetSessionIdByTokenId_ShouldThrowUnauthorizedAccessException_ForOtherUser()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.GetSessionIdByTokenId(Guid.NewGuid().ToString(), 2));
+        }
+
+        // --- RevokeSessionById: missing session ---
+
+        [Fact]
+        public async Task RevokeSessionById_ShouldThrowKeyNotFoundException_WhenSessionDoesNotExist()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.RevokeSessionById(Guid.NewGuid().ToString(), "reason", 1));
+        }
+
+        // --- RevokePairTokenByRefreshToken: errors ---
+
+        [Fact]
+        public async Task RevokePairTokenByRefreshToken_ShouldThrowKeyNotFoundException_WhenUserDoesNotExist()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.RevokePairTokenByRefreshToken(Guid.NewGuid().ToString(), "reason", 1));
+        }
+
+        [Fact]
+        public async Task RevokePairTokenByRefreshToken_ShouldThrowKeyNotFoundException_WhenRefreshTokenDoesNotBelongToUser()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildUser(1));
+            var tokenId = Guid.NewGuid();
+            context.JwiRefreshTokens.Add(BuildRefreshToken(tokenId, 2, isRevoked: false, expiresAt: DateTime.UtcNow.AddDays(1)));
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.RevokePairTokenByRefreshToken(tokenId.ToString(), "reason", 1));
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.RevokePairTokenByRefreshToken(Guid.NewGuid().ToString(), "reason", 1));
+        }
+
+        [Fact]
+        public async Task RevokePairTokenByRefreshToken_ShouldThrowKeyNotFoundException_WhenAccessTokenIsMissing()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildUser(1));
+            var tokenId = Guid.NewGuid();
+            context.JwiRefreshTokens.Add(BuildRefreshToken(tokenId, 1, isRevoked: false, expiresAt: DateTime.UtcNow.AddDays(1), accessTokenId: Guid.NewGuid()));
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.RevokePairTokenByRefreshToken(tokenId.ToString(), "reason", 1));
+        }
     }
 }

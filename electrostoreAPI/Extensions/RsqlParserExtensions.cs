@@ -176,148 +176,9 @@ public static class RsqlParserExtensions
         Expression? combined = null;
         foreach (var condition in rsql)
         {
-            var field = condition.field;
-            var searchType = condition.search_type;
-            var value = condition.value;
-
-            Expression? binaryExpression = null;
-
-            // Check for aggregate function syntax: FUNC(field.path)
-            var aggregateMatch = AggregateRegex.Match(field);
-            if (aggregateMatch.Success)
-            {
-                var aggregateFunc = aggregateMatch.Groups[1].Value;
-                var innerField = aggregateMatch.Groups[2].Value;
-
-                var (aggregateExpr, resultType) = BuildAggregateExpression(param, aggregateFunc, innerField);
-                if (aggregateExpr != null && resultType != null)
-                {
-                    object? convertedValue;
-                    try
-                    {
-                        var underlyingType = Nullable.GetUnderlyingType(resultType) ?? resultType;
-                        convertedValue = Convert.ChangeType(value, underlyingType);
-                    }
-                    catch (Exception)
-                    {
-                        continue;
-                    }
-
-                    Expression right = Expression.Constant(convertedValue, resultType);
-                    binaryExpression = searchType switch
-                    {
-                        "eq" => Expression.Equal(aggregateExpr, right),
-                        "ne" => Expression.NotEqual(aggregateExpr, right),
-                        "gt" => Expression.GreaterThan(aggregateExpr, right),
-                        "lt" => Expression.LessThan(aggregateExpr, right),
-                        "ge" => Expression.GreaterThanOrEqual(aggregateExpr, right),
-                        "le" => Expression.LessThanOrEqual(aggregateExpr, right),
-                        _ => null
-                    };
-                }
-            }
-            else
-            {
-                var left = BuildNestedPropertyAccess(param, field, out bool isCollection, out Type? collectionElementType, out string? collectionProperty);
-
-                if (left == null)
-                {
-                    continue;
-                }
-
-                if (isCollection && collectionElementType != null && collectionProperty != null)
-                {
-                    // Expression for collection properties using Any()
-                    var collectionParam = Expression.Parameter(collectionElementType, "item");
-                    var itemProperty = BuildNestedPropertyAccess(collectionParam, collectionProperty, out _, out _, out _);
-
-                    if (itemProperty == null)
-                    {
-                        continue;
-                    }
-
-                    object? convertedValue;
-                    try
-                    {
-                        if (itemProperty.Type.IsEnum)
-                        {
-                            convertedValue = Enum.Parse(itemProperty.Type, value?.ToString() ?? "", true);
-                        }
-                        else
-                        {
-                            convertedValue = Convert.ChangeType(value, itemProperty.Type);
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        // Skip this filter if conversion fails
-                        continue;
-                    }
-
-                    Expression right = Expression.Constant(convertedValue);
-
-                    Expression? itemCondition = searchType switch
-                    {
-                        "eq" => Expression.Equal(itemProperty, right),
-                        "ne" => Expression.NotEqual(itemProperty, right),
-                        "gt" => Expression.GreaterThan(itemProperty, right),
-                        "lt" => Expression.LessThan(itemProperty, right),
-                        "ge" => Expression.GreaterThanOrEqual(itemProperty, right),
-                        "le" => Expression.LessThanOrEqual(itemProperty, right),
-                        "like" => Expression.Call(itemProperty, typeof(string).GetMethod("Contains", new[] { typeof(string) })!, right),
-                        "null" => Expression.Equal(itemProperty, Expression.Constant(null)),
-                        "notnull" => Expression.NotEqual(itemProperty, Expression.Constant(null)),
-                        _ => null
-                    };
-
-                    if (itemCondition != null)
-                    {
-                        var lambda = Expression.Lambda(itemCondition, collectionParam);
-                        var anyMethod = typeof(Enumerable).GetMethods()
-                            .First(m => m.Name == "Any" && m.GetParameters().Length == 2)
-                            .MakeGenericMethod(collectionElementType);
-
-                        binaryExpression = Expression.Call(anyMethod, left, lambda);
-                    }
-                }
-                else
-                {
-                    // Expression for non-collection properties
-                    object? convertedValue;
-                    try
-                    {
-                        if (left.Type.IsEnum)
-                        {
-                            convertedValue = Enum.Parse(left.Type, value?.ToString() ?? "", true);
-                        }
-                        else
-                        {
-                            convertedValue = Convert.ChangeType(value, left.Type);
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        // Skip this filter if conversion fails
-                        continue;
-                    }
-
-                    Expression right = Expression.Constant(convertedValue);
-
-                    binaryExpression = searchType switch
-                    {
-                        "eq" => Expression.Equal(left, right),
-                        "ne" => Expression.NotEqual(left, right),
-                        "gt" => Expression.GreaterThan(left, right),
-                        "lt" => Expression.LessThan(left, right),
-                        "ge" => Expression.GreaterThanOrEqual(left, right),
-                        "le" => Expression.LessThanOrEqual(left, right),
-                        "like" => Expression.Call(left, typeof(string).GetMethod("Contains", new[] { typeof(string) })!, right),
-                        "null" => Expression.Equal(left, Expression.Constant(null)),
-                        "notnull" => Expression.NotEqual(left, Expression.Constant(null)),
-                        _ => null
-                    };
-                }
-            }
+            var binaryExpression = condition.search_type == "any"
+                ? BuildAnyExpression(param, condition.field, condition.value)
+                : BuildConditionExpression(param, condition.field, condition.search_type, condition.value);
 
             if (binaryExpression != null)
             {
@@ -329,6 +190,138 @@ public static class RsqlParserExtensions
             return (x => true, new List<FilterDto>());
         }
         return (Expression.Lambda<Func<T, bool>>(combined, param), rsql);
+    }
+
+    /// <summary>
+    /// field=any=a,b,c : the field is equal to at least one of the comma separated values.
+    /// A value that can't be converted to the type of the field is ignored.
+    /// </summary>
+    private static Expression? BuildAnyExpression(ParameterExpression param, string field, string? value)
+    {
+        Expression? combined = null;
+        foreach (var singleValue in (value ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var expression = BuildConditionExpression(param, field, "eq", singleValue);
+            if (expression != null)
+            {
+                combined = combined == null ? expression : Expression.OrElse(combined, expression);
+            }
+        }
+        return combined;
+    }
+
+    /// <summary>
+    /// Builds the boolean expression of a single condition, null if the field, the value or the search type is not valid.
+    /// </summary>
+    private static Expression? BuildConditionExpression(ParameterExpression param, string field, string searchType, string? value)
+    {
+        // Check for aggregate function syntax: FUNC(field.path)
+        var aggregateMatch = AggregateRegex.Match(field);
+        if (aggregateMatch.Success)
+        {
+            var aggregateFunc = aggregateMatch.Groups[1].Value;
+            var innerField = aggregateMatch.Groups[2].Value;
+
+            var (aggregateExpr, resultType) = BuildAggregateExpression(param, aggregateFunc, innerField);
+            if (aggregateExpr == null || resultType == null)
+            {
+                return null;
+            }
+            object? convertedValue;
+            try
+            {
+                var underlyingType = Nullable.GetUnderlyingType(resultType) ?? resultType;
+                convertedValue = Convert.ChangeType(value, underlyingType);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+
+            Expression right = Expression.Constant(convertedValue, resultType);
+            return searchType switch
+            {
+                "eq" => Expression.Equal(aggregateExpr, right),
+                "ne" => Expression.NotEqual(aggregateExpr, right),
+                "gt" => Expression.GreaterThan(aggregateExpr, right),
+                "lt" => Expression.LessThan(aggregateExpr, right),
+                "ge" => Expression.GreaterThanOrEqual(aggregateExpr, right),
+                "le" => Expression.LessThanOrEqual(aggregateExpr, right),
+                _ => null
+            };
+        }
+
+        var left = BuildNestedPropertyAccess(param, field, out bool isCollection, out Type? collectionElementType, out string? collectionProperty);
+        if (left == null)
+        {
+            return null;
+        }
+
+        if (isCollection && collectionElementType != null && collectionProperty != null)
+        {
+            // Expression for collection properties using Any()
+            var collectionParam = Expression.Parameter(collectionElementType, "item");
+            var itemProperty = BuildNestedPropertyAccess(collectionParam, collectionProperty, out _, out _, out _);
+            if (itemProperty == null)
+            {
+                return null;
+            }
+
+            var itemCondition = BuildComparison(itemProperty, searchType, value);
+            if (itemCondition == null)
+            {
+                return null;
+            }
+
+            var lambda = Expression.Lambda(itemCondition, collectionParam);
+            var anyMethod = typeof(Enumerable).GetMethods()
+                .First(m => m.Name == "Any" && m.GetParameters().Length == 2)
+                .MakeGenericMethod(collectionElementType);
+
+            return Expression.Call(anyMethod, left, lambda);
+        }
+
+        // Expression for non-collection properties
+        return BuildComparison(left, searchType, value);
+    }
+
+    private static Expression? BuildComparison(Expression left, string searchType, string? value)
+    {
+        object? convertedValue;
+        // Nullable<T> columns (e.g. int? id_user) must be converted to their underlying type
+        var targetType = Nullable.GetUnderlyingType(left.Type) ?? left.Type;
+        try
+        {
+            if (targetType.IsEnum)
+            {
+                convertedValue = Enum.Parse(targetType, value?.ToString() ?? "", true);
+            }
+            else
+            {
+                convertedValue = Convert.ChangeType(value, targetType);
+            }
+        }
+        catch (Exception)
+        {
+            // Skip this filter if conversion fails
+            return null;
+        }
+
+        Expression right = Expression.Constant(convertedValue, left.Type);
+
+        return searchType switch
+        {
+            "eq" => Expression.Equal(left, right),
+            "ne" => Expression.NotEqual(left, right),
+            "gt" => Expression.GreaterThan(left, right),
+            "lt" => Expression.LessThan(left, right),
+            "ge" => Expression.GreaterThanOrEqual(left, right),
+            "le" => Expression.LessThanOrEqual(left, right),
+            "like" => Expression.Call(left, typeof(string).GetMethod("Contains", new[] { typeof(string) })!, right),
+            "null" => Expression.Equal(left, Expression.Constant(null)),
+            "notnull" => Expression.NotEqual(left, Expression.Constant(null)),
+            _ => null
+        };
     }
 
     public static (Expression<Func<T, object>>?, string) ToSortExpression<T>(SorterDto sort)

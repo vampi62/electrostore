@@ -327,5 +327,53 @@ namespace ElectrostoreAPI.Tests.Services
 
             await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DeleteEquipementMaintenance(999));
         }
+
+        // --- additional coverage: expand ---
+
+        private async Task<(Equipements equipement, Users user, EquipementsMaintenances maintenance)> SeedMaintenance(ApplicationDbContext context)
+        {
+            var equipement = BuildEquipement();
+            var user = BuildUser();
+            context.Equipements.Add(equipement);
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            var maintenance = new EquipementsMaintenances
+            {
+                id_equipement = equipement.id_equipement,
+                id_user = user.id_user,
+                type_equipement_maintenance = EquipementMaintenanceType.Preventive,
+                date_planned_equipement_maintenance = DateTime.UtcNow
+            };
+            context.EquipementsMaintenances.Add(maintenance);
+            await context.SaveChangesAsync();
+            return (equipement, user, maintenance);
+        }
+
+        [Fact]
+        public async Task GetEquipementsMaintenancesByEquipementId_ShouldExpandEquipementAndUser_WhenRequested()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (equipement, _, _) = await SeedMaintenance(context);
+            var service = CreateService(context);
+
+            var result = await service.GetEquipementsMaintenancesByEquipementId(equipement.id_equipement, expand: ["equipement", "user"]);
+
+            var single = Assert.Single(result.data);
+            Assert.NotNull(single.equipement);
+            Assert.NotNull(single.user);
+        }
+
+        [Fact]
+        public async Task GetEquipementMaintenanceById_ShouldExpandEquipementAndUser_WhenRequested()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (_, _, maintenance) = await SeedMaintenance(context);
+            var service = CreateService(context);
+
+            var result = await service.GetEquipementMaintenanceById(maintenance.id_equipement_maintenance, expand: ["equipement", "user"]);
+
+            Assert.NotNull(result.equipement);
+            Assert.NotNull(result.user);
+        }
     }
 }

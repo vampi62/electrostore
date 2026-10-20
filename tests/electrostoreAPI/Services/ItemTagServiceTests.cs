@@ -207,5 +207,106 @@ namespace ElectrostoreAPI.Tests.Services
 
             await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DeleteItemTag(1, 1));
         }
+
+        // --- expand / bulk operations ---
+
+        private async Task<(int parentId, int tag1Id, int tag2Id)> SeedForBulk(ApplicationDbContext context)
+        {
+            var parent = BuildItem();
+            context.Items.Add(parent);
+            await context.SaveChangesAsync();
+            var tag1 = BuildTag("bulk-1");
+            var tag2 = BuildTag("bulk-2");
+            context.Tags.AddRange(tag1, tag2);
+            await context.SaveChangesAsync();
+            return (parent.id_item, tag1.id_tag, tag2.id_tag);
+        }
+
+        [Fact]
+        public async Task GetItemsTagsByItemId_ShouldExpandParentAndTag_WhenRequested()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (parentId, tagId, _) = await SeedForBulk(context);
+            context.ItemsTags.Add(new ItemsTags { id_item = parentId, id_tag = tagId });
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.GetItemsTagsByItemId(parentId, expand: ["item", "tag"]);
+
+            var link = Assert.Single(result.data);
+            Assert.NotNull(link.item);
+            Assert.NotNull(link.tag);
+        }
+
+        [Fact]
+        public async Task GetItemsTagsByTagId_ShouldExpandParentAndTag_WhenRequested()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (parentId, tagId, _) = await SeedForBulk(context);
+            context.ItemsTags.Add(new ItemsTags { id_item = parentId, id_tag = tagId });
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.GetItemsTagsByTagId(tagId, expand: ["item", "tag"]);
+
+            var link = Assert.Single(result.data);
+            Assert.NotNull(link.item);
+            Assert.NotNull(link.tag);
+        }
+
+        [Fact]
+        public async Task GetItemTagById_ShouldExpandParentAndTag_WhenRequested()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (parentId, tagId, _) = await SeedForBulk(context);
+            context.ItemsTags.Add(new ItemsTags { id_item = parentId, id_tag = tagId });
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.GetItemTagById(parentId, tagId, ["item", "tag"]);
+
+            Assert.NotNull(result.item);
+            Assert.NotNull(result.tag);
+        }
+
+        [Fact]
+        public async Task CreateBulkItemTag_ShouldReturnValidAndErrorEntries()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (parentId, tag1Id, _) = await SeedForBulk(context);
+            var service = CreateService(context);
+
+            var result = await service.CreateBulkItemTag(
+            [
+                new CreateItemTagDto { id_item = parentId, id_tag = tag1Id },
+                new CreateItemTagDto { id_item = 9999, id_tag = tag1Id },
+                new CreateItemTagDto { id_item = parentId, id_tag = tag1Id }
+            ]);
+
+            Assert.Single(result.valide);
+            Assert.Equal(2, result.error.Count());
+            Assert.Equal(1, await context.ItemsTags.CountAsync());
+        }
+
+        [Fact]
+        public async Task DeleteBulkItemTag_ShouldReturnValidAndErrorEntries()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var (parentId, tag1Id, tag2Id) = await SeedForBulk(context);
+            context.ItemsTags.Add(new ItemsTags { id_item = parentId, id_tag = tag1Id });
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.DeleteBulkItemTag(
+            [
+                new CreateItemTagDto { id_item = parentId, id_tag = tag1Id },
+                new CreateItemTagDto { id_item = parentId, id_tag = tag2Id }
+            ]);
+
+            var deleted = Assert.Single(result.valide);
+            Assert.Equal(tag1Id, deleted.id_tag);
+            Assert.Single(result.error);
+            Assert.Equal(0, await context.ItemsTags.CountAsync());
+        }
     }
 }

@@ -151,9 +151,9 @@ public class CommandItemService : ICommandItemService
         }
         if (commandItemDto.price_command_item is not null)
         {
-            if (commandItemDto.price_command_item <= 0)
+            if (commandItemDto.price_command_item < 0)
             {
-                throw new ArgumentException("price_command_item must be greater than 0");
+                throw new ArgumentException("price_command_item must be greater than or equal to 0");
             }
             commandItemToUpdate.price_command_item = commandItemDto.price_command_item.Value;
         }

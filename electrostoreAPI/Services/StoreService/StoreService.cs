@@ -382,31 +382,30 @@ public class StoreService : IStoreService
             await _validateStoreService.ValidateStorePlanPosition(storeToUpdate);
             // Add leds and boxs, if status field indicate the new status "delete", "modified", "new"
             (var validQueryLed, var errorQueryLed) = await UpdateLedList(storeToUpdate, storeDto.leds ?? []);
-            (var validQueryBox, var errorQueryBox) = await UpdateBoxList(storeToUpdate, storeDto.boxs ?? []);
+            (var boxesToCheck, var errorQueryBox) = await UpdateBoxList(storeToUpdate, storeDto.boxs ?? []);
             await _validateStoreService.CheckUpdateStoreOutsideElement(storeToUpdate);
-            if (errorQueryBox.Count == 0)
+            if (errorQueryBox.Count == 0 && boxesToCheck.Count > 0)
             {
-                // Check for overlapping boxs after all modifications
-                foreach (var box in storeDto.boxs ?? [])
+                // Persist (still inside the transaction) so that new boxes get their id and the overlap checks
+                // see the final state of the store: deleted boxes are gone, moved boxes are at their new position
+                await _context.SaveChangesAsync();
+                foreach (var (box, boxDto) in boxesToCheck)
                 {
                     try
                     {
-                        if (box.status == "new" || box.status == "modified")
-                        {
-                            var boxToUpdate = await _context.Boxs.FindAsync(box.id_box) ?? throw new KeyNotFoundException($"Box with id '{box.id_box}' not found");
-                            await _validateStoreService.CheckUpdateBoxPositionOverlap(boxToUpdate);
-                        }
+                        await _validateStoreService.CheckUpdateBoxPositionOverlap(box);
                     }
                     catch (Exception e)
                     {
                         errorQueryBox.Add(new ErrorDetail
                         {
                             reason = e.Message,
-                            data = box
+                            data = boxDto
                         });
                     }
                 }
             }
+            var validQueryBox = boxesToCheck.Select(b => _mapper.Map<ReadBoxDto>(b.Box)).ToList();
             var mqttPassword = string.Empty;
             var passwordReset = false;
             var committed = false;
@@ -555,9 +554,9 @@ public class StoreService : IStoreService
         return (validQueryLed, errorQueryLed);
     }
     
-    private async Task<(List<ReadBoxDto>, List<ErrorDetail>)> UpdateBoxList(Stores storeToUpdate, IEnumerable<UpdateBulkBoxByStoreDto> boxListDto)
+    private async Task<(List<(Boxs Box, UpdateBulkBoxByStoreDto Dto)>, List<ErrorDetail>)> UpdateBoxList(Stores storeToUpdate, IEnumerable<UpdateBulkBoxByStoreDto> boxListDto)
     {
-        var validQueryBox = new List<ReadBoxDto>();
+        var validQueryBox = new List<(Boxs Box, UpdateBulkBoxByStoreDto Dto)>();
         var errorQueryBox = new List<ErrorDetail>();
         foreach (var box in boxListDto)
         {
@@ -582,7 +581,7 @@ public class StoreService : IStoreService
                     }
                     await _validateStoreService.UpdateBoxInformations(boxToUpdate, _mapper.Map<UpdateBoxDto>(box));
                     _validateStoreService.ValidateBoxPosition(boxToUpdate, storeToUpdate);
-                    validQueryBox.Add(_mapper.Map<ReadBoxDto>(boxToUpdate));
+                    validQueryBox.Add((boxToUpdate, box));
                 }
                 else if (box.status == "new")
                 {
@@ -597,7 +596,7 @@ public class StoreService : IStoreService
                     var newBox = _mapper.Map<Boxs>(boxDtoFull);
                     _validateStoreService.ValidateBoxPosition(newBox, storeToUpdate);
                     _context.Boxs.Add(newBox);
-                    validQueryBox.Add(_mapper.Map<ReadBoxDto>(newBox));
+                    validQueryBox.Add((newBox, box));
                 }
             }
             catch (Exception e)
