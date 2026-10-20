@@ -1,8 +1,7 @@
 using ElectrostoreAPI.Dto;
 using Minio;
 using Minio.DataModel.Args;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
+using SkiaSharp;
 
 namespace ElectrostoreAPI.Services.FileService;
 
@@ -250,14 +249,24 @@ public class FileService : IFileService
                 mime_type = ""
             };
         }
-        var image = await Image.LoadAsync(file.file_stream);
-        image.Mutate(x => x.Resize(new ResizeOptions
+        using var original = SKBitmap.Decode(file.file_stream);
+        if (original == null)
         {
-            Size = new Size(width, height),
-            Mode = ResizeMode.Max
-        }));
+            return new SaveFileResult
+            {
+                path = "",
+                mime_type = ""
+            };
+        }
+        // fit inside width x height while keeping the aspect ratio
+        var scale = Math.Min((float)width / original.Width, (float)height / original.Height);
+        var info = new SKImageInfo(
+            Math.Max(1, (int)(original.Width * scale)),
+            Math.Max(1, (int)(original.Height * scale)));
+        using var resized = original.Resize(info, new SKSamplingOptions(SKCubicResampler.Mitchell));
+        using var data = resized.Encode(SKEncodedImageFormat.Jpeg, 85);
         var ms = new MemoryStream();
-        await image.SaveAsJpegAsync(ms);
+        data.SaveTo(ms);
         ms.Position = 0;
         return await SaveFile(destPath, Path.GetFileName(sourcePath), "image/jpeg", ms);
     }
