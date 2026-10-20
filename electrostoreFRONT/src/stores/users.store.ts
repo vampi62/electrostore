@@ -198,7 +198,6 @@ export const useUsersStore = defineStore("users",{
 		equipementCommentEdition: {} as Record<string, Record<string, Edition<{ create: CreateEquipementCommentByEquipementDto, update: UpdateEquipementCommentDto }>>>,
 	}),
 	actions: {
-		getUserByList: userResource.getByList,
 		getUserByInterval: userResource.getByInterval,
 		getUserById: userResource.getById,
 		createUser: userResource.create,

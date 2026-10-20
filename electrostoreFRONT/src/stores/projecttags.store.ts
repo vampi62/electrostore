@@ -83,7 +83,6 @@ export const useProjectTagsStore = defineStore("projectTags",{
 		projectTagProjectReady: {} as Record<string, Record<string, Ready<{ create: CreateProjectProjectTagByProjectTagDto }>>>,
 	}),
 	actions: {
-		getProjectTagByList: projectTagResource.getByList,
 		getProjectTagByInterval: projectTagResource.getByInterval,
 		getProjectTagById: projectTagResource.getById,
 		createProjectTag: projectTagResource.create,

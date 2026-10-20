@@ -32,15 +32,9 @@ public class CommandService : ICommandService
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedCommandDto>> GetCommands(int limit = 100, int offset = 0,
-    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         var query = _context.Commands.AsQueryable();
-        if (idResearch is not null && idResearch.Count > 0)
-        {
-            query = query.Where(c => idResearch.Contains(c.id_command));
-            rsql = null;
-            sort = null;
-        }
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_command", order = "asc" })
             .ToProjectedResponseAsync(

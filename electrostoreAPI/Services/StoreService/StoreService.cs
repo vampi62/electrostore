@@ -37,15 +37,9 @@ public class StoreService : IStoreService
 
     // limit the number of store to 100 and add offset and search parameters
     public async Task<PaginatedResponseDto<ReadExtendedStoreDto>> GetStores(int limit = 100, int offset = 0,
-    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         var query = _context.Stores.AsQueryable();
-        if (idResearch is not null && idResearch.Count > 0)
-        {
-            query = query.Where(s => idResearch.Contains(s.id_store));
-            rsql = null;
-            sort = null;
-        }
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_store", order = "asc" })
             .ToProjectedResponseAsync(

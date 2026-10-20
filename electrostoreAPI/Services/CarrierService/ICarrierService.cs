@@ -5,7 +5,7 @@ namespace ElectrostoreAPI.Services.CarrierService;
 
 public interface ICarrierService
 {
-    public Task<PaginatedResponseDto<ReadCarrierDto>> GetCarriers(int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<int>? idResearch = null);
+    public Task<PaginatedResponseDto<ReadCarrierDto>> GetCarriers(int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null);
 
     public Task<ReadCarrierDto> GetCarrierById(int id);
 

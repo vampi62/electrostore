@@ -26,13 +26,12 @@ namespace ElectrostoreAPI.Controllers
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<PaginatedResponseDto<ReadExtendedItemDto>>> GetItems([FromQuery] int limit = 100, [FromQuery] int offset = 0,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'item_tags', 'item_boxs', 'command_items', 'project_items', 'item_documents', 'item_history'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
-        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] List<int>? idResearch = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'nom_item=like=example'.")] string? filter = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'nom_item,asc' or 'nom_item,desc'.")] string? sort = null)
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
-            var items = await _itemService.GetItems(limit, offset, rsqlDto, sortDto, expand, idResearch);
+            var items = await _itemService.GetItems(limit, offset, rsqlDto, sortDto, expand);
             return Ok(items);
         }
 

@@ -26,13 +26,12 @@ namespace ElectrostoreAPI.Controllers
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<PaginatedResponseDto<ReadExtendedEquipementDto>>> GetEquipements([FromQuery] int limit = 100, [FromQuery] int offset = 0,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'equipement_tags', 'equipement_boxs', 'equipement_documents', 'equipement_maintenances', 'equipement_status_history', 'equipement_comments'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
-        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] List<int>? idResearch = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'reference_name_equipement=like=example'.")] string? filter = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'reference_name_equipement,asc' or 'reference_name_equipement,desc'.")] string? sort = null)
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
-            var equipements = await _equipementService.GetEquipements(limit, offset, rsqlDto, sortDto, expand, idResearch);
+            var equipements = await _equipementService.GetEquipements(limit, offset, rsqlDto, sortDto, expand);
             return Ok(equipements);
         }
 

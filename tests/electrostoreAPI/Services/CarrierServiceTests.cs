@@ -45,7 +45,7 @@ namespace ElectrostoreAPI.Tests.Services
         }
 
         [Fact]
-        public async Task GetCarriers_ShouldRestrictToIds_WhenIdResearchProvided()
+        public async Task GetCarriers_ShouldRestrictToIds_WhenAnyFilterProvided()
         {
             using var context = new ApplicationDbContext(_dbContextOptions);
             var a = BuildCarrier(1, "a");
@@ -54,7 +54,7 @@ namespace ElectrostoreAPI.Tests.Services
             await context.SaveChangesAsync();
             var service = CreateService(context);
 
-            var result = await service.GetCarriers(idResearch: [b.id_carrier]);
+            var result = await service.GetCarriers(rsql: [new FilterDto { field = "id_carrier", search_type = "any", value = b.id_carrier.ToString() }]);
 
             var single = Assert.Single(result.data);
             Assert.Equal(b.id_carrier, single.id_carrier);

@@ -27,15 +27,9 @@ public class ZoneService : IZoneService
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedZoneDto>> GetZones(int limit = 100, int offset = 0,
-    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         var query = _context.Zones.AsQueryable();
-        if (idResearch is not null && idResearch.Count > 0)
-        {
-            query = query.Where(z => idResearch.Contains(z.id_zone));
-            rsql = null;
-            sort = null;
-        }
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_zone", order = "asc" })
             .ToProjectedResponseAsync(

@@ -39,7 +39,7 @@ namespace ElectrostoreAPI.Tests.Services
         }
 
         [Fact]
-        public async Task GetProjectTags_ShouldRestrictToIds_WhenIdResearchProvided()
+        public async Task GetProjectTags_ShouldRestrictToIds_WhenAnyFilterProvided()
         {
             using var context = new ApplicationDbContext(_dbContextOptions);
             var a = BuildProjectTag("a");
@@ -49,7 +49,7 @@ namespace ElectrostoreAPI.Tests.Services
             await context.SaveChangesAsync();
             var service = CreateService(context);
 
-            var result = await service.GetProjectTags(idResearch: [a.id_project_tag, c.id_project_tag]);
+            var result = await service.GetProjectTags(rsql: [new FilterDto { field = "id_project_tag", search_type = "any", value = a.id_project_tag.ToString() + "," + c.id_project_tag.ToString() }]);
 
             Assert.Equal(2, result.data.Count());
             Assert.DoesNotContain(result.data, t => t.id_project_tag == b.id_project_tag);

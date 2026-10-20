@@ -5,7 +5,7 @@ namespace ElectrostoreAPI.Services.UserService;
 
 public interface IUserService
 {
-    public Task<PaginatedResponseDto<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null);
+    public Task<PaginatedResponseDto<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null);
 
     public Task<ReadUserDto> CreateUser(CreateUserDto userDto, bool avoidRoleVerification = false);
     

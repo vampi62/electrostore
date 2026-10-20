@@ -63,7 +63,6 @@ export const useZonesStore = defineStore("zones", {
 		thumbnailsURL: {} as Record<string, string>,
 	}),
 	actions: {
-		getZoneByList: zoneResource.getByList,
 		getZoneByInterval: zoneResource.getByInterval,
 		getZoneById: zoneResource.getById,
 		createZone: zoneResource.create,

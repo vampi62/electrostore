@@ -307,8 +307,6 @@ export interface paths {
                 query?: {
                     limit?: number;
                     offset?: number;
-                    /** @description (Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','. */
-                    idResearch?: number[];
                     /** @description (Optional) RSQL string to filter results. Example: 'nom_carrier=like=example'. */
                     filter?: string;
                     /** @description (Optional) Sort string to order results. Example: 'nom_carrier,asc' or 'nom_carrier,desc'. */
@@ -469,8 +467,6 @@ export interface paths {
                     offset?: number;
                     /** @description (Optional) Fields to expand. Possible values: 'command_comments', 'commands_documents', 'commands_history', 'commands_items', 'carrier'. Multiple values can be specified by separating them with ','. */
                     expand?: string[];
-                    /** @description (Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','. */
-                    idResearch?: number[];
                     /** @description (Optional) RSQL string to filter results. Example: 'nom_command=like=example'. */
                     filter?: string;
                     /** @description (Optional) Sort string to order results. Example: 'nom_command,asc' or 'nom_command,desc'. */
@@ -1343,8 +1339,6 @@ export interface paths {
                 query?: {
                     limit?: number;
                     offset?: number;
-                    /** @description (Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','. */
-                    idResearch?: number[];
                     /** @description (Optional) RSQL string to filter results. Example: 'name_cronjob=like=example'. */
                     filter?: string;
                     /** @description (Optional) Sort string to order results. Example: 'name_cronjob,asc' or 'name_cronjob,desc'. */
@@ -1647,8 +1641,6 @@ export interface paths {
                     offset?: number;
                     /** @description (Optional) Fields to expand. Possible values: 'equipement_tags', 'equipement_boxs', 'equipement_documents', 'equipement_maintenances', 'equipement_status_history', 'equipement_comments'. Multiple values can be specified by separating them with ','. */
                     expand?: string[];
-                    /** @description (Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','. */
-                    idResearch?: number[];
                     /** @description (Optional) RSQL string to filter results. Example: 'reference_name_equipement=like=example'. */
                     filter?: string;
                     /** @description (Optional) Sort string to order results. Example: 'reference_name_equipement,asc' or 'reference_name_equipement,desc'. */
@@ -2876,8 +2868,6 @@ export interface paths {
                     offset?: number;
                     /** @description (Optional) Fields to expand. Possible values: 'item_tags', 'item_boxs', 'command_items', 'project_items', 'item_documents', 'item_history'. Multiple values can be specified by separating them with ','. */
                     expand?: string[];
-                    /** @description (Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','. */
-                    idResearch?: number[];
                     /** @description (Optional) RSQL string to filter results. Example: 'nom_item=like=example'. */
                     filter?: string;
                     /** @description (Optional) Sort string to order results. Example: 'nom_item,asc' or 'nom_item,desc'. */
@@ -4278,8 +4268,6 @@ export interface paths {
                     offset?: number;
                     /** @description (Optional) Fields to expand. Possible values: 'project_comments', 'project_documents', 'project_items', 'project_tags', 'project_status_history'. Multiple values can be specified by separating them with ','. */
                     expand?: string[];
-                    /** @description (Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','. */
-                    idResearch?: number[];
                     /** @description (Optional) RSQL string to filter results. Example: 'name_project=like=example'. */
                     filter?: string;
                     /** @description (Optional) Sort string to order results. Example: 'name_project,asc' or 'name_project,desc'. */
@@ -5331,8 +5319,6 @@ export interface paths {
                     offset?: number;
                     /** @description (Optional) Fields to expand. Possible values: 'project_tags'. Multiple values can be specified by separating them with ','. */
                     expand?: string[];
-                    /** @description (Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','. */
-                    idResearch?: number[];
                     /** @description (Optional) RSQL string to filter results. Example: 'name_project_tag=like=example'. */
                     filter?: string;
                     /** @description (Optional) Sort string to order results. Example: 'id_project_tag,asc' or 'id_project_tag,desc'. */
@@ -6954,8 +6940,6 @@ export interface paths {
                     offset?: number;
                     /** @description (Optional) Fields to expand. Possible values: 'boxs', 'leds', 'stores_tags', 'zone'. Multiple values can be specified by separating them with ','. */
                     expand?: string[];
-                    /** @description (Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','. */
-                    idResearch?: number[];
                     /** @description (Optional) RSQL string to filter results. Example: 'name_store=like=example'. */
                     filter?: string;
                     /** @description (Optional) Sort string to order results. Example: 'name_store,asc' or 'name_store,desc'. */
@@ -7421,8 +7405,6 @@ export interface paths {
                     offset?: number;
                     /** @description (Optional) Fields to expand. Possible values: 'stores_tags', 'items_tags', 'boxs_tags', 'equipement_tags'. Multiple values can be specified by separating them with ','. */
                     expand?: string[];
-                    /** @description (Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','. */
-                    idResearch?: number[];
                     /** @description (Optional) RSQL string to filter results. Example: 'name_tag=like=example'. */
                     filter?: string;
                     /** @description (Optional) Sort string to order results. Example: 'name_tag,asc' or 'name_tag,desc'. */
@@ -8485,8 +8467,6 @@ export interface paths {
                     offset?: number;
                     /** @description (Optional) Fields to expand. Possible values: 'project_comments', 'command_comments'. Multiple values can be specified by separating them with ','. */
                     expand?: string[];
-                    /** @description (Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','. */
-                    idResearch?: number[];
                     /** @description (Optional) RSQL string to filter results. Example: 'role_user==1;name_user=like=John'. */
                     filter?: string;
                     /** @description (Optional) Sort string to order results. Example: 'name_user,asc' or 'name_user,desc'. */
@@ -9390,8 +9370,6 @@ export interface paths {
                     offset?: number;
                     /** @description (Optional) Fields to expand. Possible values: 'stores'. Multiple values can be specified by separating them with ','. */
                     expand?: string[];
-                    /** @description (Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','. */
-                    idResearch?: number[];
                     /** @description (Optional) RSQL string to filter results. Example: 'name_zone=like=example'. */
                     filter?: string;
                     /** @description (Optional) Sort string to order results. Example: 'name_zone,asc' or 'name_zone,desc'. */

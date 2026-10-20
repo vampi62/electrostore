@@ -27,15 +27,9 @@ public class EquipementService : IEquipementService
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedEquipementDto>> GetEquipements(int limit = 100, int offset = 0,
-    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         var query = _context.Equipements.AsQueryable();
-        if (idResearch is not null && idResearch.Count > 0)
-        {
-            query = query.Where(e => idResearch.Contains(e.id_equipement));
-            rsql = null;
-            sort = null;
-        }
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_equipement", order = "asc" })
             .ToProjectedResponseAsync(
