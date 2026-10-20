@@ -255,7 +255,7 @@ namespace ElectrostoreAPI.Tests.Services
         }
 
         [Fact]
-        public async Task GetEquipements_ShouldRestrictToIds_WhenIdResearchProvided()
+        public async Task GetEquipements_ShouldRestrictToIds_WhenAnyFilterProvided()
         {
             using var context = new ApplicationDbContext(_dbContextOptions);
             var a = BuildEquipement("a");
@@ -264,7 +264,7 @@ namespace ElectrostoreAPI.Tests.Services
             await context.SaveChangesAsync();
             var service = CreateService(context);
 
-            var result = await service.GetEquipements(idResearch: [b.id_equipement]);
+            var result = await service.GetEquipements(rsql: [new FilterDto { field = "id_equipement", search_type = "any", value = b.id_equipement.ToString() }]);
 
             var single = Assert.Single(result.data);
             Assert.Equal(b.id_equipement, single.id_equipement);

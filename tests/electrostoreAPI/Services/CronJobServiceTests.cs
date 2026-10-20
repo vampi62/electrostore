@@ -166,10 +166,10 @@ namespace ElectrostoreAPI.Tests.Services
             await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DeleteCronJob(999));
         }
 
-        // --- GetCronJobs: idResearch ---
+        // --- GetCronJobs: any filter ---
 
         [Fact]
-        public async Task GetCronJobs_ShouldRestrictToIds_WhenIdResearchProvided()
+        public async Task GetCronJobs_ShouldRestrictToIds_WhenAnyFilterProvided()
         {
             using var context = new ApplicationDbContext(_dbContextOptions);
             var a = BuildCronJob("a");
@@ -178,7 +178,7 @@ namespace ElectrostoreAPI.Tests.Services
             await context.SaveChangesAsync();
             var service = CreateService(context);
 
-            var result = await service.GetCronJobs(idResearch: [b.id_cronjob]);
+            var result = await service.GetCronJobs(rsql: [new FilterDto { field = "id_cronjob", search_type = "any", value = b.id_cronjob.ToString() }]);
 
             var single = Assert.Single(result.data);
             Assert.Equal(b.id_cronjob, single.id_cronjob);

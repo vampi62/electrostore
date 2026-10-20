@@ -111,7 +111,7 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task ExecuteToolAsync_SearchItems_ShouldFilterByFriendlyNameAndHonourLimit()
         {
             _itemService
-                .Setup(s => s.GetItems(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>(), It.IsAny<List<int>?>()))
+                .Setup(s => s.GetItems(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>()))
                 .ReturnsAsync(Page(BuildItem(1, "Resistor 10k")));
             var service = CreateService();
 
@@ -122,7 +122,7 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal("Resistor 10k", json[0].GetProperty("friendly_name_item").GetString());
             _itemService.Verify(s => s.GetItems(5, It.IsAny<int>(),
                 It.Is<List<FilterDto>?>(f => f != null && f.Count == 1 && f[0].field == "friendly_name_item" && f[0].search_type == "like" && f[0].value == "resistor"),
-                It.IsAny<SorterDto?>(), It.IsAny<List<string>?>(), It.IsAny<List<int>?>()), Times.Once);
+                It.IsAny<SorterDto?>(), It.IsAny<List<string>?>()), Times.Once);
         }
 
         [Theory]
@@ -132,14 +132,14 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task ExecuteToolAsync_SearchItems_ShouldUseDefaultLimitAndNoFilter_WhenQueryIsBlank(string arguments)
         {
             _itemService
-                .Setup(s => s.GetItems(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>(), It.IsAny<List<int>?>()))
+                .Setup(s => s.GetItems(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>()))
                 .ReturnsAsync(Page<ReadExtendedItemDto>());
             var service = CreateService();
 
             var result = await service.ExecuteToolAsync("search_items", arguments);
 
             Assert.Equal("[]", result.ResultJson);
-            _itemService.Verify(s => s.GetItems(20, It.IsAny<int>(), null, It.IsAny<SorterDto?>(), It.IsAny<List<string>?>(), It.IsAny<List<int>?>()), Times.Once);
+            _itemService.Verify(s => s.GetItems(20, It.IsAny<int>(), null, It.IsAny<SorterDto?>(), It.IsAny<List<string>?>()), Times.Once);
         }
 
         [Fact]
@@ -170,14 +170,14 @@ namespace ElectrostoreAPI.Tests.Services
 
             Assert.Equal(2, Parse(result.ResultJson).GetArrayLength());
             _boxService.Verify(s => s.GetBoxsByStoreId(4, 50, It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>()), Times.Once);
-            _storeService.Verify(s => s.GetStores(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>(), It.IsAny<List<int>?>()), Times.Never);
+            _storeService.Verify(s => s.GetStores(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>()), Times.Never);
         }
 
         [Fact]
         public async Task ExecuteToolAsync_ListBoxes_ShouldAggregateBoxesAcrossStores_WhenNoStoreProvided()
         {
             _storeService
-                .Setup(s => s.GetStores(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>(), It.IsAny<List<int>?>()))
+                .Setup(s => s.GetStores(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>()))
                 .ReturnsAsync(Page(BuildStore(1), BuildStore(2)));
             _boxService
                 .Setup(s => s.GetBoxsByStoreId(1, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>()))
@@ -191,7 +191,7 @@ namespace ElectrostoreAPI.Tests.Services
 
             var ids = Parse(result.ResultJson).EnumerateArray().Select(b => b.GetProperty("id_box").GetInt32()).ToList();
             Assert.Equal([10, 20, 21], ids);
-            _storeService.Verify(s => s.GetStores(20, It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>(), It.IsAny<List<int>?>()), Times.Once);
+            _storeService.Verify(s => s.GetStores(20, It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>()), Times.Once);
             _boxService.Verify(s => s.GetBoxsByStoreId(It.IsAny<int>(), 10, It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>()), Times.Exactly(2));
         }
 
@@ -199,21 +199,21 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task ExecuteToolAsync_ListStores_ShouldReturnStores()
         {
             _storeService
-                .Setup(s => s.GetStores(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>(), It.IsAny<List<int>?>()))
+                .Setup(s => s.GetStores(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>()))
                 .ReturnsAsync(Page(BuildStore(1)));
             var service = CreateService();
 
             var result = await service.ExecuteToolAsync("list_stores", "");
 
             Assert.Equal("store1", Parse(result.ResultJson)[0].GetProperty("name_store").GetString());
-            _storeService.Verify(s => s.GetStores(50, It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>(), It.IsAny<List<int>?>()), Times.Once);
+            _storeService.Verify(s => s.GetStores(50, It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>()), Times.Once);
         }
 
         [Fact]
         public async Task ExecuteToolAsync_ListTags_ShouldFilterByName_WhenQueryProvided()
         {
             _tagService
-                .Setup(s => s.GetTags(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>(), It.IsAny<List<int>?>()))
+                .Setup(s => s.GetTags(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>()))
                 .ReturnsAsync(Page(new ReadExtendedTagDto { id_tag = 1, name_tag = "smd", weight_tag = 1 }));
             var service = CreateService();
 
@@ -222,20 +222,20 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal("smd", Parse(result.ResultJson)[0].GetProperty("name_tag").GetString());
             _tagService.Verify(s => s.GetTags(50, It.IsAny<int>(),
                 It.Is<List<FilterDto>?>(f => f != null && f.Count == 1 && f[0].field == "name_tag" && f[0].value == "smd"),
-                It.IsAny<SorterDto?>(), It.IsAny<List<string>?>(), It.IsAny<List<int>?>()), Times.Once);
+                It.IsAny<SorterDto?>(), It.IsAny<List<string>?>()), Times.Once);
         }
 
         [Fact]
         public async Task ExecuteToolAsync_ListTags_ShouldNotFilter_WhenNoQuery()
         {
             _tagService
-                .Setup(s => s.GetTags(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>(), It.IsAny<List<int>?>()))
+                .Setup(s => s.GetTags(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>()))
                 .ReturnsAsync(Page<ReadExtendedTagDto>());
             var service = CreateService();
 
             await service.ExecuteToolAsync("list_tags", "{}");
 
-            _tagService.Verify(s => s.GetTags(50, It.IsAny<int>(), null, It.IsAny<SorterDto?>(), It.IsAny<List<string>?>(), It.IsAny<List<int>?>()), Times.Once);
+            _tagService.Verify(s => s.GetTags(50, It.IsAny<int>(), null, It.IsAny<SorterDto?>(), It.IsAny<List<string>?>()), Times.Once);
         }
 
         // --- ExecuteToolAsync: proposal tools ---
@@ -357,7 +357,7 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task ExecuteToolAsync_ShouldPropagateCancellation()
         {
             _storeService
-                .Setup(s => s.GetStores(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>(), It.IsAny<List<int>?>()))
+                .Setup(s => s.GetStores(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<List<FilterDto>?>(), It.IsAny<SorterDto?>(), It.IsAny<List<string>?>()))
                 .ThrowsAsync(new OperationCanceledException());
             var service = CreateService();
 

@@ -174,7 +174,6 @@ export const useCommandsStore = defineStore("commands",{
 		history: {} as Record<string, Record<string, ReadCommandHistoryDto>>,
 	}),
 	actions: {
-		getCommandByList: commandResource.getByList,
 		getCommandByInterval: commandResource.getByInterval,
 		getCommandById: commandResource.getById,
 		createCommand: commandResource.create,

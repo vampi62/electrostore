@@ -23,15 +23,9 @@ public class CarrierService : ICarrierService
 
     // limit the number of carrier to 100 and add offset and search parameters
     public async Task<PaginatedResponseDto<ReadCarrierDto>> GetCarriers(int limit = 100, int offset = 0,
-    List<FilterDto>? rsql = null, SorterDto? sort = null, List<int>? idResearch = null)
+    List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
         var query = _context.Carriers.AsQueryable();
-        if (idResearch is not null && idResearch.Count > 0)
-        {
-            query = query.Where(c => idResearch.Contains(c.id_carrier));
-            rsql = null;
-            sort = null;
-        }
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_carrier", order = "asc" })
             .ToResponseAsync(carrier => _mapper.Map<IEnumerable<ReadCarrierDto>>(carrier));

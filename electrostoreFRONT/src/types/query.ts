@@ -6,5 +6,4 @@ export interface BuildQueryOptions {
 	expand?: string[];
 	filter?: RSQLFilter[];
 	sort?: RSQLSort;
-	idResearch?: (string | number)[];
 }

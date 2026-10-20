@@ -18,15 +18,9 @@ public class TagService : ITagService
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedTagDto>> GetTags(int limit = 100, int offset = 0,
-    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         var query = _context.Tags.AsQueryable();
-        if (idResearch is not null && idResearch.Count > 0)
-        {
-            query = query.Where(t => idResearch.Contains(t.id_tag));
-            rsql = null;
-            sort = null;
-        }
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_tag", order = "asc" })
             .ToProjectedResponseAsync(

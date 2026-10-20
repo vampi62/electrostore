@@ -215,7 +215,6 @@ export const useEquipementsStore = defineStore("equipements", {
 		thumbnailsURL: {} as Record<string, string>,
 	}),
 	actions: {
-		getEquipementByList: equipementResource.getByList,
 		getEquipementByInterval: equipementResource.getByInterval,
 		getEquipementById: equipementResource.getById,
 		createEquipement: equipementResource.create,

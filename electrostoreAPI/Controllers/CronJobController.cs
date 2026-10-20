@@ -23,13 +23,12 @@ namespace ElectrostoreAPI.Controllers
         public async Task<ActionResult<PaginatedResponseDto<ReadCronJobDto>>> GetCronJobs(
             [FromQuery] int limit = 100,
             [FromQuery] int offset = 0,
-            [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] List<int>? idResearch = null,
             [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'name_cronjob=like=example'.")] string? filter = null,
             [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'name_cronjob,asc' or 'name_cronjob,desc'.")] string? sort = null)
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
-            var cronJobs = await _cronJobService.GetCronJobs(limit, offset, rsqlDto, sortDto, idResearch);
+            var cronJobs = await _cronJobService.GetCronJobs(limit, offset, rsqlDto, sortDto);
             return Ok(cronJobs);
         }
 

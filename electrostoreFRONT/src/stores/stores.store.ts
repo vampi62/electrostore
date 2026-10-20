@@ -219,7 +219,6 @@ export const useStoresStore = defineStore("stores",{
 		boxTagReady: {} as Record<string, Record<string, Ready<{ create: CreateBoxTagByBoxDto }>>>,
 	}),
 	actions: {
-		getStoreByList: storeResource.getByList,
 		getStoreByInterval: storeResource.getByInterval,
 		getStoreById: storeResource.getById,
 		createStore: storeResource.create,
