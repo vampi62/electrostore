@@ -12,8 +12,6 @@ using ElectrostoreAPI;
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.FileService;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
 
 using ElectrostoreAPI.Tests.Utils;
 using System.Reflection;
@@ -542,9 +540,10 @@ namespace ElectrostoreAPI.Tests.Services
             Directory.CreateDirectory(thumbnailsDirOut);
 
             // Create a simple image in memory and save it to create a real file
-            var image = new SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(200, 200);
+            using var image = new SkiaSharp.SKBitmap(200, 200);
+            using var imageData = image.Encode(SkiaSharp.SKEncodedImageFormat.Jpeg, 85);
             var imageMs = new MemoryStream();
-            await image.SaveAsJpegAsync(imageMs);
+            imageData.SaveTo(imageMs);
             imageMs.Position = 0;
 
             var fileName = "test-image.jpg";
