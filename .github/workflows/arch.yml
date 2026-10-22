@@ -79,7 +79,6 @@ jobs:
   tests:
     needs:
       - init-work
-      - quality
     uses: ./.github/workflows/tests.yml
     permissions:
       packages: write
@@ -91,7 +90,6 @@ jobs:
   build:
     needs:
       - init-work
-      - quality
       - tests
     uses: ./.github/workflows/build.yml
     permissions:
