@@ -4,11 +4,10 @@ using ElectrostoreCRON.Kafka.Messages;
 using ElectrostoreCRON.Services.CronJobExecutionRegistry;
 using ElectrostoreCRON.Services.CronSchedulerService;
 using Quartz;
-using Quartz.Impl.Matchers;
 
 namespace ElectrostoreCRON.Kafka.Consumers;
 
-public class KafkaCronJobEventsConsumer : BackgroundService
+public partial class KafkaCronJobEventsConsumer : BackgroundService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

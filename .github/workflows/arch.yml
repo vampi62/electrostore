@@ -65,9 +65,21 @@ jobs:
           echo "VERSION: ${{ env.VERSION }}"
           echo "RELEASE: ${{ env.RELEASE }}"
 
+  quality:
+    needs:
+      - init-work
+    uses: ./.github/workflows/quality.yml
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      branch: ${{needs.init-work.outputs.BRANCH}}
+    secrets: inherit
+
   tests:
     needs:
       - init-work
+      - quality
     uses: ./.github/workflows/tests.yml
     permissions:
       packages: write
@@ -79,6 +91,7 @@ jobs:
   build:
     needs:
       - init-work
+      - quality
       - tests
     uses: ./.github/workflows/build.yml
     permissions:
@@ -117,6 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - init-work
+      - quality
       - tests
       - build
       - release

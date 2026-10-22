@@ -1,0 +1,222 @@
+name: quality
+
+on:
+  workflow_call:
+    inputs:
+      branch:
+        description: 'The branch that triggered this workflow.'
+        required: true
+        type: string
+      api:
+        description: 'Run the checks of the API service.'
+        required: false
+        type: boolean
+        default: true
+      cron:
+        description: 'Run the checks of the CRON service.'
+        required: false
+        type: boolean
+        default: true
+      front:
+        description: 'Run the checks of the FRONT service.'
+        required: false
+        type: boolean
+        default: true
+      notif:
+        description: 'Run the checks of the NOTIF service.'
+        required: false
+        type: boolean
+        default: true
+      worker:
+        description: 'Run the checks of the WORKER service.'
+        required: false
+        type: boolean
+        default: true
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'The branch that triggered this workflow.'
+        required: true
+        type: string
+      api:
+        description: 'Run the checks of the API service.'
+        required: false
+        type: boolean
+        default: true
+      cron:
+        description: 'Run the checks of the CRON service.'
+        required: false
+        type: boolean
+        default: true
+      front:
+        description: 'Run the checks of the FRONT service.'
+        required: false
+        type: boolean
+        default: true
+      notif:
+        description: 'Run the checks of the NOTIF service.'
+        required: false
+        type: boolean
+        default: true
+      worker:
+        description: 'Run the checks of the WORKER service.'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    name: plan
+    runs-on: ubuntu-latest
+    outputs:
+      front: ${{ steps.matrices.outputs.front }}
+      lint_backend: ${{ steps.matrices.outputs.lint_backend }}
+      audit: ${{ steps.matrices.outputs.audit }}
+    steps:
+    - name: Build matrices from selected services
+      id: matrices
+      shell: bash
+      env:
+        API: ${{ inputs.api }}
+        CRON: ${{ inputs.cron }}
+        FRONT: ${{ inputs.front }}
+        NOTIF: ${{ inputs.notif }}
+        WORKER: ${{ inputs.worker }}
+      run: |
+        audit=$(jq -nc \
+          --argjson api "$API" --argjson notif "$NOTIF" --argjson cron "$CRON" \
+          --argjson worker "$WORKER" --argjson front "$FRONT" '
+          [
+            {name: "API",    type: "dotnet", source_dir: "electrostoreAPI",    enabled: $api},
+            {name: "NOTIF",  type: "dotnet", source_dir: "electrostoreNOTIF",  enabled: $notif},
+            {name: "CRON",   type: "dotnet", source_dir: "electrostoreCRON",   enabled: $cron},
+            {name: "WORKER", type: "dotnet", source_dir: "electrostoreWORKER", enabled: $worker},
+            {name: "FRONT",  type: "npm",    source_dir: "electrostoreFRONT",  enabled: $front}
+          ] | map(select(.enabled) | del(.enabled))')
+        {
+          echo "front=$FRONT"
+          echo "audit=$audit"
+          echo "lint_backend=$(jq -c '[.[] | select(.type == "dotnet") | {service_name: .name, source_dir}]' <<< "$audit")"
+        } >> "$GITHUB_OUTPUT"
+
+  lint-frontend:
+    name: lint - FRONT
+    needs: plan
+    if: needs.plan.outputs.front == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./electrostoreFRONT
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+      with:
+        ref: ${{ inputs.branch }}
+    - name: Set up Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: '24'
+        cache: npm
+        cache-dependency-path: electrostoreFRONT/package-lock.json
+    - name: Install dependencies
+      run: npm ci
+    - name: ESLint
+      run: npm run lint:check
+    - name: Typecheck
+      run: npm run typecheck
+
+  lint-backend:
+    name: lint - ${{ matrix.service_name }}
+    needs: plan
+    if: needs.plan.outputs.lint_backend != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.lint_backend) }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./${{ matrix.source_dir }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+      with:
+        ref: ${{ inputs.branch }}
+    - name: Set up C#
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: '10.0.x'
+    - name: Install dependencies
+      run: dotnet restore
+    # Not blocking yet: there is no .editorconfig and the existing code base has
+    # whitespace violations. Remove continue-on-error once it has been reformatted
+    # with `dotnet format`.
+    - name: Check formatting
+      continue-on-error: true
+      run: dotnet format --verify-no-changes --no-restore
+
+  audit-dependencies:
+    name: audit - ${{ matrix.name }}
+    needs: plan
+    if: needs.plan.outputs.audit != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.audit) }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./${{ matrix.source_dir }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+      with:
+        ref: ${{ inputs.branch }}
+    - name: Set up C#
+      if: matrix.type == 'dotnet'
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: '10.0.x'
+    - name: Audit NuGet packages
+      if: matrix.type == 'dotnet'
+      run: |
+        dotnet restore
+        # `dotnet list package` always exits 0, so fail on its report instead.
+        dotnet list package --vulnerable --include-transitive 2>&1 | tee audit.txt
+        if grep -q "has the following vulnerable packages" audit.txt; then
+          echo "::error::Vulnerable NuGet packages found in ${{ matrix.name }}"
+          exit 1
+        fi
+    - name: Set up Node.js
+      if: matrix.type == 'npm'
+      uses: actions/setup-node@v6
+      with:
+        node-version: '24'
+    - name: Audit npm packages (runtime dependencies)
+      if: matrix.type == 'npm'
+      run: npm audit --omit=dev --audit-level=high
+
+  scan-secrets:
+    name: scan - secrets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+      with:
+        ref: ${{ inputs.branch }}
+        fetch-depth: 0
+    # Free for personal accounts. If the repo moves to an organization, a
+    # GITLEAKS_LICENSE secret is required.
+    - name: Gitleaks
+      uses: gitleaks/gitleaks-action@v3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

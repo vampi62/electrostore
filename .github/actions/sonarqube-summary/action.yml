@@ -1,5 +1,5 @@
 name: 'SonarQube Summary'
-description: 'Poll a SonarQube background task and publish issues/coverage/duplication metrics to the GitHub Actions job summary'
+description: 'Publish issues/coverage/duplication metrics to the GitHub Actions job summary'
 
 inputs:
   project-key:
