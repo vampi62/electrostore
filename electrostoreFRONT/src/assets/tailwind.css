@@ -1,6 +1,8 @@
 /* src/assets/tailwind.css */
 @import "tailwindcss";
+/* stylelint-disable at-rule-no-unknown -- Tailwind CSS v4 directive */
 @config "../../tailwind.config.mjs";
+/* stylelint-enable at-rule-no-unknown */
 
 /*
   Tailwind v4 : the default border color has changed from gray-200 to currentColor. This restores the v3 behavior.
@@ -25,6 +27,7 @@
   Tailwind v4 removed bg-opacity-*. Restores the v3 behavior (bg-<color> bg-opacity-<n>)
   for the colors used in the app. Add a color to the list below if you need another one.
 */
+/* stylelint-disable at-rule-no-unknown */
 @utility bg-opacity-* {
 	--tw-bg-opacity: calc(--value(integer) * 1%);
 }

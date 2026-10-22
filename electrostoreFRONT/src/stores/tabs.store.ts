@@ -103,7 +103,7 @@ export function resolveTab(fullPath: string) {
 }
 
 function newTabId() {
-	return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+	return Array.from(globalThis.crypto.getRandomValues(new Uint8Array(16)), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 interface TabData {
