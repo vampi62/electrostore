@@ -1,8 +1,18 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-# Required env: SONAR_HOST_URL, SONAR_TOKEN, PROJECT_KEY. Optional: SUMMARY_TITLE.
+# Required env: SONAR_HOST_URL, SONAR_TOKEN, PROJECT_KEY.
+# Optional: SUMMARY_TITLE.
+# The scanner runs with sonar.qualitygate.wait=true, so the analysis is already
+# processed (and the gate enforced by the scan step itself) when this runs: this
+# script only reports, and never fails the job.
 TITLE="${SUMMARY_TITLE:-$PROJECT_KEY}"
+
+# SonarQube token auth is HTTP Basic with the token as user and an empty password.
+sonar_auth=$(printf '%s:' "$SONAR_TOKEN" | base64 | tr -d '\n')
+sonar_get() {
+  curl -sf -H "Authorization: Basic $sonar_auth" "$SONAR_HOST_URL$1"
+}
 
 # report-task.txt is written by the scanner (location varies between the CLI
 # and .NET scanners), so just look for it anywhere in the workspace.
@@ -19,28 +29,19 @@ if [ -z "$CE_TASK_ID" ]; then
   exit 0
 fi
 
-STATUS="PENDING"
-ANALYSIS_ID=""
-for _ in $(seq 1 30); do
-  RESPONSE=$(curl -sf -u "$SONAR_TOKEN:" "$SONAR_HOST_URL/api/ce/task?id=$CE_TASK_ID") || {
-    echo "::warning::[$TITLE] Failed to call the SonarQube API (ce/task)"
-    exit 0
-  }
-  STATUS=$(echo "$RESPONSE" | jq -r '.task.status')
-  if [ "$STATUS" = "SUCCESS" ] || [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "CANCELED" ]; then
-    ANALYSIS_ID=$(echo "$RESPONSE" | jq -r '.task.analysisId // empty')
-    break
-  fi
-  sleep 5
-done
-
+RESPONSE=$(sonar_get "/api/ce/task?id=$CE_TASK_ID") || {
+  echo "::warning::[$TITLE] Failed to call the SonarQube API (ce/task)"
+  exit 0
+}
+STATUS=$(echo "$RESPONSE" | jq -r '.task.status')
 if [ "$STATUS" != "SUCCESS" ]; then
-  echo "::warning::[$TITLE] SonarQube analysis did not succeed (status=$STATUS)"
+  echo "::warning::[$TITLE] SonarQube analysis not available (status=$STATUS), skipping summary"
   exit 0
 fi
+ANALYSIS_ID=$(echo "$RESPONSE" | jq -r '.task.analysisId // empty')
 
 METRIC_KEYS="bugs,vulnerabilities,code_smells,security_hotspots,coverage,duplicated_lines_density,ncloc"
-MEASURES=$(curl -sf -u "$SONAR_TOKEN:" "$SONAR_HOST_URL/api/measures/component?component=$(printf '%s' "$PROJECT_KEY" | jq -sRr @uri)&metricKeys=$METRIC_KEYS") || {
+MEASURES=$(sonar_get "/api/measures/component?component=$(printf '%s' "$PROJECT_KEY" | jq -sRr @uri)&metricKeys=$METRIC_KEYS") || {
   echo "::warning::[$TITLE] Failed to call the SonarQube API (measures/component)"
   exit 0
 }
@@ -65,7 +66,7 @@ NCLOC=$(metric ncloc)
 QG_ICON="⚪"
 QG_STATUS="N/A"
 if [ -n "$ANALYSIS_ID" ]; then
-  QG=$(curl -sf -u "$SONAR_TOKEN:" "$SONAR_HOST_URL/api/qualitygates/project_status?analysisId=$ANALYSIS_ID") && {
+  QG=$(sonar_get "/api/qualitygates/project_status?analysisId=$ANALYSIS_ID") && {
     QG_STATUS=$(echo "$QG" | jq -r '.projectStatus.status // "N/A"')
     if [ "$QG_STATUS" = "OK" ]; then
       QG_ICON="✅"

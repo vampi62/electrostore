@@ -55,7 +55,6 @@ jobs:
         echo "pr_id=$PR_ID" >> $GITHUB_OUTPUT
     - name: Run SonarQube scan
       id: sonarqube
-      continue-on-error: true
       uses: SonarSource/sonarqube-scan-action@v8
       env:
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -67,12 +66,10 @@ jobs:
           -Dsonar.sources=electrostoreFRONT
           -Dsonar.javascript.lcov.reportPaths=tests/electrostoreFRONT/coverage/lcov.info
           -Dsonar.cfamily.cache.enabled=false
-    - name: SonarQube Status
-      if: steps.sonarqube.outcome == 'failure'
-      run: |
-        echo "::warning::SonarQube scan failed - server may be unreachable"
+          -Dsonar.qualitygate.wait=true
+          -Dsonar.qualitygate.timeout=600
     - name: SonarQube Summary
-      if: steps.sonarqube.outcome == 'success'
+      if: ${{ !cancelled() && steps.sonarqube.outcome != 'skipped' }}
       uses: ./.github/actions/sonarqube-summary
       with:
         project-key: "PR-${{ steps.get-pr-id.outputs.pr_id }}-electrostore-front"

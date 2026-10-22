@@ -43,6 +43,16 @@ jobs:
             testNOTIF: 'tests/electrostoreNOTIF/**'
             testWORKER: 'tests/electrostoreWORKER/**'
   
+  quality:
+    name: quality
+    uses: ./.github/workflows/quality.yml
+    with:
+      branch: ${{ github.head_ref }}
+    permissions:
+      contents: read
+      pull-requests: read
+    secrets: inherit
+
   test-api:
     name: tests - API
     needs: detect-changes
