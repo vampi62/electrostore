@@ -26,17 +26,14 @@ router.beforeEach(async(to) => {
 	const auth = useAuthStore();
 
 	if (authRequired && !auth.user) {
-		(auth as any).returnUrl = to.fullPath;
+		Reflect.set(auth, "returnUrl", to.fullPath);
 		return "/login";
 	}
 	if (auth.user) {
 		switch (to.path) {
 		case "/login":
-			return "/";
 		case "/register":
-			return "/";
 		case "/forgot-password":
-			return "/";
 		case "/reset-password":
 			return "/";
 		}

@@ -19,7 +19,7 @@ export const useCarriersStore = defineStore("carriers", {
 		carriersLoading: false,
 		carriersTotalCount: 0,
 		carriers: {} as Record<string, ReadCarrierDto>,
-		carrierEdition: {} as Record<string, any>,
+		carrierEdition: {} as Record<string, Partial<ReadCarrierDto> & { loading?: boolean }>,
 	}),
 	actions: {
 		getCarrierByInterval: carrierResource.getByInterval,
