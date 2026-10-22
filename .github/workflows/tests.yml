@@ -7,33 +7,117 @@ on:
         description: 'The branch that triggered this workflow.'
         required: true
         type: string
+      api:
+        description: 'Run the tests of the API service.'
+        required: false
+        type: boolean
+        default: true
+      cron:
+        description: 'Run the tests of the CRON service.'
+        required: false
+        type: boolean
+        default: true
+      front:
+        description: 'Run the tests of the FRONT service.'
+        required: false
+        type: boolean
+        default: true
+      notif:
+        description: 'Run the tests of the NOTIF service.'
+        required: false
+        type: boolean
+        default: true
+      worker:
+        description: 'Run the tests of the WORKER service.'
+        required: false
+        type: boolean
+        default: true
+      sonar_prefix:
+        description: 'Prefix of the SonarQube project keys (defaults to the branch).'
+        required: false
+        type: string
+        default: ''
   workflow_dispatch:
     inputs:
       branch:
         description: 'The branch that triggered this workflow.'
         required: true
         type: string
+      api:
+        description: 'Run the tests of the API service.'
+        required: false
+        type: boolean
+        default: true
+      cron:
+        description: 'Run the tests of the CRON service.'
+        required: false
+        type: boolean
+        default: true
+      front:
+        description: 'Run the tests of the FRONT service.'
+        required: false
+        type: boolean
+        default: true
+      notif:
+        description: 'Run the tests of the NOTIF service.'
+        required: false
+        type: boolean
+        default: true
+      worker:
+        description: 'Run the tests of the WORKER service.'
+        required: false
+        type: boolean
+        default: true
+      sonar_prefix:
+        description: 'Prefix of the SonarQube project keys (defaults to the branch).'
+        required: false
+        type: string
+        default: ''
 
 jobs:
+  plan:
+    name: plan
+    runs-on: ubuntu-latest
+    outputs:
+      front: ${{ steps.plan.outputs.front }}
+      backend: ${{ steps.plan.outputs.backend }}
+      sonar_prefix: ${{ steps.plan.outputs.sonar_prefix }}
+    steps:
+    - name: Build matrix from selected services
+      id: plan
+      shell: bash
+      env:
+        API: ${{ inputs.api }}
+        CRON: ${{ inputs.cron }}
+        FRONT: ${{ inputs.front }}
+        NOTIF: ${{ inputs.notif }}
+        WORKER: ${{ inputs.worker }}
+        SONAR_PREFIX: ${{ inputs.sonar_prefix || inputs.branch }}
+      run: |
+        backend=$(jq -nc \
+          --argjson api "$API" --argjson notif "$NOTIF" --argjson cron "$CRON" \
+          --argjson worker "$WORKER" '
+          [
+            {service_name: "API",    source_dir: "electrostoreAPI",    sonar_key: "electrostore-api",    coverage_exclusions: "**/Controllers/**,**/Program.cs", enabled: $api},
+            {service_name: "NOTIF",  source_dir: "electrostoreNOTIF",  sonar_key: "electrostore-notif",  coverage_exclusions: "**/Program.cs",                   enabled: $notif},
+            {service_name: "CRON",   source_dir: "electrostoreCRON",   sonar_key: "electrostore-cron",   coverage_exclusions: "**/Program.cs",                   enabled: $cron},
+            {service_name: "WORKER", source_dir: "electrostoreWORKER", sonar_key: "electrostore-worker", coverage_exclusions: "**/Program.cs",                   enabled: $worker}
+          ] | map(select(.enabled) | del(.enabled))')
+        {
+          echo "front=$FRONT"
+          echo "backend=$backend"
+          echo "sonar_prefix=$SONAR_PREFIX"
+        } >> "$GITHUB_OUTPUT"
+
   test-backend:
     name: tests - ${{ matrix.service_name }}
+    needs: plan
+    if: needs.plan.outputs.backend != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - service_name: API
-            source_dir: electrostoreAPI
-            sonar_key: electrostore-api
-          - service_name: NOTIF
-            source_dir: electrostoreNOTIF
-            sonar_key: electrostore-notif
-          - service_name: CRON
-            source_dir: electrostoreCRON
-            sonar_key: electrostore-cron
-          - service_name: WORKER
-            source_dir: electrostoreWORKER
-            sonar_key: electrostore-worker
+        include: ${{ fromJSON(needs.plan.outputs.backend) }}
     defaults:
       run:
         shell: bash
@@ -62,7 +146,7 @@ jobs:
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        PROJECT_KEY: "${{ inputs.branch }}-${{ matrix.sonar_key }}"
+        PROJECT_KEY: "${{ needs.plan.outputs.sonar_prefix }}-${{ matrix.sonar_key }}"
       run: |
         dotnet tool install --global dotnet-sonarscanner
         dotnet sonarscanner begin /k:"$PROJECT_KEY" \
@@ -70,7 +154,7 @@ jobs:
           /d:sonar.token="$SONAR_TOKEN" \
           /d:sonar.exclusions="**/Migrations/**" \
           /d:sonar.cpd.exclusions="**/DTO/**,**/Models/**" \
-          /d:sonar.coverage.exclusions="**/Controllers/**,**/Program.cs" \
+          /d:sonar.coverage.exclusions="${{ matrix.coverage_exclusions }}" \
           /d:sonar.qualitygate.wait=true \
           /d:sonar.qualitygate.timeout=600 \
           /d:sonar.cs.vstest.reportsPaths=../${{ matrix.source_dir }}/TestResults/*.trx \
@@ -81,13 +165,15 @@ jobs:
       if: ${{ !cancelled() && steps.sonarqube.outcome != 'skipped' }}
       uses: ./.github/actions/sonarqube-summary
       with:
-        project-key: "${{ inputs.branch }}-${{ matrix.sonar_key }}"
+        project-key: "${{ needs.plan.outputs.sonar_prefix }}-${{ matrix.sonar_key }}"
         sonar-host-url: ${{ secrets.SONAR_HOST_URL }}
         sonar-token: ${{ secrets.SONAR_TOKEN }}
         title: ${{ matrix.service_name }}
 
   test-frontend:
     name: tests - FRONT
+    needs: plan
+    if: needs.plan.outputs.front == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -133,8 +219,8 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       with:
         args: >
-          -Dsonar.projectKey=${{ inputs.branch }}-electrostore-front
-          -Dsonar.projectName=${{ inputs.branch }}-electrostore-front
+          -Dsonar.projectKey=${{ needs.plan.outputs.sonar_prefix }}-electrostore-front
+          -Dsonar.projectName=${{ needs.plan.outputs.sonar_prefix }}-electrostore-front
           -Dsonar.sources=electrostoreFRONT
           -Dsonar.javascript.lcov.reportPaths=tests/electrostoreFRONT/coverage/lcov.info
           -Dsonar.cfamily.cache.enabled=false
@@ -144,7 +230,7 @@ jobs:
       if: ${{ !cancelled() && steps.sonarqube.outcome != 'skipped' }}
       uses: ./.github/actions/sonarqube-summary
       with:
-        project-key: "${{ inputs.branch }}-electrostore-front"
+        project-key: "${{ needs.plan.outputs.sonar_prefix }}-electrostore-front"
         sonar-host-url: ${{ secrets.SONAR_HOST_URL }}
         sonar-token: ${{ secrets.SONAR_TOKEN }}
         title: FRONT

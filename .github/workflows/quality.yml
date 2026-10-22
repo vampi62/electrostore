@@ -7,19 +7,105 @@ on:
         description: 'The branch that triggered this workflow.'
         required: true
         type: string
+      api:
+        description: 'Run the checks of the API service.'
+        required: false
+        type: boolean
+        default: true
+      cron:
+        description: 'Run the checks of the CRON service.'
+        required: false
+        type: boolean
+        default: true
+      front:
+        description: 'Run the checks of the FRONT service.'
+        required: false
+        type: boolean
+        default: true
+      notif:
+        description: 'Run the checks of the NOTIF service.'
+        required: false
+        type: boolean
+        default: true
+      worker:
+        description: 'Run the checks of the WORKER service.'
+        required: false
+        type: boolean
+        default: true
   workflow_dispatch:
     inputs:
       branch:
         description: 'The branch that triggered this workflow.'
         required: true
         type: string
+      api:
+        description: 'Run the checks of the API service.'
+        required: false
+        type: boolean
+        default: true
+      cron:
+        description: 'Run the checks of the CRON service.'
+        required: false
+        type: boolean
+        default: true
+      front:
+        description: 'Run the checks of the FRONT service.'
+        required: false
+        type: boolean
+        default: true
+      notif:
+        description: 'Run the checks of the NOTIF service.'
+        required: false
+        type: boolean
+        default: true
+      worker:
+        description: 'Run the checks of the WORKER service.'
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: read
 
 jobs:
+  plan:
+    name: plan
+    runs-on: ubuntu-latest
+    outputs:
+      front: ${{ steps.matrices.outputs.front }}
+      lint_backend: ${{ steps.matrices.outputs.lint_backend }}
+      audit: ${{ steps.matrices.outputs.audit }}
+    steps:
+    - name: Build matrices from selected services
+      id: matrices
+      shell: bash
+      env:
+        API: ${{ inputs.api }}
+        CRON: ${{ inputs.cron }}
+        FRONT: ${{ inputs.front }}
+        NOTIF: ${{ inputs.notif }}
+        WORKER: ${{ inputs.worker }}
+      run: |
+        audit=$(jq -nc \
+          --argjson api "$API" --argjson notif "$NOTIF" --argjson cron "$CRON" \
+          --argjson worker "$WORKER" --argjson front "$FRONT" '
+          [
+            {name: "API",    type: "dotnet", source_dir: "electrostoreAPI",    enabled: $api},
+            {name: "NOTIF",  type: "dotnet", source_dir: "electrostoreNOTIF",  enabled: $notif},
+            {name: "CRON",   type: "dotnet", source_dir: "electrostoreCRON",   enabled: $cron},
+            {name: "WORKER", type: "dotnet", source_dir: "electrostoreWORKER", enabled: $worker},
+            {name: "FRONT",  type: "npm",    source_dir: "electrostoreFRONT",  enabled: $front}
+          ] | map(select(.enabled) | del(.enabled))')
+        {
+          echo "front=$FRONT"
+          echo "audit=$audit"
+          echo "lint_backend=$(jq -c '[.[] | select(.type == "dotnet") | {service_name: .name, source_dir}]' <<< "$audit")"
+        } >> "$GITHUB_OUTPUT"
+
   lint-frontend:
     name: lint - FRONT
+    needs: plan
+    if: needs.plan.outputs.front == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -45,19 +131,13 @@ jobs:
 
   lint-backend:
     name: lint - ${{ matrix.service_name }}
+    needs: plan
+    if: needs.plan.outputs.lint_backend != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - service_name: API
-            source_dir: electrostoreAPI
-          - service_name: NOTIF
-            source_dir: electrostoreNOTIF
-          - service_name: CRON
-            source_dir: electrostoreCRON
-          - service_name: WORKER
-            source_dir: electrostoreWORKER
+        include: ${{ fromJSON(needs.plan.outputs.lint_backend) }}
     defaults:
       run:
         shell: bash
@@ -82,26 +162,13 @@ jobs:
 
   audit-dependencies:
     name: audit - ${{ matrix.name }}
+    needs: plan
+    if: needs.plan.outputs.audit != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: API
-            type: dotnet
-            source_dir: electrostoreAPI
-          - name: NOTIF
-            type: dotnet
-            source_dir: electrostoreNOTIF
-          - name: CRON
-            type: dotnet
-            source_dir: electrostoreCRON
-          - name: WORKER
-            type: dotnet
-            source_dir: electrostoreWORKER
-          - name: FRONT
-            type: npm
-            source_dir: electrostoreFRONT
+        include: ${{ fromJSON(needs.plan.outputs.audit) }}
     defaults:
       run:
         shell: bash

@@ -1,4 +1,4 @@
-name: tests PR
+name: Pull Request
 
 on:
   pull_request:
@@ -45,69 +45,32 @@ jobs:
   
   quality:
     name: quality
+    needs: detect-changes
     uses: ./.github/workflows/quality.yml
     with:
       branch: ${{ github.head_ref }}
+      api: ${{ needs.detect-changes.outputs.api == 'true' }}
+      cron: ${{ needs.detect-changes.outputs.cron == 'true' }}
+      front: ${{ needs.detect-changes.outputs.front == 'true' }}
+      notif: ${{ needs.detect-changes.outputs.notif == 'true' }}
+      worker: ${{ needs.detect-changes.outputs.worker == 'true' }}
     permissions:
       contents: read
       pull-requests: read
     secrets: inherit
 
-  test-api:
-    name: tests - API
+  tests:
+    name: tests
     needs: detect-changes
-    if: needs.detect-changes.outputs.api == 'true' || needs.detect-changes.outputs.testAPI == 'true'
-    uses: ./.github/workflows/PRtestsAPI.yml
+    uses: ./.github/workflows/tests.yml
     with:
       branch: ${{ github.head_ref }}
-    permissions:
-      packages: write
-      contents: read
-    secrets: inherit
-
-  test-cron:
-    name: tests - CRON
-    needs: detect-changes
-    if: needs.detect-changes.outputs.cron == 'true' || needs.detect-changes.outputs.testCRON == 'true'
-    uses: ./.github/workflows/PRtestsCRON.yml
-    with:
-      branch: ${{ github.head_ref }}
-    permissions:
-      packages: write
-      contents: read
-    secrets: inherit
-
-  test-front:
-    name: tests - FRONT
-    needs: detect-changes
-    if: needs.detect-changes.outputs.front == 'true' || needs.detect-changes.outputs.testFRONT == 'true'
-    uses: ./.github/workflows/PRtestsFRONT.yml
-    with:
-      branch: ${{ github.head_ref }}
-    permissions:
-      packages: write
-      contents: read
-    secrets: inherit
-
-  test-notif:
-    name: tests - NOTIF
-    needs: detect-changes
-    if: needs.detect-changes.outputs.notif == 'true' || needs.detect-changes.outputs.testNOTIF == 'true'
-    uses: ./.github/workflows/PRtestsNOTIF.yml
-    with:
-      branch: ${{ github.head_ref }}
-    permissions:
-      packages: write
-      contents: read
-    secrets: inherit
-
-  test-worker:
-    name: tests - WORKER
-    needs: detect-changes
-    if: needs.detect-changes.outputs.worker == 'true' || needs.detect-changes.outputs.testWORKER == 'true'
-    uses: ./.github/workflows/PRtestsWORKER.yml
-    with:
-      branch: ${{ github.head_ref }}
+      sonar_prefix: PR-${{ github.event.pull_request.number }}
+      api: ${{ needs.detect-changes.outputs.api == 'true' || needs.detect-changes.outputs.testAPI == 'true' }}
+      cron: ${{ needs.detect-changes.outputs.cron == 'true' || needs.detect-changes.outputs.testCRON == 'true' }}
+      front: ${{ needs.detect-changes.outputs.front == 'true' || needs.detect-changes.outputs.testFRONT == 'true' }}
+      notif: ${{ needs.detect-changes.outputs.notif == 'true' || needs.detect-changes.outputs.testNOTIF == 'true' }}
+      worker: ${{ needs.detect-changes.outputs.worker == 'true' || needs.detect-changes.outputs.testWORKER == 'true' }}
     permissions:
       packages: write
       contents: read
