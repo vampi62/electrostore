@@ -1,0 +1,5 @@
+root = true
+
+[*.cs]
+# CA1873 (.NET 10 SDK) : "Avoid potentially expensive logging" - false positives on already evaluated arguments
+dotnet_diagnostic.CA1873.severity = none

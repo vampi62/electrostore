@@ -7,6 +7,7 @@
         "build": "vite build",
         "preview": "vite preview --port 5050",
         "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts --fix --ignore-path .gitignore",
+        "lint:check": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts --ignore-path .gitignore",
         "gen:api-types": "openapi-typescript ../openapi/swagger.json -o src/types/api.d.ts",
         "typecheck": "vue-tsc -p tsconfig.json",
         "typecheck:worker": "tsc -p tsconfig.worker.json"
