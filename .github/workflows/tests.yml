@@ -59,7 +59,6 @@ jobs:
           DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
     - name: Run SonarQube scan
       id: sonarqube
-      continue-on-error: true
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -71,6 +70,8 @@ jobs:
           /d:sonar.token="$SONAR_TOKEN" \
           /d:sonar.exclusions="**/Migrations/**" \
           /d:sonar.cpd.exclusions="**/DTO/**,**/Models/**" \
+          /d:sonar.coverage.exclusions="**/Controllers/**,**/Program.cs" \
+          /d:sonar.qualitygate.wait=true \
           /d:sonar.cs.vstest.reportsPaths=../${{ matrix.source_dir }}/TestResults/*.trx \
           /d:sonar.cs.opencover.reportsPaths=../${{ matrix.source_dir }}/TestResults/**/coverage.opencover.xml
         dotnet build

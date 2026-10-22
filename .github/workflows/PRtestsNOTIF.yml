@@ -42,7 +42,6 @@ jobs:
         echo "pr_id=$PR_ID" >> $GITHUB_OUTPUT
     - name: Run SonarQube scan
       id: sonarqube
-      continue-on-error: true
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -54,6 +53,8 @@ jobs:
           /d:sonar.token="$SONAR_TOKEN" \
           /d:sonar.exclusions="**/Migrations/**" \
           /d:sonar.cpd.exclusions="**/DTO/**,**/Models/**" \
+          /d:sonar.coverage.exclusions="**/Program.cs" \
+          /d:sonar.qualitygate.wait=true \
           /d:sonar.cs.vstest.reportsPaths=../electrostoreNOTIF/TestResults/*.trx \
           /d:sonar.cs.opencover.reportsPaths=../electrostoreNOTIF/TestResults/**/coverage.opencover.xml
         dotnet build
