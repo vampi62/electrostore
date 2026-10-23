@@ -199,7 +199,9 @@ export default {
 					}
 				};
 				recorder.onstop = () => {
-					stream.getTracks().forEach((track) => track.stop());
+					for (const track of stream.getTracks()) {
+						track.stop();
+					}
 					this.recording = false;
 					if (this.chunks.length > 0) {
 						// the codecs parameter is removed, the api only accepts the bare mime type

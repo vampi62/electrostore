@@ -94,53 +94,92 @@ public partial class Program
 
         builder.Services.AddHttpContextAccessor();
 
+        ConfigureControllers(builder);
+
+        builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(Program).Assembly));
+        builder.Services.AddEndpointsApiExplorer();
+        ConfigureSwagger(builder);
+
+        builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+        ConfigureHttpClients(builder);
+
+        // gRPC server
+        builder.Services.AddGrpc(options =>
+        {
+            //options.Interceptors.Add<AuthInterceptor>();
+            options.MaxReceiveMessageSize = 100 * 1024 * 1024; // 100 MB
+        });
+
+        builder.Logging.AddFilter("LuckyPennySoftware.AutoMapper.License", LogLevel.None);
+
+        AddAuthentication(builder, key);
+
+        var app = builder.Build();
+        ConfigurePipeline(app);
+
+        // Skipped when generating the OpenAPI doc via the Swashbuckle CLI (dotnet swagger tofile),
+        // which executes Main() up to app.Run() for real and would otherwise require a live database.
+        if (!builder.Configuration.GetValue<bool>("SwaggerGeneration"))
+        {
+            InitializeExternalConnections(app);
+            InitializeDatabase(app);
+        }
+
+        app.Run();
+    }
+
+    private static void ConfigureControllers(WebApplicationBuilder builder)
+    {
         builder.Services.AddControllers(options => { options.Filters.Add(new AuthorizeFilter()); })
             // Invalid model state response factory
             .ConfigureApiBehaviorOptions(options =>
             {
-                options.InvalidModelStateResponseFactory = context =>
-                {
-                    var validationErrors = context.ModelState
-                        .Where(ms => ms.Value != null && ms.Value.Errors.Count > 0)
-                        .Select(kvp => new
-                        {
-                            Field = kvp.Key,
-                            Errors = kvp.Value!.Errors.Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? e.Exception?.Message ?? "Invalid value" : e.ErrorMessage).ToArray()
-                        })
-                        .ToList();
-                    // if first error contain "JSON deserialization"
-                    // this issue comes from a bad JSON format in the request body
-                    // so we search in the error the missing field (found after ":" and separate by ";") and return a specific message with it
-                    if (validationErrors.Count > 0 && validationErrors[0].Errors.Any(e => e.Contains("JSON deserialization", StringComparison.OrdinalIgnoreCase)))
-                    {
-                        var missingsField = validationErrors[0].Errors
-                            .Where(e => e.Contains("JSON deserialization", StringComparison.OrdinalIgnoreCase))
-                            .SelectMany(e =>
-                            {
-                                var parts = e.Split([':', ';']);
-                                if (parts.Length > 1)
-                                {
-                                    return parts.Skip(1).Select(p => p.Trim());
-                                }
-                                return [];
-                            })
-                            .ToList();
-                        var errorMessage = "Malformed JSON request body.";
-                        var ex = new { error = errorMessage, details = $"Please check the format of the following field(s): {string.Join(", ", missingsField)}" };
-                        return new BadRequestObjectResult(ex);
-                    }
-                    else if (validationErrors.Count != 0)
-                    {
-                        var ex = new { error = "Validation Failed", details = validationErrors };
-                        return new BadRequestObjectResult(ex);
-                    }
-
-                    return new BadRequestResult();
-                };
+                options.InvalidModelStateResponseFactory = BuildInvalidModelStateResponse;
             });
+    }
 
-        builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(Program).Assembly));
-        builder.Services.AddEndpointsApiExplorer();
+    private static IActionResult BuildInvalidModelStateResponse(ActionContext context)
+    {
+        var validationErrors = context.ModelState
+            .Where(ms => ms.Value != null && ms.Value.Errors.Count > 0)
+            .Select(kvp => new
+            {
+                Field = kvp.Key,
+                Errors = kvp.Value!.Errors.Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? e.Exception?.Message ?? "Invalid value" : e.ErrorMessage).ToArray()
+            })
+            .ToList();
+        // if first error contain "JSON deserialization"
+        // this issue comes from a bad JSON format in the request body
+        // so we search in the error the missing field (found after ":" and separate by ";") and return a specific message with it
+        if (validationErrors.Count > 0 && validationErrors[0].Errors.Any(e => e.Contains("JSON deserialization", StringComparison.OrdinalIgnoreCase)))
+        {
+            var missingsField = validationErrors[0].Errors
+                .Where(e => e.Contains("JSON deserialization", StringComparison.OrdinalIgnoreCase))
+                .SelectMany(e =>
+                {
+                    var parts = e.Split([':', ';']);
+                    if (parts.Length > 1)
+                    {
+                        return parts.Skip(1).Select(p => p.Trim());
+                    }
+                    return [];
+                })
+                .ToList();
+            var errorMessage = "Malformed JSON request body.";
+            var ex = new { error = errorMessage, details = $"Please check the format of the following field(s): {string.Join(", ", missingsField)}" };
+            return new BadRequestObjectResult(ex);
+        }
+        else if (validationErrors.Count != 0)
+        {
+            var ex = new { error = "Validation Failed", details = validationErrors };
+            return new BadRequestObjectResult(ex);
+        }
+
+        return new BadRequestResult();
+    }
+
+    private static void ConfigureSwagger(WebApplicationBuilder builder)
+    {
         builder.Services.AddSwaggerGen(c =>
         {
             c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -169,8 +208,10 @@ public partial class Program
             c.SwaggerDoc("v1", new OpenApiInfo { Title = "ElectroStore API", Version = "v1" });
             c.OperationFilter<AddTotalCountHeaderFilter>();
         });
+    }
 
-        builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+    private static void ConfigureHttpClients(WebApplicationBuilder builder)
+    {
         builder.Services.AddHttpClient();
 
         builder.Services.AddHttpClient(LlmChatService.HttpClientName, client =>
@@ -183,19 +224,10 @@ public partial class Program
             client.BaseAddress = new Uri(EnsureTrailingSlash(
                 builder.Configuration.GetValue<string>("Stt:BaseUrl") ?? throw new InvalidOperationException("Stt:BaseUrl configuration is missing.")));
         });
+    }
 
-        // gRPC server
-        builder.Services.AddGrpc(options =>
-        {
-            //options.Interceptors.Add<AuthInterceptor>();
-            options.MaxReceiveMessageSize = 100 * 1024 * 1024; // 100 MB
-        });
-
-        builder.Logging.AddFilter("LuckyPennySoftware.AutoMapper.License", LogLevel.None);
-
-        AddAuthentication(builder, key);
-
-        var app = builder.Build();
+    private static void ConfigurePipeline(WebApplication app)
+    {
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
@@ -203,7 +235,7 @@ public partial class Program
         }
 
         // if S3 is not enabled create the required directories
-        if (!builder.Configuration.GetSection("S3:Enable").Get<bool>())
+        if (!app.Configuration.GetSection("S3:Enable").Get<bool>())
         {
             app.UseStaticFiles();
             CreateRequiredDirectories();
@@ -234,16 +266,6 @@ public partial class Program
         MapHealthEndpoint(app);
 
         app.MapControllers();
-
-        // Skipped when generating the OpenAPI doc via the Swashbuckle CLI (dotnet swagger tofile),
-        // which executes Main() up to app.Run() for real and would otherwise require a live database.
-        if (!builder.Configuration.GetValue<bool>("SwaggerGeneration"))
-        {
-            InitializeExternalConnections(app);
-            InitializeDatabase(app);
-        }
-
-        app.Run();
     }
 
     private static void LoadKafkaNativeLibrary()

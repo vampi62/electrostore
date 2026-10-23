@@ -24,6 +24,8 @@ public class EquipementCommentService : IEquipementCommentService
     public async Task<PaginatedResponseDto<ReadExtendedEquipementCommentDto>> GetEquipementsCommentsByEquipementId(int equipementId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandEquipement = expand?.Contains("equipement") == true;
+        var expandUser = expand?.Contains("user") == true;
         // check if the equipement exists
         if (!await _context.Equipements.AnyAsync(e => e.id_equipement == equipementId))
         {
@@ -32,11 +34,11 @@ public class EquipementCommentService : IEquipementCommentService
         var query = _context.EquipementsComments.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_equipement", search_type = "eq", value = equipementId.ToString() });
-        if (expand != null && expand.Contains("equipement"))
+        if (expandEquipement)
         {
             query = query.Include(ec => ec.Equipement);
         }
-        if (expand != null && expand.Contains("user"))
+        if (expandUser)
         {
             query = query.Include(ec => ec.User);
         }
@@ -48,6 +50,8 @@ public class EquipementCommentService : IEquipementCommentService
     public async Task<PaginatedResponseDto<ReadExtendedEquipementCommentDto>> GetEquipementsCommentsByUserId(int userId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandEquipement = expand?.Contains("equipement") == true;
+        var expandUser = expand?.Contains("user") == true;
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
         {
@@ -56,11 +60,11 @@ public class EquipementCommentService : IEquipementCommentService
         var query = _context.EquipementsComments.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_user", search_type = "eq", value = userId.ToString() });
-        if (expand != null && expand.Contains("equipement"))
+        if (expandEquipement)
         {
             query = query.Include(ec => ec.Equipement);
         }
-        if (expand != null && expand.Contains("user"))
+        if (expandUser)
         {
             query = query.Include(ec => ec.User);
         }
@@ -71,13 +75,15 @@ public class EquipementCommentService : IEquipementCommentService
 
     public async Task<ReadExtendedEquipementCommentDto> GetEquipementCommentById(int id, int? userId = null, int? equipementId = null, List<string>? expand = null)
     {
+        var expandEquipement = expand?.Contains("equipement") == true;
+        var expandUser = expand?.Contains("user") == true;
         var query = _context.EquipementsComments.AsQueryable();
         query = query.Where(ec => ec.id_equipement_comment == id && (equipementId == null || ec.id_equipement == equipementId) && (userId == null || ec.id_user == userId));
-        if (expand != null && expand.Contains("equipement"))
+        if (expandEquipement)
         {
             query = query.Include(ec => ec.Equipement);
         }
-        if (expand != null && expand.Contains("user"))
+        if (expandUser)
         {
             query = query.Include(ec => ec.User);
         }

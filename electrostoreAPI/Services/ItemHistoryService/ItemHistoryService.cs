@@ -24,6 +24,9 @@ public class ItemHistoryService : IItemHistoryService
     public async Task<PaginatedResponseDto<ReadExtendedItemHistoryDto>> GetItemHistoryByItemId(int itemId, int limit = 100, int offset = 0,
         List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandItem = expand?.Contains("item") == true;
+        var expandBox = expand?.Contains("box") == true;
+        var expandUser = expand?.Contains("user") == true;
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
@@ -37,9 +40,9 @@ public class ItemHistoryService : IItemHistoryService
                 h => new
                 {
                     ItemHistory = h,
-                    Item = expand != null && expand.Contains("item") ? h.Item : null,
-                    Box = expand != null && expand.Contains("box") ? h.Box : null,
-                    User = expand != null && expand.Contains("user") ? h.User : null
+                    Item = expandItem ? h.Item : null,
+                    Box = expandBox ? h.Box : null,
+                    User = expandUser ? h.User : null
                 },
                 history => history.Select(h => {
                     return _mapper.Map<ReadExtendedItemHistoryDto>(h.ItemHistory) with
@@ -53,15 +56,18 @@ public class ItemHistoryService : IItemHistoryService
 
     public async Task<ReadExtendedItemHistoryDto> GetItemHistoryById(int id, int itemId, List<string>? expand = null)
     {
+        var expandItem = expand?.Contains("item") == true;
+        var expandBox = expand?.Contains("box") == true;
+        var expandUser = expand?.Contains("user") == true;
         var query = _context.ItemsHistory.AsQueryable();
         query = query.Where(h => h.id_item_history == id && h.id_item == itemId);
         var history = await query
             .Select(h => new
             {
                 ItemHistory = h,
-                Item = expand != null && expand.Contains("item") ? h.Item : null,
-                Box = expand != null && expand.Contains("box") ? h.Box : null,
-                User = expand != null && expand.Contains("user") ? h.User : null
+                Item = expandItem ? h.Item : null,
+                Box = expandBox ? h.Box : null,
+                User = expandUser ? h.User : null
             })
             .FirstOrDefaultAsync()
             ?? throw new KeyNotFoundException($"ItemHistory with id '{id}' not found for Item with id '{itemId}'");
@@ -76,6 +82,9 @@ public class ItemHistoryService : IItemHistoryService
     public async Task<PaginatedResponseDto<ReadExtendedItemHistoryDto>> GetItemsHistory(int limit = 100, int offset = 0,
         List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandItem = expand?.Contains("item") == true;
+        var expandBox = expand?.Contains("box") == true;
+        var expandUser = expand?.Contains("user") == true;
         var query = _context.ItemsHistory.AsQueryable();
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_item_history", order = "desc" })
@@ -83,9 +92,9 @@ public class ItemHistoryService : IItemHistoryService
                 h => new
                 {
                     ItemHistory = h,
-                    Item = expand != null && expand.Contains("item") ? h.Item : null,
-                    Box = expand != null && expand.Contains("box") ? h.Box : null,
-                    User = expand != null && expand.Contains("user") ? h.User : null
+                    Item = expandItem ? h.Item : null,
+                    Box = expandBox ? h.Box : null,
+                    User = expandUser ? h.User : null
                 },
                 history => history.Select(h => {
                     return _mapper.Map<ReadExtendedItemHistoryDto>(h.ItemHistory) with

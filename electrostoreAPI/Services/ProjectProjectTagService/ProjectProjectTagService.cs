@@ -24,6 +24,8 @@ public class ProjectProjectTagService : IProjectProjectTagService
     public async Task<PaginatedResponseDto<ReadExtendedProjectProjectTagDto>> GetProjectsProjectTagsByProjectId(int projectId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandProject = expand?.Contains("project") == true;
+        var expandProjectTag = expand?.Contains("project_tag") == true;
         // check if project exists
         if (!await _context.Projects.AnyAsync(s => s.id_project == projectId))
         {
@@ -32,11 +34,11 @@ public class ProjectProjectTagService : IProjectProjectTagService
         var query = _context.ProjectsProjectTags.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_project", search_type = "eq", value = projectId.ToString() });
-        if (expand != null && expand.Contains("project"))
+        if (expandProject)
         {
             query = query.Include(st => st.Project);
         }
-        if (expand != null && expand.Contains("project_tag"))
+        if (expandProjectTag)
         {
             query = query.Include(st => st.ProjectTag);
         }
@@ -48,6 +50,8 @@ public class ProjectProjectTagService : IProjectProjectTagService
     public async Task<PaginatedResponseDto<ReadExtendedProjectProjectTagDto>> GetProjectsProjectTagsByprojectTagId(int projectTagId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandProjectTag = expand?.Contains("project_tag") == true;
+        var expandProject = expand?.Contains("project") == true;
         // check if projectTag exists
         if (!await _context.ProjectTags.AnyAsync(t => t.id_project_tag == projectTagId))
         {
@@ -56,11 +60,11 @@ public class ProjectProjectTagService : IProjectProjectTagService
         var query = _context.ProjectsProjectTags.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_project_tag", search_type = "eq", value = projectTagId.ToString() });
-        if (expand != null && expand.Contains("project_tag"))
+        if (expandProjectTag)
         {
             query = query.Include(st => st.ProjectTag);
         }
-        if (expand != null && expand.Contains("project"))
+        if (expandProject)
         {
             query = query.Include(st => st.Project);
         }
@@ -71,13 +75,15 @@ public class ProjectProjectTagService : IProjectProjectTagService
 
     public async Task<ReadExtendedProjectProjectTagDto> GetProjectProjectTagById(int projectId, int projectTagId, List<string>? expand = null)
     {
+        var expandProjectTag = expand?.Contains("project_tag") == true;
+        var expandProject = expand?.Contains("project") == true;
         var query = _context.ProjectsProjectTags.AsQueryable();
         query = query.Where(st => st.id_project == projectId && st.id_project_tag == projectTagId);
-        if (expand != null && expand.Contains("project_tag"))
+        if (expandProjectTag)
         {
             query = query.Include(st => st.ProjectTag);
         }
-        if (expand != null && expand.Contains("project"))
+        if (expandProject)
         {
             query = query.Include(st => st.Project);
         }

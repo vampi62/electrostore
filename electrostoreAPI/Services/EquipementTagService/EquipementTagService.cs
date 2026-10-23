@@ -20,6 +20,8 @@ public class EquipementTagService : IEquipementTagService
     public async Task<PaginatedResponseDto<ReadExtendedEquipementTagDto>> GetEquipementsTagsByEquipementId(int equipementId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandTag = expand?.Contains("tag") == true;
+        var expandEquipement = expand?.Contains("equipement") == true;
         // check if the equipement exists
         if (!await _context.Equipements.AnyAsync(e => e.id_equipement == equipementId))
         {
@@ -28,11 +30,11 @@ public class EquipementTagService : IEquipementTagService
         var query = _context.EquipementsTags.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_equipement", search_type = "eq", value = equipementId.ToString() });
-        if (expand != null && expand.Contains("tag"))
+        if (expandTag)
         {
             query = query.Include(et => et.Tag);
         }
-        if (expand != null && expand.Contains("equipement"))
+        if (expandEquipement)
         {
             query = query.Include(et => et.Equipement);
         }
@@ -44,6 +46,8 @@ public class EquipementTagService : IEquipementTagService
     public async Task<PaginatedResponseDto<ReadExtendedEquipementTagDto>> GetEquipementsTagsByTagId(int tagId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandTag = expand?.Contains("tag") == true;
+        var expandEquipement = expand?.Contains("equipement") == true;
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
         {
@@ -52,11 +56,11 @@ public class EquipementTagService : IEquipementTagService
         var query = _context.EquipementsTags.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_tag", search_type = "eq", value = tagId.ToString() });
-        if (expand != null && expand.Contains("tag"))
+        if (expandTag)
         {
             query = query.Include(et => et.Tag);
         }
-        if (expand != null && expand.Contains("equipement"))
+        if (expandEquipement)
         {
             query = query.Include(et => et.Equipement);
         }
@@ -67,13 +71,15 @@ public class EquipementTagService : IEquipementTagService
 
     public async Task<ReadExtendedEquipementTagDto> GetEquipementTagById(int equipementId, int tagId, List<string>? expand = null)
     {
+        var expandTag = expand?.Contains("tag") == true;
+        var expandEquipement = expand?.Contains("equipement") == true;
         var query = _context.EquipementsTags.AsQueryable();
         query = query.Where(et => et.id_equipement == equipementId && et.id_tag == tagId);
-        if (expand != null && expand.Contains("tag"))
+        if (expandTag)
         {
             query = query.Include(et => et.Tag);
         }
-        if (expand != null && expand.Contains("equipement"))
+        if (expandEquipement)
         {
             query = query.Include(et => et.Equipement);
         }

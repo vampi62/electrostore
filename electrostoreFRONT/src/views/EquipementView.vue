@@ -605,18 +605,18 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 			<template #append-row>
 				<div class="flex flex-wrap items-end gap-2 mb-4">
 					<div class="flex flex-col">
-						<label class="text-sm font-semibold">{{ $t('equipement.MaintenanceType') }}</label>
-						<select v-model="maintenanceForm.type_equipement_maintenance" class="border border-gray-300 rounded px-2 py-1">
+						<label for="maintenance-type" class="text-sm font-semibold">{{ $t('equipement.MaintenanceType') }}</label>
+						<select id="maintenance-type" v-model="maintenanceForm.type_equipement_maintenance" class="border border-gray-300 rounded px-2 py-1">
 							<option v-for="(label, value) in maintenanceTypeOptions" :key="value" :value="value">{{ label }}</option>
 						</select>
 					</div>
 					<div class="flex flex-col">
-						<label class="text-sm font-semibold">{{ $t('equipement.MaintenanceDatePlanned') }}</label>
-						<input type="datetime-local" v-model="maintenanceForm.date_planned_equipement_maintenance" class="border border-gray-300 rounded px-2 py-1" />
+						<label for="maintenance-date-planned" class="text-sm font-semibold">{{ $t('equipement.MaintenanceDatePlanned') }}</label>
+						<input id="maintenance-date-planned" type="datetime-local" v-model="maintenanceForm.date_planned_equipement_maintenance" class="border border-gray-300 rounded px-2 py-1" />
 					</div>
 					<div class="flex flex-col flex-1 min-w-[150px]">
-						<label class="text-sm font-semibold">{{ $t('equipement.MaintenanceDescription') }}</label>
-						<input type="text" v-model="maintenanceForm.description_equipement_maintenance" class="border border-gray-300 rounded px-2 py-1" />
+						<label for="maintenance-description" class="text-sm font-semibold">{{ $t('equipement.MaintenanceDescription') }}</label>
+						<input id="maintenance-description" type="text" v-model="maintenanceForm.description_equipement_maintenance" class="border border-gray-300 rounded px-2 py-1" />
 					</div>
 					<button type="button" @click="maintenanceAdd" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
 						{{ $t('equipement.MaintenanceAdd') }}

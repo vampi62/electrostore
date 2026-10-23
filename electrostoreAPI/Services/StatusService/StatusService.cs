@@ -7,6 +7,8 @@ namespace ElectrostoreAPI.Services.StatusService;
 
 public class StatusService : IStatusService
 {
+    private const string HealthStatusKey = "status";
+
     private readonly IMqttClient _mqttClient;
     private readonly IConfiguration _configuration;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -53,11 +55,11 @@ public class StatusService : IStatusService
             kafka_connected = kafkaTask.Result,
             llm_status = _configuration.GetValue<bool>("Llm:Enable") ? "healthy" : "disabled",
             stt_status = _configuration.GetValue<bool>("Stt:Enable") ? "healthy" : "disabled",
-            notif_status = notifHealth.TryGetValue("status", out var notifStatus) && notifStatus.GetString() is string ns ? ns : "unknown",
+            notif_status = notifHealth.TryGetValue(HealthStatusKey, out var notifStatus) && notifStatus.GetString() is string ns ? ns : "unknown",
             notif_smtp = notifHealth.TryGetValue("smtp", out var smtpElement) && (smtpElement.ValueKind == JsonValueKind.True || smtpElement.ValueKind == JsonValueKind.False) ? smtpElement.ValueKind == JsonValueKind.True : (bool?)false,
             notif_web_push = notifHealth.TryGetValue("webPush", out var wpElement) && (wpElement.ValueKind == JsonValueKind.True || wpElement.ValueKind == JsonValueKind.False) ? wpElement.ValueKind == JsonValueKind.True : (bool?)false,
-            cron_status = cronHealth.TryGetValue("status", out var cronStatus) && cronStatus.GetString() is string cs ? cs : "unknown",
-            worker_status = workerHealth.TryGetValue("status", out var workerStatus) && workerStatus.GetString() is string workerStr ? workerStr : "unknown",
+            cron_status = cronHealth.TryGetValue(HealthStatusKey, out var cronStatus) && cronStatus.GetString() is string cs ? cs : "unknown",
+            worker_status = workerHealth.TryGetValue(HealthStatusKey, out var workerStatus) && workerStatus.GetString() is string workerStr ? workerStr : "unknown",
             external_services = new Dictionary<string, string>
             {}
         };
@@ -84,13 +86,13 @@ public class StatusService : IStatusService
             var response = await httpClient.GetAsync(url);
             var content = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content)
-                ?? new Dictionary<string, JsonElement> { { "status", JsonDocument.Parse("\"unknown\"").RootElement } };
+                ?? new Dictionary<string, JsonElement> { { HealthStatusKey, JsonDocument.Parse("\"unknown\"").RootElement } };
         }
         catch
         {
             return new Dictionary<string, JsonElement>
             {
-                { "status", JsonDocument.Parse("\"unreachable\"").RootElement }
+                { HealthStatusKey, JsonDocument.Parse("\"unreachable\"").RootElement }
             };
         }
     }

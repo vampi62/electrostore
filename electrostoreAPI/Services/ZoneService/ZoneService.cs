@@ -29,6 +29,7 @@ public class ZoneService : IZoneService
     public async Task<PaginatedResponseDto<ReadExtendedZoneDto>> GetZones(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandStores = expand?.Contains("stores") == true;
         var query = _context.Zones.AsQueryable();
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_zone", order = "asc" })
@@ -37,7 +38,7 @@ public class ZoneService : IZoneService
                 {
                     Zone = z,
                     StoresCount = z.Stores.Count,
-                    Stores = expand != null && expand.Contains("stores") ? z.Stores.Take(20).ToList() : null
+                    Stores = expandStores ? z.Stores.Take(20).ToList() : null
                 },
                 zones => zones.Select(z =>
                 {
@@ -51,6 +52,7 @@ public class ZoneService : IZoneService
 
     public async Task<ReadExtendedZoneDto> GetZoneById(int id, List<string>? expand = null)
     {
+        var expandStores = expand?.Contains("stores") == true;
         var query = _context.Zones.AsQueryable();
         query = query.Where(z => z.id_zone == id);
         var zone = await query
@@ -58,7 +60,7 @@ public class ZoneService : IZoneService
             {
                 Zone = z,
                 StoresCount = z.Stores.Count,
-                Stores = expand != null && expand.Contains("stores") ? z.Stores.Take(20).ToList() : null
+                Stores = expandStores ? z.Stores.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Zone with id '{id}' not found");
         return _mapper.Map<ReadExtendedZoneDto>(zone.Zone) with
@@ -82,13 +84,9 @@ public class ZoneService : IZoneService
         await _fileService.CreateDirectory(Path.Combine(_zoneImagesThumbnailsPath, newZone.id_zone.ToString()));
         if (zoneDto.img_file is not null)
         {
-            var savedImg = await _fileService.SaveFile(Path.Combine(_zoneImagesPath, newZone.id_zone.ToString()), zoneDto.img_file.FileName, zoneDto.img_file.ContentType, zoneDto.img_file.OpenReadStream());
-            var savedThumbnail = await _fileService.GenerateThumbnail(
-                savedImg.path,
-                Path.Combine(_zoneImagesThumbnailsPath, newZone.id_zone.ToString()),
-                256, 256);
-            newZone.url_picture_zone = savedImg.path;
-            newZone.url_thumbnail_zone = savedThumbnail.path;
+            var (picturePath, thumbnailPath) = await _fileService.SaveImageWithThumbnail(Path.Combine(_zoneImagesPath, newZone.id_zone.ToString()), Path.Combine(_zoneImagesThumbnailsPath, newZone.id_zone.ToString()), zoneDto.img_file);
+            newZone.url_picture_zone = picturePath;
+            newZone.url_thumbnail_zone = thumbnailPath;
             await _context.SaveChangesAsync();
         }
         return _mapper.Map<ReadZoneDto>(newZone);
@@ -124,34 +122,16 @@ public class ZoneService : IZoneService
         }
         if (zoneDto.unset_img_zone is true)
         {
-            if (zoneToUpdate.url_picture_zone is not null)
-            {
-                await _fileService.DeleteFile(zoneToUpdate.url_picture_zone);
-            }
-            if (zoneToUpdate.url_thumbnail_zone is not null)
-            {
-                await _fileService.DeleteFile(zoneToUpdate.url_thumbnail_zone);
-            }
+            await _fileService.DeleteImageWithThumbnail(zoneToUpdate.url_picture_zone, zoneToUpdate.url_thumbnail_zone);
             zoneToUpdate.url_picture_zone = null;
             zoneToUpdate.url_thumbnail_zone = null;
         }
         else if (zoneDto.img_file is not null)
         {
-            if (zoneToUpdate.url_picture_zone is not null)
-            {
-                await _fileService.DeleteFile(zoneToUpdate.url_picture_zone);
-            }
-            if (zoneToUpdate.url_thumbnail_zone is not null)
-            {
-                await _fileService.DeleteFile(zoneToUpdate.url_thumbnail_zone);
-            }
-            var savedImg = await _fileService.SaveFile(Path.Combine(_zoneImagesPath, id.ToString()), zoneDto.img_file.FileName, zoneDto.img_file.ContentType, zoneDto.img_file.OpenReadStream());
-            var savedThumbnail = await _fileService.GenerateThumbnail(
-                savedImg.path,
-                Path.Combine(_zoneImagesThumbnailsPath, id.ToString()),
-                256, 256);
-            zoneToUpdate.url_picture_zone = savedImg.path;
-            zoneToUpdate.url_thumbnail_zone = savedThumbnail.path;
+            await _fileService.DeleteImageWithThumbnail(zoneToUpdate.url_picture_zone, zoneToUpdate.url_thumbnail_zone);
+            var (picturePath, thumbnailPath) = await _fileService.SaveImageWithThumbnail(Path.Combine(_zoneImagesPath, id.ToString()), Path.Combine(_zoneImagesThumbnailsPath, id.ToString()), zoneDto.img_file);
+            zoneToUpdate.url_picture_zone = picturePath;
+            zoneToUpdate.url_thumbnail_zone = thumbnailPath;
         }
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadZoneDto>(zoneToUpdate);

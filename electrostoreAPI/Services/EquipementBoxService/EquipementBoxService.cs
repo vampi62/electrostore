@@ -20,6 +20,8 @@ public class EquipementBoxService : IEquipementBoxService
     public async Task<PaginatedResponseDto<ReadExtendedEquipementBoxDto>> GetEquipementsBoxsByBoxId(int boxId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandEquipement = expand?.Contains("equipement") == true;
+        var expandBox = expand?.Contains("box") == true;
         // check if the box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
         {
@@ -28,11 +30,11 @@ public class EquipementBoxService : IEquipementBoxService
         var query = _context.EquipementsBoxs.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_box", search_type = "eq", value = boxId.ToString() });
-        if (expand != null && expand.Contains("equipement"))
+        if (expandEquipement)
         {
             query = query.Include(eb => eb.Equipement);
         }
-        if (expand != null && expand.Contains("box"))
+        if (expandBox)
         {
             query = query.Include(eb => eb.Box);
         }
@@ -44,6 +46,8 @@ public class EquipementBoxService : IEquipementBoxService
     public async Task<PaginatedResponseDto<ReadExtendedEquipementBoxDto>> GetEquipementsBoxsByEquipementId(int equipementId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandEquipement = expand?.Contains("equipement") == true;
+        var expandBox = expand?.Contains("box") == true;
         // check if the equipement exists
         if (!await _context.Equipements.AnyAsync(e => e.id_equipement == equipementId))
         {
@@ -52,11 +56,11 @@ public class EquipementBoxService : IEquipementBoxService
         var query = _context.EquipementsBoxs.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_equipement", search_type = "eq", value = equipementId.ToString() });
-        if (expand != null && expand.Contains("equipement"))
+        if (expandEquipement)
         {
             query = query.Include(eb => eb.Equipement);
         }
-        if (expand != null && expand.Contains("box"))
+        if (expandBox)
         {
             query = query.Include(eb => eb.Box);
         }
@@ -67,13 +71,15 @@ public class EquipementBoxService : IEquipementBoxService
 
     public async Task<ReadExtendedEquipementBoxDto> GetEquipementBoxById(int equipementId, int boxId, List<string>? expand = null)
     {
+        var expandEquipement = expand?.Contains("equipement") == true;
+        var expandBox = expand?.Contains("box") == true;
         var query = _context.EquipementsBoxs.AsQueryable();
         query = query.Where(eb => eb.id_box == boxId && eb.id_equipement == equipementId);
-        if (expand != null && expand.Contains("equipement"))
+        if (expandEquipement)
         {
             query = query.Include(eb => eb.Equipement);
         }
-        if (expand != null && expand.Contains("box"))
+        if (expandBox)
         {
             query = query.Include(eb => eb.Box);
         }

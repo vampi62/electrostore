@@ -29,6 +29,12 @@ public class EquipementService : IEquipementService
     public async Task<PaginatedResponseDto<ReadExtendedEquipementDto>> GetEquipements(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandEquipementTags = expand?.Contains("equipement_tags") == true;
+        var expandEquipementBoxs = expand?.Contains("equipement_boxs") == true;
+        var expandEquipementDocuments = expand?.Contains("equipement_documents") == true;
+        var expandEquipementMaintenances = expand?.Contains("equipement_maintenances") == true;
+        var expandEquipementStatusHistory = expand?.Contains("equipement_status_history") == true;
+        var expandEquipementComments = expand?.Contains("equipement_comments") == true;
         var query = _context.Equipements.AsQueryable();
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_equipement", order = "asc" })
@@ -42,12 +48,12 @@ public class EquipementService : IEquipementService
                     EquipementsMaintenancesCount = e.EquipementsMaintenances.Count,
                     EquipementsStatusCount = e.EquipementsStatus.Count,
                     EquipementsCommentsCount = e.EquipementsComments.Count,
-                    EquipementsTags = expand != null && expand.Contains("equipement_tags") ? e.EquipementsTags.Take(20).ToList() : null,
-                    EquipementsBoxs = expand != null && expand.Contains("equipement_boxs") ? e.EquipementsBoxs.Take(20).ToList() : null,
-                    EquipementsDocuments = expand != null && expand.Contains("equipement_documents") ? e.EquipementsDocuments.Take(20).ToList() : null,
-                    EquipementsMaintenances = expand != null && expand.Contains("equipement_maintenances") ? e.EquipementsMaintenances.Take(20).ToList() : null,
-                    EquipementsStatusHistory = expand != null && expand.Contains("equipement_status_history") ? e.EquipementsStatus.OrderByDescending(s => s.created_at).Take(20).ToList() : null,
-                    EquipementsComments = expand != null && expand.Contains("equipement_comments") ? e.EquipementsComments.Take(20).ToList() : null
+                    EquipementsTags = expandEquipementTags ? e.EquipementsTags.Take(20).ToList() : null,
+                    EquipementsBoxs = expandEquipementBoxs ? e.EquipementsBoxs.Take(20).ToList() : null,
+                    EquipementsDocuments = expandEquipementDocuments ? e.EquipementsDocuments.Take(20).ToList() : null,
+                    EquipementsMaintenances = expandEquipementMaintenances ? e.EquipementsMaintenances.Take(20).ToList() : null,
+                    EquipementsStatusHistory = expandEquipementStatusHistory ? e.EquipementsStatus.OrderByDescending(s => s.created_at).Take(20).ToList() : null,
+                    EquipementsComments = expandEquipementComments ? e.EquipementsComments.Take(20).ToList() : null
                 },
                 equipement => equipement.Select(e => {
                     return _mapper.Map<ReadExtendedEquipementDto>(e.Equipement) with
@@ -70,6 +76,12 @@ public class EquipementService : IEquipementService
 
     public async Task<ReadExtendedEquipementDto> GetEquipementById(int id, List<string>? expand = null)
     {
+        var expandEquipementTags = expand?.Contains("equipement_tags") == true;
+        var expandEquipementBoxs = expand?.Contains("equipement_boxs") == true;
+        var expandEquipementDocuments = expand?.Contains("equipement_documents") == true;
+        var expandEquipementMaintenances = expand?.Contains("equipement_maintenances") == true;
+        var expandEquipementStatusHistory = expand?.Contains("equipement_status_history") == true;
+        var expandEquipementComments = expand?.Contains("equipement_comments") == true;
         var query = _context.Equipements.AsQueryable();
         query = query.Where(e => e.id_equipement == id);
         var equipement = await query
@@ -82,12 +94,12 @@ public class EquipementService : IEquipementService
                 EquipementsMaintenancesCount = e.EquipementsMaintenances.Count,
                 EquipementsStatusCount = e.EquipementsStatus.Count,
                 EquipementsCommentsCount = e.EquipementsComments.Count,
-                EquipementsTags = expand != null && expand.Contains("equipement_tags") ? e.EquipementsTags.Take(20).ToList() : null,
-                EquipementsBoxs = expand != null && expand.Contains("equipement_boxs") ? e.EquipementsBoxs.Take(20).ToList() : null,
-                EquipementsDocuments = expand != null && expand.Contains("equipement_documents") ? e.EquipementsDocuments.Take(20).ToList() : null,
-                EquipementsMaintenances = expand != null && expand.Contains("equipement_maintenances") ? e.EquipementsMaintenances.Take(20).ToList() : null,
-                EquipementsStatusHistory = expand != null && expand.Contains("equipement_status_history") ? e.EquipementsStatus.OrderByDescending(s => s.created_at).Take(20).ToList() : null,
-                EquipementsComments = expand != null && expand.Contains("equipement_comments") ? e.EquipementsComments.Take(20).ToList() : null
+                EquipementsTags = expandEquipementTags ? e.EquipementsTags.Take(20).ToList() : null,
+                EquipementsBoxs = expandEquipementBoxs ? e.EquipementsBoxs.Take(20).ToList() : null,
+                EquipementsDocuments = expandEquipementDocuments ? e.EquipementsDocuments.Take(20).ToList() : null,
+                EquipementsMaintenances = expandEquipementMaintenances ? e.EquipementsMaintenances.Take(20).ToList() : null,
+                EquipementsStatusHistory = expandEquipementStatusHistory ? e.EquipementsStatus.OrderByDescending(s => s.created_at).Take(20).ToList() : null,
+                EquipementsComments = expandEquipementComments ? e.EquipementsComments.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Equipement with id '{id}' not found");
         return _mapper.Map<ReadExtendedEquipementDto>(equipement.Equipement) with
@@ -122,13 +134,9 @@ public class EquipementService : IEquipementService
         await _fileService.CreateDirectory(Path.Combine(_equipementImagesThumbnailsPath, equipement.id_equipement.ToString()));
         if (equipementDto.img_file is not null)
         {
-            var savedImg = await _fileService.SaveFile(Path.Combine(_equipementImagesPath, equipement.id_equipement.ToString()), equipementDto.img_file.FileName, equipementDto.img_file.ContentType, equipementDto.img_file.OpenReadStream());
-            var savedThumbnail = await _fileService.GenerateThumbnail(
-                savedImg.path,
-                Path.Combine(_equipementImagesThumbnailsPath, equipement.id_equipement.ToString()),
-                256, 256);
-            equipement.url_picture_equipement = savedImg.path;
-            equipement.url_thumbnail_equipement = savedThumbnail.path;
+            var (picturePath, thumbnailPath) = await _fileService.SaveImageWithThumbnail(Path.Combine(_equipementImagesPath, equipement.id_equipement.ToString()), Path.Combine(_equipementImagesThumbnailsPath, equipement.id_equipement.ToString()), equipementDto.img_file);
+            equipement.url_picture_equipement = picturePath;
+            equipement.url_thumbnail_equipement = thumbnailPath;
             await _context.SaveChangesAsync();
         }
         await _equipementStatusService.CreateEquipementStatus(new CreateEquipementStatusDto
@@ -166,34 +174,16 @@ public class EquipementService : IEquipementService
         }
         if (equipementDto.unset_img_equipement is true)
         {
-            if (equipementToUpdate.url_picture_equipement is not null)
-            {
-                await _fileService.DeleteFile(equipementToUpdate.url_picture_equipement);
-            }
-            if (equipementToUpdate.url_thumbnail_equipement is not null)
-            {
-                await _fileService.DeleteFile(equipementToUpdate.url_thumbnail_equipement);
-            }
+            await _fileService.DeleteImageWithThumbnail(equipementToUpdate.url_picture_equipement, equipementToUpdate.url_thumbnail_equipement);
             equipementToUpdate.url_picture_equipement = null;
             equipementToUpdate.url_thumbnail_equipement = null;
         }
         else if (equipementDto.img_file is not null)
         {
-            if (equipementToUpdate.url_picture_equipement is not null)
-            {
-                await _fileService.DeleteFile(equipementToUpdate.url_picture_equipement);
-            }
-            if (equipementToUpdate.url_thumbnail_equipement is not null)
-            {
-                await _fileService.DeleteFile(equipementToUpdate.url_thumbnail_equipement);
-            }
-            var savedImg = await _fileService.SaveFile(Path.Combine(_equipementImagesPath, id.ToString()), equipementDto.img_file.FileName, equipementDto.img_file.ContentType, equipementDto.img_file.OpenReadStream());
-            var savedThumbnail = await _fileService.GenerateThumbnail(
-                savedImg.path,
-                Path.Combine(_equipementImagesThumbnailsPath, id.ToString()),
-                256, 256);
-            equipementToUpdate.url_picture_equipement = savedImg.path;
-            equipementToUpdate.url_thumbnail_equipement = savedThumbnail.path;
+            await _fileService.DeleteImageWithThumbnail(equipementToUpdate.url_picture_equipement, equipementToUpdate.url_thumbnail_equipement);
+            var (picturePath, thumbnailPath) = await _fileService.SaveImageWithThumbnail(Path.Combine(_equipementImagesPath, id.ToString()), Path.Combine(_equipementImagesThumbnailsPath, id.ToString()), equipementDto.img_file);
+            equipementToUpdate.url_picture_equipement = picturePath;
+            equipementToUpdate.url_thumbnail_equipement = thumbnailPath;
         }
         await _context.SaveChangesAsync();
         if (statusChanged)

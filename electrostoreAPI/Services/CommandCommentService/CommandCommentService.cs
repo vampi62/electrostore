@@ -24,6 +24,8 @@ public class CommandCommentService : ICommandCommentService
     public async Task<PaginatedResponseDto<ReadExtendedCommandCommentDto>> GetCommandsCommentsByCommandId(int CommandId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandCommand = expand?.Contains("command") == true;
+        var expandUser = expand?.Contains("user") == true;
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == CommandId))
         {
@@ -32,11 +34,11 @@ public class CommandCommentService : ICommandCommentService
         var query = _context.CommandsComments.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_command", search_type = "eq", value = CommandId.ToString() });
-        if (expand != null && expand.Contains("command")) // check if the command is included in the expand list
+        if (expandCommand)
         {
             query = query.Include(cc => cc.Command);
         }
-        if (expand != null && expand.Contains("user")) // check if the user is included in the expand list
+        if (expandUser)
         {
             query = query.Include(cc => cc.User);
         }
@@ -48,6 +50,8 @@ public class CommandCommentService : ICommandCommentService
     public async Task<PaginatedResponseDto<ReadExtendedCommandCommentDto>> GetCommandsCommentsByUserId(int userId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandCommand = expand?.Contains("command") == true;
+        var expandUser = expand?.Contains("user") == true;
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
         {
@@ -56,11 +60,11 @@ public class CommandCommentService : ICommandCommentService
         var query = _context.CommandsComments.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_user", search_type = "eq", value = userId.ToString() });
-        if (expand != null && expand.Contains("command")) // check if the command is included in the expand list
+        if (expandCommand)
         {
             query = query.Include(cc => cc.Command);
         }
-        if (expand != null && expand.Contains("user")) // check if the user is included in the expand list
+        if (expandUser)
         {
             query = query.Include(cc => cc.User);
         }
@@ -71,13 +75,15 @@ public class CommandCommentService : ICommandCommentService
 
     public async Task<ReadExtendedCommandCommentDto> GetCommandsCommentById(int id, int? userId = null, int? CommandId = null, List<string>? expand = null)
     {
+        var expandCommand = expand?.Contains("command") == true;
+        var expandUser = expand?.Contains("user") == true;
         var query = _context.CommandsComments.AsQueryable();
         query = query.Where(cc => cc.id_command_comment == id && (CommandId == null || cc.id_command == CommandId) && (userId == null || cc.id_user == userId));
-        if (expand != null && expand.Contains("command")) // check if the command is included in the expand list
+        if (expandCommand)
         {
             query = query.Include(cc => cc.Command);
         }
-        if (expand != null && expand.Contains("user")) // check if the user is included in the expand list
+        if (expandUser)
         {
             query = query.Include(cc => cc.User);
         }

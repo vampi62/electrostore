@@ -27,6 +27,9 @@ public class BoxService : IBoxService
     public async Task<PaginatedResponseDto<ReadExtendedBoxDto>> GetBoxsByStoreId(int storeId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandStore = expand?.Contains("store") == true;
+        var expandBoxTags = expand?.Contains("box_tags") == true;
+        var expandItemBoxs = expand?.Contains("item_boxs") == true;
         // check if the store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
         {
@@ -42,9 +45,9 @@ public class BoxService : IBoxService
                     Box = b,
                     BoxsTagsCount = b.BoxsTags.Count,
                     ItemsBoxsCount = b.ItemsBoxs.Count,
-                    Store = expand != null && expand.Contains("store") ? b.Store : null,
-                    BoxsTags = expand != null && expand.Contains("box_tags") ? b.BoxsTags.Take(20).ToList() : null,
-                    ItemsBoxs = expand != null && expand.Contains("item_boxs") ? b.ItemsBoxs.Take(20).ToList() : null
+                    Store = expandStore ? b.Store : null,
+                    BoxsTags = expandBoxTags ? b.BoxsTags.Take(20).ToList() : null,
+                    ItemsBoxs = expandItemBoxs ? b.ItemsBoxs.Take(20).ToList() : null
                 },
                 boxes => boxes.Select(b => _mapper.Map<ReadExtendedBoxDto>(b.Box) with
                 {
@@ -58,6 +61,9 @@ public class BoxService : IBoxService
 
     public async Task<ReadExtendedBoxDto> GetBoxById(int id, int? storeId = null, List<string>? expand = null)
     {
+        var expandStore = expand?.Contains("store") == true;
+        var expandBoxTags = expand?.Contains("box_tags") == true;
+        var expandItemBoxs = expand?.Contains("item_boxs") == true;
         var query = _context.Boxs.AsQueryable();
         query = query.Where(b => b.id_box == id && (storeId == null || b.id_store == storeId));
         var box = await query
@@ -66,9 +72,9 @@ public class BoxService : IBoxService
                 Box = b,
                 BoxsTagsCount = b.BoxsTags.Count,
                 ItemsBoxsCount = b.ItemsBoxs.Count,
-                Store = expand != null && expand.Contains("store") ? b.Store : null,
-                BoxsTags = expand != null && expand.Contains("box_tags") ? b.BoxsTags.Take(20).ToList() : null,
-                ItemsBoxs = expand != null && expand.Contains("item_boxs") ? b.ItemsBoxs.Take(20).ToList() : null
+                Store = expandStore ? b.Store : null,
+                BoxsTags = expandBoxTags ? b.BoxsTags.Take(20).ToList() : null,
+                ItemsBoxs = expandItemBoxs ? b.ItemsBoxs.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Box with id '{id}' not found");
         return _mapper.Map<ReadExtendedBoxDto>(box.Box) with

@@ -24,6 +24,8 @@ public class ItemBoxService : IItemBoxService
     public async Task<PaginatedResponseDto<ReadExtendedItemBoxDto>> GetItemsBoxsByBoxId(int boxId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandItem = expand?.Contains("item") == true;
+        var expandBox = expand?.Contains("box") == true;
         // check if the box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
         {
@@ -32,11 +34,11 @@ public class ItemBoxService : IItemBoxService
         var query = _context.ItemsBoxs.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_box", search_type = "eq", value = boxId.ToString() });
-        if (expand != null && expand.Contains("item"))
+        if (expandItem)
         {
             query = query.Include(ib => ib.Item);
         }
-        if (expand != null && expand.Contains("box"))
+        if (expandBox)
         {
             query = query.Include(ib => ib.Box);
         }
@@ -48,6 +50,8 @@ public class ItemBoxService : IItemBoxService
     public async Task<PaginatedResponseDto<ReadExtendedItemBoxDto>> GetItemsBoxsByItemId(int itemId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandItem = expand?.Contains("item") == true;
+        var expandBox = expand?.Contains("box") == true;
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
@@ -56,11 +60,11 @@ public class ItemBoxService : IItemBoxService
         var query = _context.ItemsBoxs.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_item", search_type = "eq", value = itemId.ToString() });
-        if (expand != null && expand.Contains("item"))
+        if (expandItem)
         {
             query = query.Include(ib => ib.Item);
         }
-        if (expand != null && expand.Contains("box"))
+        if (expandBox)
         {
             query = query.Include(ib => ib.Box);
         }
@@ -71,13 +75,15 @@ public class ItemBoxService : IItemBoxService
 
     public async Task<ReadExtendedItemBoxDto> GetItemBoxById(int itemId, int boxId, List<string>? expand = null)
     {
+        var expandItem = expand?.Contains("item") == true;
+        var expandBox = expand?.Contains("box") == true;
         var query = _context.ItemsBoxs.AsQueryable();
         query = query.Where(ib => ib.id_box == boxId && ib.id_item == itemId);
-        if (expand != null && expand.Contains("item"))
+        if (expandItem)
         {
             query = query.Include(ib => ib.Item);
         }
-        if (expand != null && expand.Contains("box"))
+        if (expandBox)
         {
             query = query.Include(ib => ib.Box);
         }

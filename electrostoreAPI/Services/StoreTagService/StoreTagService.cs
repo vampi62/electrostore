@@ -24,6 +24,8 @@ public class StoreTagService : IStoreTagService
     public async Task<PaginatedResponseDto<ReadExtendedStoreTagDto>> GetStoresTagsByStoreId(int storeId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandTag = expand?.Contains("tag") == true;
+        var expandStore = expand?.Contains("store") == true;
         // check if store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
         {
@@ -32,11 +34,11 @@ public class StoreTagService : IStoreTagService
         var query = _context.StoresTags.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_store", search_type = "eq", value = storeId.ToString() });
-        if (expand != null && expand.Contains("tag"))
+        if (expandTag)
         {
             query = query.Include(st => st.Tag);
         }
-        if (expand != null && expand.Contains("store"))
+        if (expandStore)
         {
             query = query.Include(st => st.Store);
         }
@@ -48,6 +50,8 @@ public class StoreTagService : IStoreTagService
     public async Task<PaginatedResponseDto<ReadExtendedStoreTagDto>> GetStoresTagsByTagId(int tagId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandTag = expand?.Contains("tag") == true;
+        var expandStore = expand?.Contains("store") == true;
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
         {
@@ -56,11 +60,11 @@ public class StoreTagService : IStoreTagService
         var query = _context.StoresTags.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_tag", search_type = "eq", value = tagId.ToString() });
-        if (expand != null && expand.Contains("tag"))
+        if (expandTag)
         {
             query = query.Include(st => st.Tag);
         }
-        if (expand != null && expand.Contains("store"))
+        if (expandStore)
         {
             query = query.Include(st => st.Store);
         }
@@ -71,13 +75,15 @@ public class StoreTagService : IStoreTagService
 
     public async Task<ReadExtendedStoreTagDto> GetStoreTagById(int storeId, int tagId, List<string>? expand = null)
     {
+        var expandTag = expand?.Contains("tag") == true;
+        var expandStore = expand?.Contains("store") == true;
         var query = _context.StoresTags.AsQueryable();
         query = query.Where(st => st.id_store == storeId && st.id_tag == tagId);
-        if (expand != null && expand.Contains("tag"))
+        if (expandTag)
         {
             query = query.Include(st => st.Tag);
         }
-        if (expand != null && expand.Contains("store"))
+        if (expandStore)
         {
             query = query.Include(st => st.Store);
         }

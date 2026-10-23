@@ -20,6 +20,7 @@ public class ProjectTagService : IProjectTagService
     public async Task<PaginatedResponseDto<ReadExtendedProjectTagDto>> GetProjectTags(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandProjectTags = expand?.Contains("project_tags") == true;
         var query = _context.ProjectTags.AsQueryable();
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_project_tag", order = "asc" })
@@ -28,7 +29,7 @@ public class ProjectTagService : IProjectTagService
                 {
                     ProjectTags = t,
                     ProjectsProjectTagsCount = t.ProjectsProjectTags.Count,
-                    ProjectsProjectTags = expand != null && expand.Contains("project_tags") ? t.ProjectsProjectTags.Take(20).ToList() : null
+                    ProjectsProjectTags = expandProjectTags ? t.ProjectsProjectTags.Take(20).ToList() : null
                 },
                 projectTag => projectTag.Select(t => _mapper.Map<ReadExtendedProjectTagDto>(t.ProjectTags) with
                 {
@@ -39,6 +40,7 @@ public class ProjectTagService : IProjectTagService
 
     public async Task<ReadExtendedProjectTagDto> GetProjectTagById(int id, List<string>? expand = null)
     {
+        var expandProjectTags = expand?.Contains("project_tags") == true;
         var query = _context.ProjectTags.AsQueryable();
         query = query.Where(t => t.id_project_tag == id);
         var projectTag = await query
@@ -46,7 +48,7 @@ public class ProjectTagService : IProjectTagService
             {
                 ProjectTags = t,
                 ProjectsProjectTagsCount = t.ProjectsProjectTags.Count,
-                ProjectsProjectTags = expand != null && expand.Contains("project_tags") ? t.ProjectsProjectTags.Take(20).ToList() : null
+                ProjectsProjectTags = expandProjectTags ? t.ProjectsProjectTags.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjectTag with id '{id}' not found");
         return _mapper.Map<ReadExtendedProjectTagDto>(projectTag.ProjectTags) with
