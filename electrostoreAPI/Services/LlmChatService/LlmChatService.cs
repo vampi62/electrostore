@@ -38,8 +38,7 @@ public class LlmChatService : ILlmChatService
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "Error while calling the LLM chat completion endpoint");
-            throw;
+            throw new HttpRequestException("Error while calling the LLM chat completion endpoint", ex, ex.StatusCode);
         }
         if (!response.IsSuccessStatusCode)
         {
@@ -101,9 +100,8 @@ public class LlmChatService : ILlmChatService
         await using (stream)
         {
             using var reader = new StreamReader(stream);
-            while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested && await reader.ReadLineAsync(cancellationToken) is { } line)
             {
-                var line = await reader.ReadLineAsync(cancellationToken);
                 if (string.IsNullOrWhiteSpace(line) || !line.StartsWith("data:", StringComparison.Ordinal))
                 {
                     continue;

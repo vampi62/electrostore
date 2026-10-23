@@ -38,6 +38,12 @@ public class ItemService : IItemService
     public async Task<PaginatedResponseDto<ReadExtendedItemDto>> GetItems(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandItemTags = expand?.Contains("item_tags") == true;
+        var expandItemBoxs = expand?.Contains("item_boxs") == true;
+        var expandCommandItems = expand?.Contains("command_items") == true;
+        var expandProjectItems = expand?.Contains("project_items") == true;
+        var expandItemDocuments = expand?.Contains("item_documents") == true;
+        var expandItemHistory = expand?.Contains("item_history") == true;
         var query = _context.Items.AsQueryable();
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_item", order = "asc" })
@@ -50,12 +56,12 @@ public class ItemService : IItemService
                     CommandsItemsCount = i.CommandsItems.Count,
                     ProjectsItemsCount = i.ProjectsItems.Count,
                     ItemsDocumentsCount = i.ItemsDocuments.Count,
-                    ItemsTags = expand != null && expand.Contains("item_tags") ? i.ItemsTags.Take(20).ToList() : null,
-                    ItemsBoxs = expand != null && expand.Contains("item_boxs") ? i.ItemsBoxs.Take(20).ToList() : null,
-                    CommandsItems = expand != null && expand.Contains("command_items") ? i.CommandsItems.Take(20).ToList() : null,
-                    ProjectsItems = expand != null && expand.Contains("project_items") ? i.ProjectsItems.Take(20).ToList() : null,
-                    ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null,
-                    ItemsHistory = expand != null && expand.Contains("item_history") ? i.ItemsHistory.OrderByDescending(h => h.created_at).Take(20).ToList() : null,
+                    ItemsTags = expandItemTags ? i.ItemsTags.Take(20).ToList() : null,
+                    ItemsBoxs = expandItemBoxs ? i.ItemsBoxs.Take(20).ToList() : null,
+                    CommandsItems = expandCommandItems ? i.CommandsItems.Take(20).ToList() : null,
+                    ProjectsItems = expandProjectItems ? i.ProjectsItems.Take(20).ToList() : null,
+                    ItemsDocuments = expandItemDocuments ? i.ItemsDocuments.Take(20).ToList() : null,
+                    ItemsHistory = expandItemHistory ? i.ItemsHistory.OrderByDescending(h => h.created_at).Take(20).ToList() : null,
                     quantity_item = i.ItemsBoxs.Sum(ib => ib.quantity_item_box)
                 },
                 item => item.Select(i => {
@@ -79,6 +85,12 @@ public class ItemService : IItemService
 
     public async Task<ReadExtendedItemDto> GetItemById(int id, List<string>? expand = null)
     {
+        var expandItemTags = expand?.Contains("item_tags") == true;
+        var expandItemBoxs = expand?.Contains("item_boxs") == true;
+        var expandCommandItems = expand?.Contains("command_items") == true;
+        var expandProjectItems = expand?.Contains("project_items") == true;
+        var expandItemDocuments = expand?.Contains("item_documents") == true;
+        var expandItemHistory = expand?.Contains("item_history") == true;
         var query = _context.Items.AsQueryable();
         query = query.Where(i => i.id_item == id);
         var item = await query
@@ -90,12 +102,12 @@ public class ItemService : IItemService
                 CommandsItemsCount = i.CommandsItems.Count,
                 ProjectsItemsCount = i.ProjectsItems.Count,
                 ItemsDocumentsCount = i.ItemsDocuments.Count,
-                ItemsTags = expand != null && expand.Contains("item_tags") ? i.ItemsTags.Take(20).ToList() : null,
-                ItemsBoxs = expand != null && expand.Contains("item_boxs") ? i.ItemsBoxs.Take(20).ToList() : null,
-                CommandsItems = expand != null && expand.Contains("command_items") ? i.CommandsItems.Take(20).ToList() : null,
-                ProjectsItems = expand != null && expand.Contains("project_items") ? i.ProjectsItems.Take(20).ToList() : null,
-                ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null,
-                ItemsHistory = expand != null && expand.Contains("item_history") ? i.ItemsHistory.OrderByDescending(h => h.created_at).Take(20).ToList() : null,
+                ItemsTags = expandItemTags ? i.ItemsTags.Take(20).ToList() : null,
+                ItemsBoxs = expandItemBoxs ? i.ItemsBoxs.Take(20).ToList() : null,
+                CommandsItems = expandCommandItems ? i.CommandsItems.Take(20).ToList() : null,
+                ProjectsItems = expandProjectItems ? i.ProjectsItems.Take(20).ToList() : null,
+                ItemsDocuments = expandItemDocuments ? i.ItemsDocuments.Take(20).ToList() : null,
+                ItemsHistory = expandItemHistory ? i.ItemsHistory.OrderByDescending(h => h.created_at).Take(20).ToList() : null,
                 quantity_item = i.ItemsBoxs.Sum(ib => ib.quantity_item_box)
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Item with id '{id}' not found");
@@ -131,13 +143,9 @@ public class ItemService : IItemService
         await _fileService.CreateDirectory(Path.Combine(_itemDocumentsPath, item.id_item.ToString()));
         if (itemDto.img_file is not null)
         {
-            var savedImg = await _fileService.SaveFile(Path.Combine(_itemImagesPath, item.id_item.ToString()), itemDto.img_file.FileName, itemDto.img_file.ContentType, itemDto.img_file.OpenReadStream());
-            var savedThumbnail = await _fileService.GenerateThumbnail(
-                savedImg.path,
-                Path.Combine(_itemImagesThumbnailsPath, item.id_item.ToString()),
-                256, 256);
-            item.url_picture_item = savedImg.path;
-            item.url_thumbnail_item = savedThumbnail.path;
+            var (picturePath, thumbnailPath) = await _fileService.SaveImageWithThumbnail(Path.Combine(_itemImagesPath, item.id_item.ToString()), Path.Combine(_itemImagesThumbnailsPath, item.id_item.ToString()), itemDto.img_file);
+            item.url_picture_item = picturePath;
+            item.url_thumbnail_item = thumbnailPath;
             await _context.SaveChangesAsync();
         }
         await _itemHistoryService.LogHistory(item.id_item, null, ItemHistoryType.ItemCreated);
@@ -178,36 +186,16 @@ public class ItemService : IItemService
         }
         if (itemDto.unset_img_item is true)
         {
-            if (itemToUpdate.url_picture_item is not null)
-            {
-                await _fileService.DeleteFile(itemToUpdate.url_picture_item);
-                hasChanges = true;
-            }
-            if (itemToUpdate.url_thumbnail_item is not null)
-            {
-                await _fileService.DeleteFile(itemToUpdate.url_thumbnail_item);
-                hasChanges = true;
-            }
+            hasChanges |= await _fileService.DeleteImageWithThumbnail(itemToUpdate.url_picture_item, itemToUpdate.url_thumbnail_item);
             itemToUpdate.url_picture_item = null;
             itemToUpdate.url_thumbnail_item = null;
         }
         else if (itemDto.img_file is not null)
         {
-            if (itemToUpdate.url_picture_item is not null)
-            {
-                await _fileService.DeleteFile(itemToUpdate.url_picture_item);
-            }
-            if (itemToUpdate.url_thumbnail_item is not null)
-            {
-                await _fileService.DeleteFile(itemToUpdate.url_thumbnail_item);
-            }
-            var savedImg = await _fileService.SaveFile(Path.Combine(_itemImagesPath, id.ToString()), itemDto.img_file.FileName, itemDto.img_file.ContentType, itemDto.img_file.OpenReadStream());
-            var savedThumbnail = await _fileService.GenerateThumbnail(
-                savedImg.path,
-                Path.Combine(_itemImagesThumbnailsPath, id.ToString()),
-                256, 256);
-            itemToUpdate.url_picture_item = savedImg.path;
-            itemToUpdate.url_thumbnail_item = savedThumbnail.path;
+            await _fileService.DeleteImageWithThumbnail(itemToUpdate.url_picture_item, itemToUpdate.url_thumbnail_item);
+            var (picturePath, thumbnailPath) = await _fileService.SaveImageWithThumbnail(Path.Combine(_itemImagesPath, id.ToString()), Path.Combine(_itemImagesThumbnailsPath, id.ToString()), itemDto.img_file);
+            itemToUpdate.url_picture_item = picturePath;
+            itemToUpdate.url_thumbnail_item = thumbnailPath;
             hasChanges = true;
         }
         await _context.SaveChangesAsync();

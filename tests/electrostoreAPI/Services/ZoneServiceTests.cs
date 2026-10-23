@@ -223,12 +223,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private void SetupImageSaving()
         {
-            _fileService
-                .Setup(f => f.SaveFile(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<bool>()))
-                .ReturnsAsync(new SaveFileResult { path = "zoneImages/1/plan.png", mime_type = "image/png" });
-            _fileService
-                .Setup(f => f.GenerateThumbnail(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()))
-                .ReturnsAsync(new SaveFileResult { path = "zoneImagesThumbnails/1/plan.png", mime_type = "image/png" });
+            _fileService.SetupImageWithThumbnailSaving("zoneImages/1/plan.png", "zoneImagesThumbnails/1/plan.png");
         }
 
         private static Stores BuildStore(int zoneId) => new()
@@ -311,7 +306,7 @@ namespace ElectrostoreAPI.Tests.Services
 
             Assert.Equal("zoneImages/1/plan.png", result.url_picture_zone);
             Assert.Equal("zoneImagesThumbnails/1/plan.png", result.url_thumbnail_zone);
-            _fileService.Verify(f => f.GenerateThumbnail("zoneImages/1/plan.png", It.IsAny<string>(), 256, 256), Times.Once);
+            _fileService.Verify(f => f.GetFile("zoneImages/1/plan.png"), Times.Once);
         }
 
         [Fact]

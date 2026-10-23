@@ -20,6 +20,8 @@ public class EquipementMaintenanceService : IEquipementMaintenanceService
     public async Task<PaginatedResponseDto<ReadExtendedEquipementMaintenanceDto>> GetEquipementsMaintenancesByEquipementId(int equipementId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandEquipement = expand?.Contains("equipement") == true;
+        var expandUser = expand?.Contains("user") == true;
         // check if the equipement exists
         if (!await _context.Equipements.AnyAsync(e => e.id_equipement == equipementId))
         {
@@ -28,11 +30,11 @@ public class EquipementMaintenanceService : IEquipementMaintenanceService
         var query = _context.EquipementsMaintenances.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_equipement", search_type = "eq", value = equipementId.ToString() });
-        if (expand != null && expand.Contains("equipement"))
+        if (expandEquipement)
         {
             query = query.Include(em => em.Equipement);
         }
-        if (expand != null && expand.Contains("user"))
+        if (expandUser)
         {
             query = query.Include(em => em.User);
         }
@@ -43,13 +45,15 @@ public class EquipementMaintenanceService : IEquipementMaintenanceService
 
     public async Task<ReadExtendedEquipementMaintenanceDto> GetEquipementMaintenanceById(int id, int? equipementId = null, List<string>? expand = null)
     {
+        var expandEquipement = expand?.Contains("equipement") == true;
+        var expandUser = expand?.Contains("user") == true;
         var query = _context.EquipementsMaintenances.AsQueryable();
         query = query.Where(em => em.id_equipement_maintenance == id && (equipementId == null || em.id_equipement == equipementId));
-        if (expand != null && expand.Contains("equipement"))
+        if (expandEquipement)
         {
             query = query.Include(em => em.Equipement);
         }
-        if (expand != null && expand.Contains("user"))
+        if (expandUser)
         {
             query = query.Include(em => em.User);
         }

@@ -34,6 +34,11 @@ public class CommandService : ICommandService
     public async Task<PaginatedResponseDto<ReadExtendedCommandDto>> GetCommands(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandCommandComments = expand?.Contains("command_comments") == true;
+        var expandCommandsDocuments = expand?.Contains("commands_documents") == true;
+        var expandCommandsHistory = expand?.Contains("commands_history") == true;
+        var expandCommandsItems = expand?.Contains("commands_items") == true;
+        var expandCarrier = expand?.Contains("carrier") == true;
         var query = _context.Commands.AsQueryable();
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_command", order = "asc" })
@@ -44,11 +49,11 @@ public class CommandService : ICommandService
                     CommandsCommentsCount = c.CommandsComments.Count,
                     CommandsDocumentsCount = c.CommandsDocuments.Count,
                     CommandsItemsCount = c.CommandsItems.Count,
-                    CommandsComments = expand != null && expand.Contains("command_comments") ? c.CommandsComments.Take(20).ToList() : null,
-                    CommandsDocuments = expand != null && expand.Contains("commands_documents") ? c.CommandsDocuments.Take(20).ToList() : null,
-                    CommandsHistory = expand != null && expand.Contains("commands_history") ? c.CommandsHistory.Take(20).ToList() : null,
-                    CommandsItems = expand != null && expand.Contains("commands_items") ? c.CommandsItems.Take(20).ToList() : null,
-                    Carrier = expand != null && expand.Contains("carrier") ? c.Carrier : null
+                    CommandsComments = expandCommandComments ? c.CommandsComments.Take(20).ToList() : null,
+                    CommandsDocuments = expandCommandsDocuments ? c.CommandsDocuments.Take(20).ToList() : null,
+                    CommandsHistory = expandCommandsHistory ? c.CommandsHistory.Take(20).ToList() : null,
+                    CommandsItems = expandCommandsItems ? c.CommandsItems.Take(20).ToList() : null,
+                    Carrier = expandCarrier ? c.Carrier : null
                 },
                 command => command.Select(c => {
                     return _mapper.Map<ReadExtendedCommandDto>(c.Command) with
@@ -67,6 +72,11 @@ public class CommandService : ICommandService
 
     public async Task<ReadExtendedCommandDto> GetCommandById(int id, List<string>? expand = null)
     {
+        var expandCommandComments = expand?.Contains("command_comments") == true;
+        var expandCommandsDocuments = expand?.Contains("commands_documents") == true;
+        var expandCommandsHistory = expand?.Contains("commands_history") == true;
+        var expandCommandsItems = expand?.Contains("commands_items") == true;
+        var expandCarrier = expand?.Contains("carrier") == true;
         var query = _context.Commands.AsQueryable();
         query = query.Where(c => c.id_command == id);
         var command = await query
@@ -76,11 +86,11 @@ public class CommandService : ICommandService
                 CommandsCommentsCount = c.CommandsComments.Count,
                 CommandsDocumentsCount = c.CommandsDocuments.Count,
                 CommandsItemsCount = c.CommandsItems.Count,
-                CommandsComments = expand != null && expand.Contains("command_comments") ? c.CommandsComments.Take(20).ToList() : null,
-                CommandsDocuments = expand != null && expand.Contains("commands_documents") ? c.CommandsDocuments.Take(20).ToList() : null,
-                CommandsHistory = expand != null && expand.Contains("commands_history") ? c.CommandsHistory.Take(20).ToList() : null,
-                CommandsItems = expand != null && expand.Contains("commands_items") ? c.CommandsItems.Take(20).ToList() : null,
-                Carrier = expand != null && expand.Contains("carrier") ? c.Carrier : null
+                CommandsComments = expandCommandComments ? c.CommandsComments.Take(20).ToList() : null,
+                CommandsDocuments = expandCommandsDocuments ? c.CommandsDocuments.Take(20).ToList() : null,
+                CommandsHistory = expandCommandsHistory ? c.CommandsHistory.Take(20).ToList() : null,
+                CommandsItems = expandCommandsItems ? c.CommandsItems.Take(20).ToList() : null,
+                Carrier = expandCarrier ? c.Carrier : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Command with id '{id}' not found");
         return _mapper.Map<ReadExtendedCommandDto>(command.Command) with

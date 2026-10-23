@@ -390,27 +390,23 @@ export default {
 			const boxHtml = (this.$refs["BOX" + border.id_box] as HTMLElement[])[0];
 			boxHtml.classList.add("selectedElement","diagonal-hatch");
 		},
+		markElementDeleted(edition: StateTree, element: StateTree) {
+			for (const index of Object.keys(edition)) {
+				if (edition[index] !== element) {
+					continue;
+				}
+				if (edition[index].status === "new") {
+					delete edition[index];
+				} else {
+					edition[index].status = "delete";
+				}
+			}
+		},
 		deleteElement() {
 			if (this.selectedElement.type === "led") {
-				for (const index of Object.keys(this.ledEdition)) {
-					if (this.ledEdition[index] === this.selectedElement.key) {
-						if (this.ledEdition[index].status === "new") {
-							delete this.ledEdition[index];
-						} else {
-							this.ledEdition[index].status = "delete";
-						}
-					}
-				}
+				this.markElementDeleted(this.ledEdition, this.selectedElement.key);
 			} else if (this.selectedElement.type === "box") {
-				for (const index of Object.keys(this.boxEdition)) {
-					if (this.boxEdition[index] === this.selectedElement.key) {
-						if (this.boxEdition[index].status === "new") {
-							delete this.boxEdition[index];
-						} else {
-							this.boxEdition[index].status = "delete";
-						}
-					}
-				}
+				this.markElementDeleted(this.boxEdition, this.selectedElement.key);
 			}
 			this.showMenu = false;
 			this.stopSelecting();
@@ -466,15 +462,15 @@ export default {
 			if (!grid) {
 				return;
 			}
-			let gridBoxPos = grid.getBoundingClientRect();
-			let left = gridBoxPos.left + window.scrollX;
-			let top = gridBoxPos.top + window.scrollY;
+			const gridBoxPos = grid.getBoundingClientRect();
+			const left = gridBoxPos.left + window.scrollX;
+			const top = gridBoxPos.top + window.scrollY;
 			this.gridSize.cellSizeX = Math.floor(gridBoxPos.width / this.storeData.xlength_store);
 			this.gridSize.cellSizeY = Math.floor(gridBoxPos.height / this.storeData.ylength_store);
-			let x = Math.floor((event.clientX - left + window.scrollX) / this.gridSize.cellSizeX);
-			let y = this.storeData.ylength_store - Math.floor((event.clientY - top + window.scrollY) / this.gridSize.cellSizeY) - 1;
+			const x = Math.floor((event.clientX - left + window.scrollX) / this.gridSize.cellSizeX);
+			const y = this.storeData.ylength_store - Math.floor((event.clientY - top + window.scrollY) / this.gridSize.cellSizeY) - 1;
 			// if a value is out of the grid, don't update the mousePos
-			if ((x < 0) || (y < 0) || (x >= this.storeData.xlength_store) || (y >= this.storeData.ylength_store)) {
+			if (x < 0 || y < 0 || x >= this.storeData.xlength_store || y >= this.storeData.ylength_store) {
 				return;
 			}
 			this.mousePos.X = x;
@@ -483,106 +479,106 @@ export default {
 				return;
 			}
 			if (this.selectedElement.type === "led") {
-				if (this.isBorderMode) {
-					const { side, index } = this.nearestSide(x, y, this.selectedElement.key.y_led);
-					this.selectedElement.key.y_led = side;
-					this.selectedElement.key.x_led = index;
-				} else {
-					this.selectedElement.key.x_led = x;
-					this.selectedElement.key.y_led = y;
-				}
+				this.dragLed(x, y);
 			} else if (this.selectedElement.type === "box") {
-				let dx = x - this.mouseClick.X;
-				let dy = y - this.mouseClick.Y;
-				if ((this.selectedElement.temp.xstart_box + dx < 0) ||
-					(this.selectedElement.temp.ystart_box + dy < 0) ||
-					(this.selectedElement.temp.xend_box + dx > this.storeData.xlength_store) ||
-					(this.selectedElement.temp.yend_box + dy > this.storeData.ylength_store)) {
-					return;
-				}
-				this.selectedElement.key.xstart_box = this.selectedElement.temp.xstart_box + dx;
-				this.selectedElement.key.ystart_box = this.selectedElement.temp.ystart_box + dy;
-				this.selectedElement.key.xend_box = this.selectedElement.temp.xend_box + dx;
-				this.selectedElement.key.yend_box = this.selectedElement.temp.yend_box + dy;
-				this.checkBoxConflict();
+				this.dragBox(x, y);
 			} else if (this.selectedElement.type === "border") {
-				if ((this.selectedElement.temp.direction === "ne" || this.selectedElement.temp.direction === "se" || this.selectedElement.temp.direction === "e") &&
-					(this.mousePos.X >= this.selectedElement.temp.xstart_box)) {
-					this.selectedElement.key.xend_box = this.selectedElement.temp.xend_box + (this.mousePos.X - this.mouseClick.X);
-				} else if ((this.selectedElement.temp.direction === "nw" || this.selectedElement.temp.direction === "ne" || this.selectedElement.temp.direction === "n") &&
-					(this.mousePos.Y >= this.selectedElement.temp.ystart_box)) {
-					this.selectedElement.key.yend_box = this.selectedElement.temp.yend_box + (this.mousePos.Y - this.mouseClick.Y);
-				} else if ((this.selectedElement.temp.direction === "nw" || this.selectedElement.temp.direction === "sw" || this.selectedElement.temp.direction === "w") &&
-					(this.mousePos.X < this.selectedElement.temp.xend_box)) {
-					this.selectedElement.key.xstart_box = this.selectedElement.temp.xstart_box + (this.mousePos.X - this.mouseClick.X);
-				} else if ((this.selectedElement.temp.direction === "sw" || this.selectedElement.temp.direction === "se" || this.selectedElement.temp.direction === "s") &&
-					(this.mousePos.Y < this.selectedElement.temp.yend_box)) {
-					this.selectedElement.key.ystart_box = this.selectedElement.temp.ystart_box + (this.mousePos.Y - this.mouseClick.Y);
-				}
-				this.checkBoxConflict();
+				this.dragBorder();
 			}
+		},
+		dragLed(x: number, y: number) {
+			if (this.isBorderMode) {
+				const { side, index } = this.nearestSide(x, y, this.selectedElement.key.y_led);
+				this.selectedElement.key.y_led = side;
+				this.selectedElement.key.x_led = index;
+			} else {
+				this.selectedElement.key.x_led = x;
+				this.selectedElement.key.y_led = y;
+			}
+		},
+		dragBox(x: number, y: number) {
+			const temp = this.selectedElement.temp;
+			const dx = x - this.mouseClick.X;
+			const dy = y - this.mouseClick.Y;
+			if (temp.xstart_box + dx < 0 ||
+				temp.ystart_box + dy < 0 ||
+				temp.xend_box + dx > this.storeData.xlength_store ||
+				temp.yend_box + dy > this.storeData.ylength_store) {
+				return;
+			}
+			this.selectedElement.key.xstart_box = temp.xstart_box + dx;
+			this.selectedElement.key.ystart_box = temp.ystart_box + dy;
+			this.selectedElement.key.xend_box = temp.xend_box + dx;
+			this.selectedElement.key.yend_box = temp.yend_box + dy;
+			this.checkBoxConflict();
+		},
+		dragBorder() {
+			const temp = this.selectedElement.temp;
+			const direction = temp.direction ?? "";
+			const dx = this.mousePos.X - this.mouseClick.X;
+			const dy = this.mousePos.Y - this.mouseClick.Y;
+			// only one edge moves per event, first matching rule wins
+			if (["ne", "se", "e"].includes(direction) && this.mousePos.X >= temp.xstart_box) {
+				this.selectedElement.key.xend_box = temp.xend_box + dx;
+			} else if (["nw", "ne", "n"].includes(direction) && this.mousePos.Y >= temp.ystart_box) {
+				this.selectedElement.key.yend_box = temp.yend_box + dy;
+			} else if (["nw", "sw", "w"].includes(direction) && this.mousePos.X < temp.xend_box) {
+				this.selectedElement.key.xstart_box = temp.xstart_box + dx;
+			} else if (["sw", "se", "s"].includes(direction) && this.mousePos.Y < temp.yend_box) {
+				this.selectedElement.key.ystart_box = temp.ystart_box + dy;
+			}
+			this.checkBoxConflict();
+		},
+		boxElement(box: StateTree): HTMLElement {
+			return (this.$refs["BOX" + box.id_box] as HTMLElement[])[0];
+		},
+		boxesOverlap(box1: StateTree, box2: StateTree) {
+			return box1.id_box !== box2.id_box &&
+				box1.xstart_box < box2.xend_box &&
+				box1.xend_box > box2.xstart_box &&
+				box1.ystart_box < box2.yend_box &&
+				box1.yend_box > box2.ystart_box;
 		},
 		checkBoxConflict(validate = false): boolean | undefined {
-			for (const box of Object.values<StateTree>(this.boxEdition)) {
-				(this.$refs["BOX" + box.id_box] as HTMLElement[])[0].classList.remove("conflict");
+			const boxes = Object.values<StateTree>(this.boxEdition);
+			for (const box of boxes) {
+				this.boxElement(box).classList.remove("conflict");
 			}
-			for (const box1 of Object.values<StateTree>(this.boxEdition)) {
-				for (const box2 of Object.values<StateTree>(this.boxEdition)) {
-					if (box1.id_box !== box2.id_box) {
-						if ((box1.xstart_box < box2.xend_box) &&
-						(box1.xend_box > box2.xstart_box) &&
-						(box1.ystart_box < box2.yend_box) &&
-						(box1.yend_box > box2.ystart_box)) {
-							(this.$refs["BOX" + box1.id_box] as HTMLElement[])[0].classList.add("conflict");
-							(this.$refs["BOX" + box2.id_box] as HTMLElement[])[0].classList.add("conflict");
-						}
-					}
+			for (const box1 of boxes) {
+				for (const box2 of boxes.filter((other) => this.boxesOverlap(box1, other))) {
+					this.boxElement(box1).classList.add("conflict");
+					this.boxElement(box2).classList.add("conflict");
 				}
 			}
-			if (validate) {
-				let BreakException = {};
-				try {
-					for (const box of Object.values<StateTree>(this.boxEdition)) {
-						if ((this.$refs["BOX" + box.id_box] as HTMLElement[])[0].classList.contains("conflict")) {
-							this.addNotification({ message: this.t("store.BoxConflict"), type: "error" });
-							throw BreakException;
-						}
-					}
-					return true;
-				} catch (e) {
-					return false;
-				}
+			if (!validate) {
+				return undefined;
 			}
+			if (boxes.some((box) => this.boxElement(box).classList.contains("conflict"))) {
+				this.addNotification({ message: this.t("store.BoxConflict"), type: "error" });
+				return false;
+			}
+			return true;
+		},
+		isLedOutOfGrid(led: StateTree) {
+			if (led?.status === "delete") {
+				return false;
+			}
+			if (this.isBorderMode) {
+				const onVerticalSide = led.y_led === LedBorderSide.Left || led.y_led === LedBorderSide.Right;
+				return led.x_led >= (onVerticalSide ? this.storeData.ylength_store : this.storeData.xlength_store);
+			}
+			return led.x_led >= this.storeData.xlength_store || led.y_led >= this.storeData.ylength_store;
+		},
+		isBoxOutOfGrid(box: StateTree) {
+			return box?.status !== "delete" &&
+				(box.xend_box > this.storeData.xlength_store || box.yend_box > this.storeData.ylength_store);
 		},
 		checkOutOfGrid() {
-			let errorLed = false;
-			for (const led of Object.keys(this.ledEdition)) {
-				const ledData = this.ledEdition[led];
-				if (ledData?.status === "delete") {
-					continue;
-				}
-				if (this.isBorderMode) {
-					const maxPosition = (ledData.y_led === LedBorderSide.Left || ledData.y_led === LedBorderSide.Right) ? this.storeData.ylength_store : this.storeData.xlength_store;
-					if (ledData.x_led >= maxPosition) {
-						errorLed = true;
-					}
-				} else if ((ledData.x_led >= this.storeData.xlength_store) || (ledData.y_led >= this.storeData.ylength_store)) {
-					errorLed = true;
-				}
-			}
-			if (errorLed) {
+			if (Object.values<StateTree>(this.ledEdition).some((led) => this.isLedOutOfGrid(led))) {
 				this.addNotification({ message: this.t("store.LedOutOfGrid"), type: "error" });
 				return false;
 			}
-			let errorBox = false;
-			for (const box of Object.keys(this.boxEdition)) {
-				if ((this.boxEdition[box].xend_box > this.storeData.xlength_store) || (this.boxEdition[box].yend_box > this.storeData.ylength_store)) {
-					if (this.boxEdition[box]?.status !== "delete") {
-						errorBox = true;
-					}
-				}
-			}
-			if (errorBox) {
+			if (Object.values<StateTree>(this.boxEdition).some((box) => this.isBoxOutOfGrid(box))) {
 				this.addNotification({ message: this.t("store.BoxOutOfGrid"), type: "error" });
 				return false;
 			}

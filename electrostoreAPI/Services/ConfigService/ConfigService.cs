@@ -1,5 +1,6 @@
 using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Extensions;
 
 namespace ElectrostoreAPI.Services.ConfigService;
 
@@ -54,7 +55,7 @@ public class ConfigService : IConfigService
 
     public bool GetDemoMode() => _configuration.GetValue<bool>("DemoMode");
 
-    public string GetAppLanguage() => _configuration.GetValue<string>("AppLanguage") ?? "en";
+    public string GetAppLanguage() => _configuration.GetAppLanguage();
 
     public string[] GetAllowedImageExtensions() => [.. FieldLengths.AllowedImageMimeTypes.Values];
 

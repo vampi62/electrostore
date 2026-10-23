@@ -24,6 +24,8 @@ public class ProjectCommentService : IProjectCommentService
     public async Task<PaginatedResponseDto<ReadExtendedProjectCommentDto>> GetProjectCommentsByProjectId(int projectId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandProject = expand?.Contains("project") == true;
+        var expandUser = expand?.Contains("user") == true;
         // check if the project exists
         if (!await _context.Projects.AnyAsync(p => p.id_project == projectId))
         {
@@ -32,11 +34,11 @@ public class ProjectCommentService : IProjectCommentService
         var query = _context.ProjectsComments.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_project", search_type = "eq", value = projectId.ToString() });
-        if (expand != null && expand.Contains("project"))
+        if (expandProject)
         {
             query = query.Include(p => p.Project);
         }
-        if (expand != null && expand.Contains("user"))
+        if (expandUser)
         {
             query = query.Include(p => p.User);
         }
@@ -48,6 +50,8 @@ public class ProjectCommentService : IProjectCommentService
     public async Task<PaginatedResponseDto<ReadExtendedProjectCommentDto>> GetProjectCommentsByUserId(int userId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandProject = expand?.Contains("project") == true;
+        var expandUser = expand?.Contains("user") == true;
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
         {
@@ -56,11 +60,11 @@ public class ProjectCommentService : IProjectCommentService
         var query = _context.ProjectsComments.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_user", search_type = "eq", value = userId.ToString() });
-        if (expand != null && expand.Contains("project"))
+        if (expandProject)
         {
             query = query.Include(pc => pc.Project);
         }
-        if (expand != null && expand.Contains("user"))
+        if (expandUser)
         {
             query = query.Include(pc => pc.User);
         }
@@ -71,13 +75,15 @@ public class ProjectCommentService : IProjectCommentService
 
     public async Task<ReadExtendedProjectCommentDto> GetProjectCommentsById(int id, int? userId = null, int? projectId = null, List<string>? expand = null)
     {
+        var expandProject = expand?.Contains("project") == true;
+        var expandUser = expand?.Contains("user") == true;
         var query = _context.ProjectsComments.AsQueryable();
         query = query.Where(pc => pc.id_project_comment == id && (projectId == null || pc.id_project == projectId) && (userId == null || pc.id_user == userId));
-        if (expand != null && expand.Contains("project"))
+        if (expandProject)
         {
             query = query.Include(pc => pc.Project);
         }
-        if (expand != null && expand.Contains("user"))
+        if (expandUser)
         {
             query = query.Include(pc => pc.User);
         }

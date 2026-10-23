@@ -37,6 +37,8 @@ public class UserService : IUserService
     public async Task<PaginatedResponseDto<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandProjectComments = expand?.Contains("project_comments") == true;
+        var expandCommandComments = expand?.Contains("command_comments") == true;
         var query = _context.Users.AsQueryable();
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_user", order = "asc" })
@@ -46,8 +48,8 @@ public class UserService : IUserService
                     User = u,
                     ProjectsCommentsCount = u.ProjectsComments.Count,
                     CommandsCommentsCount = u.CommandsComments.Count,
-                    ProjectsComments = expand != null && expand.Contains("project_comments") ? u.ProjectsComments.Take(20).ToList() : null,
-                    CommandsComments = expand != null && expand.Contains("command_comments") ? u.CommandsComments.Take(20).ToList() : null
+                    ProjectsComments = expandProjectComments ? u.ProjectsComments.Take(20).ToList() : null,
+                    CommandsComments = expandCommandComments ? u.CommandsComments.Take(20).ToList() : null
                 },
                 user => user.Select(u =>
                 {
@@ -92,10 +94,9 @@ public class UserService : IUserService
         {
             var notification = new NotificationMessage
             {
-                Types = ["email"],
                 RecipientEmail = newUser.email_user,
                 TemplateId = "account-created",
-                Language = _configuration.GetValue<string>("AppLanguage") ?? "en",
+                Language = _configuration.GetAppLanguage(),
                 TemplateValues = new Dictionary<string, string>
                 {
                     ["firstName"] = newUser.firstname_user,
@@ -139,6 +140,8 @@ public class UserService : IUserService
 
     public async Task<ReadExtendedUserDto> GetUserById(int id, List<string>? expand = null)
     {
+        var expandProjectComments = expand?.Contains("project_comments") == true;
+        var expandCommandComments = expand?.Contains("command_comments") == true;
         var query = _context.Users.AsQueryable();
         query = query.Where(u => u.id_user == id);
         var user = await query
@@ -147,8 +150,8 @@ public class UserService : IUserService
                 User = u,
                 ProjectsCommentsCount = u.ProjectsComments.Count,
                 CommandsCommentsCount = u.CommandsComments.Count,
-                ProjectsComments = expand != null && expand.Contains("project_comments") ? u.ProjectsComments.Take(20).ToList() : null,
-                CommandsComments = expand != null && expand.Contains("command_comments") ? u.CommandsComments.Take(20).ToList() : null
+                ProjectsComments = expandProjectComments ? u.ProjectsComments.Take(20).ToList() : null,
+                CommandsComments = expandCommandComments ? u.CommandsComments.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"User with id '{id}' not found");
         return _mapper.Map<ReadExtendedUserDto>(user.User) with
@@ -162,24 +165,7 @@ public class UserService : IUserService
 
     public async Task<ReadUserDto> UpdateUser(int id, UpdateUserDto userDto)
     {
-        var clientId = _sessionService.GetClientId();
-        var clientRole = _sessionService.GetClientRole();
-        if (clientId != id && clientRole < UserRole.Admin)
-        {
-            throw new UnauthorizedAccessException("You are not allowed to update this user");
-        }
-        var authMethod = _sessionService.GetTokenAuthMethod();
-        if (!authMethod.StartsWith("sso_"))
-        {
-            if (userDto.current_password_user is null)
-            {
-                throw new InvalidOperationException("Non-SSO users must provide their current password to update an account");
-            }
-            if (!BCrypt.Net.BCrypt.Verify(userDto.current_password_user, (await _context.Users.FindAsync(clientId))!.password_user))
-            {
-                throw new InvalidOperationException("Your current password is incorrect");
-            }
-        }
+        await EnsureCanUpdateUser(id, userDto);
         var userToUpdate = await _context.Users.FindAsync(id) ?? throw new KeyNotFoundException($"User with id '{id}' not found");
         if (userDto.name_user is not null)
         {
@@ -221,6 +207,28 @@ public class UserService : IUserService
         return _mapper.Map<ReadUserDto>(userToUpdate);
     }
 
+    private async Task EnsureCanUpdateUser(int id, UpdateUserDto userDto)
+    {
+        var clientId = _sessionService.GetClientId();
+        var clientRole = _sessionService.GetClientRole();
+        if (clientId != id && clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not allowed to update this user");
+        }
+        var authMethod = _sessionService.GetTokenAuthMethod();
+        if (!authMethod.StartsWith("sso_"))
+        {
+            if (userDto.current_password_user is null)
+            {
+                throw new InvalidOperationException("Non-SSO users must provide their current password to update an account");
+            }
+            if (!BCrypt.Net.BCrypt.Verify(userDto.current_password_user, (await _context.Users.FindAsync(clientId))!.password_user))
+            {
+                throw new InvalidOperationException("Your current password is incorrect");
+            }
+        }
+    }
+
     public async Task DeleteUser(int id)
     {
         var clientId = _sessionService.GetClientId();
@@ -243,10 +251,9 @@ public class UserService : IUserService
         {
             var notification = new NotificationMessage
             {
-                Types = ["email"],
                 RecipientEmail = userToDelete.email_user,
                 TemplateId = "account-deleted",
-                Language = _configuration.GetValue<string>("AppLanguage") ?? "en"
+                Language = _configuration.GetAppLanguage()
             };
             await _kafkaProducerService.PublishAsync(
                 KafkaNotificationTopic,
@@ -287,7 +294,7 @@ public class UserService : IUserService
         {
             try
             {
-                var lang = _configuration.GetValue<string>("AppLanguage") ?? "en";
+                var lang = _configuration.GetAppLanguage();
                 var values = new Dictionary<string, string>
                 {
                     ["oldEmail"] = oldUserEmail,
@@ -295,8 +302,7 @@ public class UserService : IUserService
                 };
                 var notificationNew = new NotificationMessage
                 {
-                    Types = ["email"],
-                    RecipientEmail = userToUpdate.email_user,
+                        RecipientEmail = userToUpdate.email_user,
                     TemplateId = "email-changed",
                     Language = lang,
                     TemplateValues = values
@@ -308,8 +314,7 @@ public class UserService : IUserService
                 );
                 var notificationOld = new NotificationMessage
                 {
-                    Types = ["email"],
-                    RecipientEmail = oldUserEmail,
+                        RecipientEmail = oldUserEmail,
                     TemplateId = "email-changed",
                     Language = lang,
                     TemplateValues = values
@@ -331,10 +336,9 @@ public class UserService : IUserService
             {
                 var notification = new NotificationMessage
                 {
-                    Types = ["email"],
-                    RecipientEmail = userToUpdate.email_user,
+                        RecipientEmail = userToUpdate.email_user,
                     TemplateId = "password-changed",
-                    Language = _configuration.GetValue<string>("AppLanguage") ?? "en"
+                    Language = _configuration.GetAppLanguage()
                 };
                 await _kafkaProducerService.PublishAsync(
                     KafkaNotificationTopic,
@@ -353,10 +357,9 @@ public class UserService : IUserService
             {
                 var notification = new NotificationMessage
                 {
-                    Types = ["email"],
-                    RecipientEmail = userToUpdate.email_user,
+                        RecipientEmail = userToUpdate.email_user,
                     TemplateId = "account-updated",
-                    Language = _configuration.GetValue<string>("AppLanguage") ?? "en"
+                    Language = _configuration.GetAppLanguage()
                 };
                 await _kafkaProducerService.PublishAsync(
                     KafkaNotificationTopic,

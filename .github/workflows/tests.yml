@@ -37,6 +37,21 @@ on:
         required: false
         type: string
         default: ''
+      sonar_quality_gate:
+        description: 'Make the SonarQube scan wait for, and fail on, the server-side Quality Gate (sonar.qualitygate.wait).'
+        required: false
+        type: boolean
+        default: true
+      sonar_fail_severities:
+        description: 'Fail the job if an open SonarQube issue has one of these impact severities (comma-separated: HIGH,MEDIUM,LOW). Empty disables the check.'
+        required: false
+        type: string
+        default: ''
+      sonar_fail_qualities:
+        description: 'Restrict sonar_fail_severities to these software qualities (comma-separated: MAINTAINABILITY,RELIABILITY,SECURITY). Empty means any quality; used alone it fails on any severity.'
+        required: false
+        type: string
+        default: ''
   workflow_dispatch:
     inputs:
       branch:
@@ -73,6 +88,21 @@ on:
         required: false
         type: string
         default: ''
+      sonar_quality_gate:
+        description: 'Make the SonarQube scan wait for, and fail on, the server-side Quality Gate (sonar.qualitygate.wait).'
+        required: false
+        type: boolean
+        default: true
+      sonar_fail_severities:
+        description: 'Fail the job if an open SonarQube issue has one of these impact severities (comma-separated: HIGH,MEDIUM,LOW). Empty disables the check.'
+        required: false
+        type: string
+        default: ''
+      sonar_fail_qualities:
+        description: 'Restrict sonar_fail_severities to these software qualities (comma-separated: MAINTAINABILITY,RELIABILITY,SECURITY). Empty means any quality; used alone it fails on any severity.'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   plan:
@@ -98,10 +128,10 @@ jobs:
           --argjson api "$API" --argjson notif "$NOTIF" --argjson cron "$CRON" \
           --argjson worker "$WORKER" '
           [
-            {service_name: "API",    source_dir: "electrostoreAPI",    sonar_key: "electrostore-api",    coverage_exclusions: "**/Controllers/**,**/Program.cs", enabled: $api},
-            {service_name: "NOTIF",  source_dir: "electrostoreNOTIF",  sonar_key: "electrostore-notif",  coverage_exclusions: "**/Program.cs",                   enabled: $notif},
-            {service_name: "CRON",   source_dir: "electrostoreCRON",   sonar_key: "electrostore-cron",   coverage_exclusions: "**/Program.cs",                   enabled: $cron},
-            {service_name: "WORKER", source_dir: "electrostoreWORKER", sonar_key: "electrostore-worker", coverage_exclusions: "**/Program.cs",                   enabled: $worker}
+            {service_name: "API",    source_dir: "electrostoreAPI",    sonar_key: "electrostore-api",    coverage_exclusions: "**/Controllers/**,**/Program.cs", issue_ignores: "csharpsquid:S107|**/Services/AuthService/AuthService.cs", enabled: $api},
+            {service_name: "NOTIF",  source_dir: "electrostoreNOTIF",  sonar_key: "electrostore-notif",  coverage_exclusions: "**/Program.cs",                   issue_ignores: "", enabled: $notif},
+            {service_name: "CRON",   source_dir: "electrostoreCRON",   sonar_key: "electrostore-cron",   coverage_exclusions: "**/Program.cs",                   issue_ignores: "", enabled: $cron},
+            {service_name: "WORKER", source_dir: "electrostoreWORKER", sonar_key: "electrostore-worker", coverage_exclusions: "**/Program.cs",                   issue_ignores: "", enabled: $worker}
           ] | map(select(.enabled) | del(.enabled))')
         {
           echo "front=$FRONT"
@@ -147,7 +177,24 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         PROJECT_KEY: "${{ needs.plan.outputs.sonar_prefix }}-${{ matrix.sonar_key }}"
+        QUALITY_GATE_WAIT: ${{ inputs.sonar_quality_gate }}
+        ISSUE_IGNORES: ${{ matrix.issue_ignores }}
       run: |
+        # Issue exclusions, one "ruleKey|fileGlob" entry per ';' (e.g. constructors with many injected
+        # dependencies: the S107 threshold can only be changed in the SonarQube quality profile, not here).
+        ignore_args=()
+        if [ -n "$ISSUE_IGNORES" ]; then
+          ids=()
+          i=0
+          IFS=';' read -ra entries <<< "$ISSUE_IGNORES"
+          for entry in "${entries[@]}"; do
+            i=$((i + 1))
+            ids+=("e$i")
+            ignore_args+=("/d:sonar.issue.ignore.multicriteria.e$i.ruleKey=${entry%%|*}")
+            ignore_args+=("/d:sonar.issue.ignore.multicriteria.e$i.resourceKey=${entry#*|}")
+          done
+          ignore_args+=("/d:sonar.issue.ignore.multicriteria=$(IFS=,; echo "${ids[*]}")")
+        fi
         dotnet tool install --global dotnet-sonarscanner
         dotnet sonarscanner begin /k:"$PROJECT_KEY" \
           /d:sonar.host.url="$SONAR_HOST_URL" \
@@ -155,10 +202,11 @@ jobs:
           /d:sonar.exclusions="**/Migrations/**" \
           /d:sonar.cpd.exclusions="**/DTO/**,**/Models/**" \
           /d:sonar.coverage.exclusions="${{ matrix.coverage_exclusions }}" \
-          /d:sonar.qualitygate.wait=true \
+          /d:sonar.qualitygate.wait="$QUALITY_GATE_WAIT" \
           /d:sonar.qualitygate.timeout=600 \
           /d:sonar.cs.vstest.reportsPaths=../${{ matrix.source_dir }}/TestResults/*.trx \
-          /d:sonar.cs.opencover.reportsPaths=../${{ matrix.source_dir }}/TestResults/**/coverage.opencover.xml
+          /d:sonar.cs.opencover.reportsPaths=../${{ matrix.source_dir }}/TestResults/**/coverage.opencover.xml \
+          "${ignore_args[@]}"
         dotnet build
         dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
     - name: SonarQube Summary
@@ -169,6 +217,8 @@ jobs:
         sonar-host-url: ${{ secrets.SONAR_HOST_URL }}
         sonar-token: ${{ secrets.SONAR_TOKEN }}
         title: ${{ matrix.service_name }}
+        fail-on-severities: ${{ inputs.sonar_fail_severities }}
+        fail-on-qualities: ${{ inputs.sonar_fail_qualities }}
 
   test-frontend:
     name: tests - FRONT
@@ -223,8 +273,13 @@ jobs:
           -Dsonar.projectName=${{ needs.plan.outputs.sonar_prefix }}-electrostore-front
           -Dsonar.sources=electrostoreFRONT
           -Dsonar.javascript.lcov.reportPaths=tests/electrostoreFRONT/coverage/lcov.info
+          -Dsonar.issue.ignore.multicriteria=e1,e2
+          -Dsonar.issue.ignore.multicriteria.e1.ruleKey=typescript:S107
+          -Dsonar.issue.ignore.multicriteria.e1.resourceKey=**/helpers/nestedResource.ts
+          -Dsonar.issue.ignore.multicriteria.e2.ruleKey=typescript:S107
+          -Dsonar.issue.ignore.multicriteria.e2.resourceKey=**/stores/stores.store.ts
           -Dsonar.cfamily.cache.enabled=false
-          -Dsonar.qualitygate.wait=true
+          -Dsonar.qualitygate.wait=${{ inputs.sonar_quality_gate }}
           -Dsonar.qualitygate.timeout=600
     - name: SonarQube Summary
       if: ${{ !cancelled() && steps.sonarqube.outcome != 'skipped' }}
@@ -234,3 +289,5 @@ jobs:
         sonar-host-url: ${{ secrets.SONAR_HOST_URL }}
         sonar-token: ${{ secrets.SONAR_TOKEN }}
         title: FRONT
+        fail-on-severities: ${{ inputs.sonar_fail_severities }}
+        fail-on-qualities: ${{ inputs.sonar_fail_qualities }}

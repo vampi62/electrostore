@@ -326,12 +326,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private void SetupImageSaving()
         {
-            _fileService
-                .Setup(f => f.SaveFile(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<System.IO.Stream>(), It.IsAny<bool>()))
-                .ReturnsAsync(new SaveFileResult { path = "itemImages/1/pic.png", mime_type = "image/png" });
-            _fileService
-                .Setup(f => f.GenerateThumbnail(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()))
-                .ReturnsAsync(new SaveFileResult { path = "itemImagesThumbnails/1/pic.png", mime_type = "image/png" });
+            _fileService.SetupImageWithThumbnailSaving("itemImages/1/pic.png", "itemImagesThumbnails/1/pic.png");
         }
 
         private async Task<Items> SeedItemWithRelations(ApplicationDbContext context)

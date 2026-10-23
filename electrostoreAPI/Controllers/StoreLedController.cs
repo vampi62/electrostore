@@ -109,9 +109,18 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpPost("{id_led}/show")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> showLedBox([FromRoute] int id_store, [FromRoute] int id_led, [FromQuery] int red, [FromQuery] int green, [FromQuery] int blue, [FromQuery] int timeshow, [FromQuery] int animation)
+        public async Task<ActionResult> ShowLedById([FromRoute] int id_store, [FromRoute] int id_led, [FromQuery] int red, [FromQuery] int green, [FromQuery] int blue, [FromQuery] int timeshow, [FromQuery] int animation)
         {
             await _ledService.ShowLedById(id_store, id_led, red, green, blue, timeshow, animation);
+            return NoContent();
+        }
+
+        // Led-related action exposed under the box route: it only depends on the led service
+        [HttpPost("~/api/store/{id_store}/box/{id_box}/show")]
+        [Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult> ShowLedsByBox([FromRoute] int id_store, [FromRoute] int id_box, [FromQuery] int red, [FromQuery] int green, [FromQuery] int blue, [FromQuery] int timeshow, [FromQuery] int animation)
+        {
+            await _ledService.ShowLedsByBox(id_store, id_box, red, green, blue, timeshow, animation);
             return NoContent();
         }
     }

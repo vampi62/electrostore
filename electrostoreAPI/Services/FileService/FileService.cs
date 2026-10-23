@@ -1,12 +1,12 @@
 using ElectrostoreAPI.Dto;
 using Minio;
 using Minio.DataModel.Args;
-using SkiaSharp;
 
 namespace ElectrostoreAPI.Services.FileService;
 
 public class FileService : IFileService
 {
+    private const string S3NotConfiguredMessage = "S3 is enabled but MinIO client is not configured";
     private readonly IMinioClient? _minioClient;
     private readonly bool _s3Enabled;
     private readonly string _s3BucketName;
@@ -28,7 +28,7 @@ public class FileService : IFileService
                 return new GetFileResult
                 {
                     success = false,
-                    error_message = "S3 is enabled but MinIO client is not configured",
+                    error_message = S3NotConfiguredMessage,
                     mime_type = ""
                 };
             }
@@ -41,25 +41,7 @@ public class FileService : IFileService
                     .WithCallbackStream(stream => stream.CopyTo(objectContent))
                 );
                 objectContent.Position = 0;
-                // try to get the mime type from the file extension
-                var ext = Path.GetExtension(path).ToLower();
-                var mimeType = ext switch
-                {
-                    ".png" => "image/png",
-                    ".jpg" => "image/jpeg",
-                    ".jpeg" => "image/jpeg",
-                    ".gif" => "image/gif",
-                    ".bmp" => "image/bmp",
-                    ".pdf" => "application/pdf",
-                    ".doc" => "application/msword",
-                    ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    ".xls" => "application/vnd.ms-excel",
-                    ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    ".ppt" => "application/vnd.ms-powerpoint",
-                    ".pptx" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                    ".txt" => "text/plain",
-                    _ => "application/octet-stream"
-                };
+                var mimeType = GetMimeTypeFromExtension(path);
                 return new GetFileResult
                 {
                     success = true,
@@ -82,25 +64,7 @@ public class FileService : IFileService
             var localPath = Path.Combine(_localFilesPath, path);
             if (File.Exists(localPath))
             {
-                // try to get the mime type from the file extension
-                var ext = Path.GetExtension(path).ToLower();
-                var mimeType = ext switch
-                {
-                    ".png" => "image/png",
-                    ".jpg" => "image/jpeg",
-                    ".jpeg" => "image/jpeg",
-                    ".gif" => "image/gif",
-                    ".bmp" => "image/bmp",
-                    ".pdf" => "application/pdf",
-                    ".doc" => "application/msword",
-                    ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    ".xls" => "application/vnd.ms-excel",
-                    ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    ".ppt" => "application/vnd.ms-powerpoint",
-                    ".pptx" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                    ".txt" => "text/plain",
-                    _ => "application/octet-stream"
-                };
+                var mimeType = GetMimeTypeFromExtension(path);
                 var FileStream = new MemoryStream();
                 using (var stream = new FileStream(localPath, FileMode.Open, FileAccess.Read))
                 {
@@ -163,73 +127,10 @@ public class FileService : IFileService
             fileName = fileName[..100];
         }
         var fileExt = Path.GetExtension(fullFileName);
-        var newName = fileName + fileExt;
-        var i = 1;
-        string filePath;
         // if S3 is used, upload the file to S3 and return the path
-        if (_s3Enabled)
-        {
-            if (_minioClient == null)
-            {
-                throw new InvalidOperationException("S3 is enabled but MinIO client is not configured");
-            }
-            var baseS3Url = basePath + Path.AltDirectorySeparatorChar;
-            if (baseS3Url.StartsWith(Path.AltDirectorySeparatorChar))
-            {
-                baseS3Url = baseS3Url[1..];
-            }
-            filePath = baseS3Url + newName;
-            while (!overwrite)
-            {
-                try
-                {
-                    await _minioClient.StatObjectAsync(new StatObjectArgs()
-                        .WithBucket(_s3BucketName)
-                        .WithObject(filePath)
-                    );
-                    newName = $"{fileName}({i}){fileExt}";
-                    filePath = baseS3Url + newName;
-                    if (filePath.StartsWith(Path.AltDirectorySeparatorChar))
-                    {
-                        filePath = filePath[1..];
-                    }
-                    i++;
-                }
-                catch (Minio.Exceptions.ObjectNotFoundException)
-                {
-                    break;
-                }
-            }
-            using (var uploadStream = new MemoryStream())
-            {
-                await data.CopyToAsync(uploadStream);
-                uploadStream.Position = 0;
-                await _minioClient.PutObjectAsync(new PutObjectArgs()
-                    .WithBucket(_s3BucketName)
-                    .WithObject(filePath)
-                    .WithStreamData(uploadStream)
-                    .WithObjectSize(uploadStream.Length)
-                    .WithContentType(contentType)
-                );
-            }
-        }
-        else
-        {
-            if (!overwrite)
-            {
-                while (File.Exists(Path.Combine(_localFilesPath, basePath, newName)))
-                {
-                    newName = $"{fileName}({i}){fileExt}";
-                    i++;
-                }
-            }
-            filePath = Path.Combine(basePath, newName);
-            var localPath = Path.Combine(_localFilesPath, filePath);
-            using (var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write))
-            {
-                await data.CopyToAsync(fileStream);
-            }
-        }
+        var filePath = _s3Enabled
+            ? await SaveFileToS3(basePath, fileName, fileExt, contentType, data, overwrite)
+            : await SaveFileToLocal(basePath, fileName, fileExt, data, overwrite);
         return new SaveFileResult
         {
             path = filePath,
@@ -237,49 +138,102 @@ public class FileService : IFileService
         };
     }
 
-    public async Task<SaveFileResult> GenerateThumbnail(string sourcePath, string destPath, int width, int height)
+    private async Task<string> SaveFileToS3(string basePath, string fileName, string fileExt, string contentType, Stream data, bool overwrite)
     {
-        // if S3 is used, get the file from S3, generate the thumbnail and upload it back to S3
-        var file = await GetFile(sourcePath);
-        if (!file.success || file.file_stream == null)
+        var minioClient = GetMinioClientOrThrow();
+        var baseS3Url = basePath + Path.AltDirectorySeparatorChar;
+        if (baseS3Url.StartsWith(Path.AltDirectorySeparatorChar))
         {
-            return new SaveFileResult
-            {
-                path = "",
-                mime_type = ""
-            };
+            baseS3Url = baseS3Url[1..];
         }
-        using var original = SKBitmap.Decode(file.file_stream);
-        if (original == null)
+        var filePath = baseS3Url + fileName + fileExt;
+        var i = 1;
+        while (!overwrite && await S3ObjectExists(minioClient, filePath))
         {
-            return new SaveFileResult
+            filePath = baseS3Url + $"{fileName}({i}){fileExt}";
+            if (filePath.StartsWith(Path.AltDirectorySeparatorChar))
             {
-                path = "",
-                mime_type = ""
-            };
+                filePath = filePath[1..];
+            }
+            i++;
         }
-        // fit inside width x height while keeping the aspect ratio
-        var scale = Math.Min((float)width / original.Width, (float)height / original.Height);
-        var info = new SKImageInfo(
-            Math.Max(1, (int)(original.Width * scale)),
-            Math.Max(1, (int)(original.Height * scale)));
-        using var resized = original.Resize(info, new SKSamplingOptions(SKCubicResampler.Mitchell));
-        using var data = resized.Encode(SKEncodedImageFormat.Jpeg, 85);
-        var ms = new MemoryStream();
-        data.SaveTo(ms);
-        ms.Position = 0;
-        return await SaveFile(destPath, Path.GetFileName(sourcePath), "image/jpeg", ms);
+        using var uploadStream = new MemoryStream();
+        await data.CopyToAsync(uploadStream);
+        uploadStream.Position = 0;
+        await minioClient.PutObjectAsync(new PutObjectArgs()
+            .WithBucket(_s3BucketName)
+            .WithObject(filePath)
+            .WithStreamData(uploadStream)
+            .WithObjectSize(uploadStream.Length)
+            .WithContentType(contentType)
+        );
+        return filePath;
+    }
+
+    private async Task<bool> S3ObjectExists(IMinioClient minioClient, string filePath)
+    {
+        try
+        {
+            await minioClient.StatObjectAsync(new StatObjectArgs()
+                .WithBucket(_s3BucketName)
+                .WithObject(filePath)
+            );
+            return true;
+        }
+        catch (Minio.Exceptions.ObjectNotFoundException)
+        {
+            return false;
+        }
+    }
+
+    private async Task<string> SaveFileToLocal(string basePath, string fileName, string fileExt, Stream data, bool overwrite)
+    {
+        var newName = fileName + fileExt;
+        var i = 1;
+        while (!overwrite && File.Exists(Path.Combine(_localFilesPath, basePath, newName)))
+        {
+            newName = $"{fileName}({i}){fileExt}";
+            i++;
+        }
+        var filePath = Path.Combine(basePath, newName);
+        var localPath = Path.Combine(_localFilesPath, filePath);
+        using var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write);
+        await data.CopyToAsync(fileStream);
+        return filePath;
+    }
+
+    private IMinioClient GetMinioClientOrThrow()
+    {
+        return _minioClient ?? throw new InvalidOperationException(S3NotConfiguredMessage);
+    }
+
+    private static string GetMimeTypeFromExtension(string path)
+    {
+        var ext = Path.GetExtension(path).ToLower();
+        return ext switch
+        {
+            ".png" => "image/png",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".gif" => "image/gif",
+            ".bmp" => "image/bmp",
+            ".pdf" => "application/pdf",
+            ".doc" => "application/msword",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".xls" => "application/vnd.ms-excel",
+            ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ".ppt" => "application/vnd.ms-powerpoint",
+            ".pptx" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            ".txt" => "text/plain",
+            _ => "application/octet-stream"
+        };
     }
 
     public async Task DeleteFile(string path)
     {
         if (_s3Enabled)
         {
-            if (_minioClient == null)
-            {
-                throw new InvalidOperationException("S3 is enabled but MinIO client is not configured");
-            }
-            await _minioClient.RemoveObjectAsync(new RemoveObjectArgs()
+            var minioClient = GetMinioClientOrThrow();
+            await minioClient.RemoveObjectAsync(new RemoveObjectArgs()
                 .WithBucket(_s3BucketName)
                 .WithObject(path)
             );
@@ -314,10 +268,7 @@ public class FileService : IFileService
     {
         if (_s3Enabled)
         {
-            if (_minioClient == null)
-            {
-                throw new InvalidOperationException("S3 is enabled but MinIO client is not configured");
-            }
+            var minioClient = GetMinioClientOrThrow();
             // S3 removes objects, so we need to list all objects with the given prefix and delete them
             var listArgs = new ListObjectsArgs()
                 .WithBucket(_s3BucketName)
@@ -325,7 +276,7 @@ public class FileService : IFileService
                 .WithRecursive(true);
             // Collect keys from the IAsyncEnumerable<Item>
             var keys = new List<string>();
-            await foreach (var item in _minioClient.ListObjectsEnumAsync(listArgs))
+            await foreach (var item in minioClient.ListObjectsEnumAsync(listArgs))
             {
                 if (item?.Key != null)
                 {
@@ -334,7 +285,7 @@ public class FileService : IFileService
             }
             foreach (var key in keys)
             {
-                await _minioClient.RemoveObjectAsync(new RemoveObjectArgs()
+                await minioClient.RemoveObjectAsync(new RemoveObjectArgs()
                     .WithBucket(_s3BucketName)
                     .WithObject(key)
                 );

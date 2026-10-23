@@ -20,6 +20,8 @@ public class CommandItemService : ICommandItemService
     public async Task<PaginatedResponseDto<ReadExtendedCommandItemDto>> GetCommandsItemsByCommandId(int commandId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandItem = expand?.Contains("item") == true;
+        var expandCommand = expand?.Contains("command") == true;
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == commandId))
         {
@@ -28,11 +30,11 @@ public class CommandItemService : ICommandItemService
         var query = _context.CommandsItems.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_command", search_type = "eq", value = commandId.ToString() });
-        if (expand != null && expand.Contains("item"))
+        if (expandItem)
         {
             query = query.Include(ci => ci.Item);
         }
-        if (expand != null && expand.Contains("command"))
+        if (expandCommand)
         {
             query = query.Include(ci => ci.Command);
         }
@@ -44,6 +46,8 @@ public class CommandItemService : ICommandItemService
     public async Task<PaginatedResponseDto<ReadExtendedCommandItemDto>> GetCommandsItemsByItemId(int itemId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandItem = expand?.Contains("item") == true;
+        var expandCommand = expand?.Contains("command") == true;
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
@@ -52,11 +56,11 @@ public class CommandItemService : ICommandItemService
         var query = _context.CommandsItems.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_item", search_type = "eq", value = itemId.ToString() });
-        if (expand != null && expand.Contains("item"))
+        if (expandItem)
         {
             query = query.Include(ci => ci.Item);
         }
-        if (expand != null && expand.Contains("command"))
+        if (expandCommand)
         {
             query = query.Include(ci => ci.Command);
         }
@@ -67,13 +71,15 @@ public class CommandItemService : ICommandItemService
 
     public async Task<ReadExtendedCommandItemDto> GetCommandItemById(int commandId, int itemId, List<string>? expand = null)
     {
+        var expandItem = expand?.Contains("item") == true;
+        var expandCommand = expand?.Contains("command") == true;
         var query = _context.CommandsItems.AsQueryable();
         query = query.Where(ci => ci.id_command == commandId && ci.id_item == itemId);
-        if (expand != null && expand.Contains("item"))
+        if (expandItem)
         {
             query = query.Include(ci => ci.Item);
         }
-        if (expand != null && expand.Contains("command"))
+        if (expandCommand)
         {
             query = query.Include(ci => ci.Command);
         }

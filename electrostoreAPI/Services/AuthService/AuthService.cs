@@ -1,5 +1,6 @@
 using AutoMapper;
 using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Kafka.Producer;
 using ElectrostoreAPI.Kafka.Messages;
 using ElectrostoreAPI.Services.SessionService;
@@ -105,10 +106,9 @@ public class AuthService : IAuthService
         {
             var notification = new NotificationMessage
             {
-                Types = ["email"],
                 RecipientEmail = user.email_user,
                 TemplateId = "login-detected",
-                Language = _configuration.GetValue<string>("AppLanguage") ?? "en"
+                Language = _configuration.GetAppLanguage()
             };
             await _kafkaProducerService.PublishAsync(
                 KafkaNotificationTopic,
@@ -244,10 +244,9 @@ public class AuthService : IAuthService
             {
                 var notification = new NotificationMessage
                 {
-                    Types = ["email"],
-                    RecipientEmail = user.email_user,
+                        RecipientEmail = user.email_user,
                     TemplateId = "password-reset",
-                    Language = _configuration.GetValue<string>("AppLanguage") ?? "en",
+                    Language = _configuration.GetAppLanguage(),
                     TemplateValues = new Dictionary<string, string>
                     {
                         ["resetLink"] = _configuration["FrontendUrl"] + "/reset-password?token=" + user.reset_token.ToString() + "&email=" + user.email_user
@@ -289,10 +288,9 @@ public class AuthService : IAuthService
         {
             var notification = new NotificationMessage
             {
-                Types = ["email"],
                 RecipientEmail = user.email_user,
                 TemplateId = "password-changed",
-                Language = _configuration.GetValue<string>("AppLanguage") ?? "en"
+                Language = _configuration.GetAppLanguage()
             };
             await _kafkaProducerService.PublishAsync(
                 KafkaNotificationTopic,
@@ -323,10 +321,9 @@ public class AuthService : IAuthService
         {
             var notification = new NotificationMessage
             {
-                Types = ["email"],
                 RecipientEmail = user.email_user,
                 TemplateId = "login-detected",
-                Language = _configuration.GetValue<string>("AppLanguage") ?? "en"
+                Language = _configuration.GetAppLanguage()
             };
             await _kafkaProducerService.PublishAsync(
                 KafkaNotificationTopic,

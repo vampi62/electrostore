@@ -209,12 +209,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private void SetupImageSaving()
         {
-            _fileService
-                .Setup(f => f.SaveFile(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<System.IO.Stream>(), It.IsAny<bool>()))
-                .ReturnsAsync(new SaveFileResult { path = "equipementImages/1/pic.png", mime_type = "image/png" });
-            _fileService
-                .Setup(f => f.GenerateThumbnail(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()))
-                .ReturnsAsync(new SaveFileResult { path = "equipementImagesThumbnails/1/pic.png", mime_type = "image/png" });
+            _fileService.SetupImageWithThumbnailSaving("equipementImages/1/pic.png", "equipementImagesThumbnails/1/pic.png");
         }
 
         private static readonly List<string> AllExpands =
