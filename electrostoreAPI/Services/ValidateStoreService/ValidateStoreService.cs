@@ -104,30 +104,35 @@ public class ValidateStoreService : IValidateStoreService
         }
         else
         {
-            if (storeDto.id_zone is not null)
+            await UpdateStoreZoneInformations(storeToUpdate, storeDto);
+        }
+    }
+
+    private async Task UpdateStoreZoneInformations(Stores storeToUpdate, UpdateStoreDto storeDto)
+    {
+        if (storeDto.id_zone is not null)
+        {
+            if (!await _context.Zones.AnyAsync(z => z.id_zone == storeDto.id_zone))
             {
-                if (!await _context.Zones.AnyAsync(z => z.id_zone == storeDto.id_zone))
-                {
-                    throw new KeyNotFoundException($"Zone with id '{storeDto.id_zone}' not found");
-                }
-                storeToUpdate.id_zone = storeDto.id_zone.Value;
+                throw new KeyNotFoundException($"Zone with id '{storeDto.id_zone}' not found");
             }
-            if (storeDto.xmin_store is not null)
-            {
-                storeToUpdate.xmin_store = storeDto.xmin_store.Value;
-            }
-            if (storeDto.ymin_store is not null)
-            {
-                storeToUpdate.ymin_store = storeDto.ymin_store.Value;
-            }
-            if (storeDto.xmax_store is not null)
-            {
-                storeToUpdate.xmax_store = storeDto.xmax_store.Value;
-            }
-            if (storeDto.ymax_store is not null)
-            {
-                storeToUpdate.ymax_store = storeDto.ymax_store.Value;
-            }
+            storeToUpdate.id_zone = storeDto.id_zone.Value;
+        }
+        if (storeDto.xmin_store is not null)
+        {
+            storeToUpdate.xmin_store = storeDto.xmin_store.Value;
+        }
+        if (storeDto.ymin_store is not null)
+        {
+            storeToUpdate.ymin_store = storeDto.ymin_store.Value;
+        }
+        if (storeDto.xmax_store is not null)
+        {
+            storeToUpdate.xmax_store = storeDto.xmax_store.Value;
+        }
+        if (storeDto.ymax_store is not null)
+        {
+            storeToUpdate.ymax_store = storeDto.ymax_store.Value;
         }
     }
 

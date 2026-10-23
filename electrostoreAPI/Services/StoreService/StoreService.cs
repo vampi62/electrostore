@@ -252,67 +252,9 @@ public class StoreService : IStoreService
             _context.Stores.Add(newStore);
             await _context.SaveChangesAsync(); // persist store to get real id_store
             // Add leds and boxs if provided
-            var validQueryLed = new List<ReadLedDto>();
-            var errorQueryLed = new List<ErrorDetail>();
-            foreach (var ledDto in storeDto.leds ?? Enumerable.Empty<CreateLedByStoreDto>())
-            {
-                try
-                {
-                    var ledDtoFull = new CreateLedDto
-                    {
-                        x_led = ledDto.x_led,
-                        y_led = ledDto.y_led,
-                        id_store = newStore.id_store,
-                        mqtt_id_led = ledDto.mqtt_id_led
-                    };
-                    var newLed = _mapper.Map<Leds>(ledDtoFull);
-                    _validateStoreService.ValidateLedPosition(newLed, newStore);
-                    _context.Leds.Add(newLed);
-                    validQueryLed.Add(_mapper.Map<ReadLedDto>(newLed));
-                }
-                catch (Exception e)
-                {
-                    errorQueryLed.Add(new ErrorDetail
-                    {
-                        reason = e.Message,
-                        data = ledDto
-                    });
-                }
-            }
-            var validQueryBox = new List<ReadBoxDto>();
-            var errorQueryBox = new List<ErrorDetail>();
-            foreach (var boxDto in storeDto.boxs ?? Enumerable.Empty<CreateBoxByStoreDto>())
-            {
-                try
-                {
-                    var boxDtoFull = new CreateBoxDto
-                    {
-                        xstart_box = boxDto.xstart_box,
-                        ystart_box = boxDto.ystart_box,
-                        xend_box = boxDto.xend_box,
-                        yend_box = boxDto.yend_box,
-                        id_store = newStore.id_store
-                    };
-                    await _validateStoreService.CheckCreateBoxPositionOverlap(boxDtoFull);
-                    var newBox = _mapper.Map<Boxs>(boxDtoFull);
-                    _validateStoreService.ValidateBoxPosition(newBox, newStore);
-                    _context.Boxs.Add(newBox);
-                    validQueryBox.Add(_mapper.Map<ReadBoxDto>(newBox));
-                }
-                catch (Exception e)
-                {
-                    errorQueryBox.Add(new ErrorDetail
-                    {
-                        reason = e.Message,
-                        data = boxDto
-                    });
-                }
-            }
-            var mqttPassword = GenerateMqttPasswordForStore();
-            var encryptedPassword = await _encryptionService.Encrypt(mqttPassword, _encryptionKey);
-            newStore.mqtt_password_store = encryptedPassword.encrypted_data;
-            newStore.mqtt_password_encryption_iv_store = encryptedPassword.iv;
-            newStore.mqtt_password_encryption_tag_store = encryptedPassword.tag;
+            var (validQueryLed, errorQueryLed) = CreateLedList(newStore, storeDto.leds ?? []);
+            var (validQueryBox, errorQueryBox) = await CreateBoxList(newStore, storeDto.boxs ?? []);
+            var mqttPassword = await ResetMqttPassword(newStore);
             await _context.SaveChangesAsync();
             var committed = false;
             if (errorQueryLed.Count == 0 && errorQueryBox.Count == 0)
@@ -340,23 +282,7 @@ public class StoreService : IStoreService
                 })
             );
         }
-        return new ReadStoreCompleteDto
-        {
-            store = _mapper.Map<ReadStoreDto>(newStore) with
-            {
-                mqtt_password_store = mqttPassword
-            },
-            leds = new ReadBulkDto<ReadLedDto>
-            {
-                valide = validQueryLed,
-                error = errorQueryLed
-            },
-            boxs = new ReadBulkDto<ReadBoxDto>
-            {
-                valide = validQueryBox,
-                error = errorQueryBox
-            }
-        };
+        return BuildStoreCompleteDto(newStore, mqttPassword, validQueryLed, errorQueryLed, validQueryBox, errorQueryBox);
     }
     
     public async Task<ReadStoreCompleteDto> UpdateStoreComplete(int id, UpdateStoreCompleteDto storeDto)
@@ -383,21 +309,7 @@ public class StoreService : IStoreService
                 // Persist (still inside the transaction) so that new boxes get their id and the overlap checks
                 // see the final state of the store: deleted boxes are gone, moved boxes are at their new position
                 await _context.SaveChangesAsync();
-                foreach (var (box, boxDto) in boxesToCheck)
-                {
-                    try
-                    {
-                        await _validateStoreService.CheckUpdateBoxPositionOverlap(box);
-                    }
-                    catch (Exception e)
-                    {
-                        errorQueryBox.Add(new ErrorDetail
-                        {
-                            reason = e.Message,
-                            data = boxDto
-                        });
-                    }
-                }
+                await CheckBoxesOverlap(boxesToCheck, errorQueryBox);
             }
             var validQueryBox = boxesToCheck.Select(b => _mapper.Map<ReadBoxDto>(b.Box)).ToList();
             var mqttPassword = string.Empty;
@@ -408,11 +320,7 @@ public class StoreService : IStoreService
                 await _context.SaveChangesAsync();
                 if (storeDto.store.reset_mqtt_password_store == true)
                 {
-                    mqttPassword = GenerateMqttPasswordForStore();
-                    var encryptedPassword = await _encryptionService.Encrypt(mqttPassword, _encryptionKey);
-                    storeToUpdate.mqtt_password_store = encryptedPassword.encrypted_data;
-                    storeToUpdate.mqtt_password_encryption_iv_store = encryptedPassword.iv;
-                    storeToUpdate.mqtt_password_encryption_tag_store = encryptedPassword.tag;
+                    mqttPassword = await ResetMqttPassword(storeToUpdate);
                     await _context.SaveChangesAsync();
                     passwordReset = true;
                 }
@@ -448,23 +356,7 @@ public class StoreService : IStoreService
                 tag = storeToUpdate.mqtt_password_encryption_tag_store
             }, _encryptionKey);
         }
-        return new ReadStoreCompleteDto
-        {
-            store = _mapper.Map<ReadStoreDto>(storeToUpdate) with
-            {
-                mqtt_password_store = mqttPassword
-            },
-            leds = new ReadBulkDto<ReadLedDto>
-            {
-                valide = validQueryLed,
-                error = errorQueryLed
-            },
-            boxs = new ReadBulkDto<ReadBoxDto>
-            {
-                valide = validQueryBox,
-                error = errorQueryBox
-            }
-        };
+        return BuildStoreCompleteDto(storeToUpdate, mqttPassword, validQueryLed, errorQueryLed, validQueryBox, errorQueryBox);
     }
 
     public async Task<int> UpdateStoreMqttStatusByMqttNameAsync(string mqttName, UpdateStoreMqttStatusDto mqttStatusDto, CancellationToken cancellationToken)
@@ -484,6 +376,124 @@ public class StoreService : IStoreService
         }
         await _context.SaveChangesAsync(cancellationToken);
         return stores.Count;
+    }
+
+    private ReadStoreCompleteDto BuildStoreCompleteDto(Stores store, string mqttPassword,
+        List<ReadLedDto> validQueryLed, List<ErrorDetail> errorQueryLed,
+        List<ReadBoxDto> validQueryBox, List<ErrorDetail> errorQueryBox)
+    {
+        return new ReadStoreCompleteDto
+        {
+            store = _mapper.Map<ReadStoreDto>(store) with
+            {
+                mqtt_password_store = mqttPassword
+            },
+            leds = new ReadBulkDto<ReadLedDto>
+            {
+                valide = validQueryLed,
+                error = errorQueryLed
+            },
+            boxs = new ReadBulkDto<ReadBoxDto>
+            {
+                valide = validQueryBox,
+                error = errorQueryBox
+            }
+        };
+    }
+
+    private async Task<string> ResetMqttPassword(Stores store)
+    {
+        var mqttPassword = GenerateMqttPasswordForStore();
+        var encryptedPassword = await _encryptionService.Encrypt(mqttPassword, _encryptionKey);
+        store.mqtt_password_store = encryptedPassword.encrypted_data;
+        store.mqtt_password_encryption_iv_store = encryptedPassword.iv;
+        store.mqtt_password_encryption_tag_store = encryptedPassword.tag;
+        return mqttPassword;
+    }
+
+    private (List<ReadLedDto>, List<ErrorDetail>) CreateLedList(Stores newStore, IEnumerable<CreateLedByStoreDto> ledListDto)
+    {
+        var validQueryLed = new List<ReadLedDto>();
+        var errorQueryLed = new List<ErrorDetail>();
+        foreach (var ledDto in ledListDto)
+        {
+            try
+            {
+                var ledDtoFull = new CreateLedDto
+                {
+                    x_led = ledDto.x_led,
+                    y_led = ledDto.y_led,
+                    id_store = newStore.id_store,
+                    mqtt_id_led = ledDto.mqtt_id_led
+                };
+                var newLed = _mapper.Map<Leds>(ledDtoFull);
+                _validateStoreService.ValidateLedPosition(newLed, newStore);
+                _context.Leds.Add(newLed);
+                validQueryLed.Add(_mapper.Map<ReadLedDto>(newLed));
+            }
+            catch (Exception e)
+            {
+                errorQueryLed.Add(new ErrorDetail
+                {
+                    reason = e.Message,
+                    data = ledDto
+                });
+            }
+        }
+        return (validQueryLed, errorQueryLed);
+    }
+
+    private async Task<(List<ReadBoxDto>, List<ErrorDetail>)> CreateBoxList(Stores newStore, IEnumerable<CreateBoxByStoreDto> boxListDto)
+    {
+        var validQueryBox = new List<ReadBoxDto>();
+        var errorQueryBox = new List<ErrorDetail>();
+        foreach (var boxDto in boxListDto)
+        {
+            try
+            {
+                var boxDtoFull = new CreateBoxDto
+                {
+                    xstart_box = boxDto.xstart_box,
+                    ystart_box = boxDto.ystart_box,
+                    xend_box = boxDto.xend_box,
+                    yend_box = boxDto.yend_box,
+                    id_store = newStore.id_store
+                };
+                await _validateStoreService.CheckCreateBoxPositionOverlap(boxDtoFull);
+                var newBox = _mapper.Map<Boxs>(boxDtoFull);
+                _validateStoreService.ValidateBoxPosition(newBox, newStore);
+                _context.Boxs.Add(newBox);
+                validQueryBox.Add(_mapper.Map<ReadBoxDto>(newBox));
+            }
+            catch (Exception e)
+            {
+                errorQueryBox.Add(new ErrorDetail
+                {
+                    reason = e.Message,
+                    data = boxDto
+                });
+            }
+        }
+        return (validQueryBox, errorQueryBox);
+    }
+
+    private async Task CheckBoxesOverlap(List<(Boxs Box, UpdateBulkBoxByStoreDto Dto)> boxesToCheck, List<ErrorDetail> errorQueryBox)
+    {
+        foreach (var (box, boxDto) in boxesToCheck)
+        {
+            try
+            {
+                await _validateStoreService.CheckUpdateBoxPositionOverlap(box);
+            }
+            catch (Exception e)
+            {
+                errorQueryBox.Add(new ErrorDetail
+                {
+                    reason = e.Message,
+                    data = boxDto
+                });
+            }
+        }
     }
 
     private static string GenerateMqttPasswordForStore()

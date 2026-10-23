@@ -131,13 +131,9 @@ public class ItemService : IItemService
         await _fileService.CreateDirectory(Path.Combine(_itemDocumentsPath, item.id_item.ToString()));
         if (itemDto.img_file is not null)
         {
-            var savedImg = await _fileService.SaveFile(Path.Combine(_itemImagesPath, item.id_item.ToString()), itemDto.img_file.FileName, itemDto.img_file.ContentType, itemDto.img_file.OpenReadStream());
-            var savedThumbnail = await _fileService.GenerateThumbnail(
-                savedImg.path,
-                Path.Combine(_itemImagesThumbnailsPath, item.id_item.ToString()),
-                256, 256);
-            item.url_picture_item = savedImg.path;
-            item.url_thumbnail_item = savedThumbnail.path;
+            var (picturePath, thumbnailPath) = await _fileService.SaveImageWithThumbnail(Path.Combine(_itemImagesPath, item.id_item.ToString()), Path.Combine(_itemImagesThumbnailsPath, item.id_item.ToString()), itemDto.img_file);
+            item.url_picture_item = picturePath;
+            item.url_thumbnail_item = thumbnailPath;
             await _context.SaveChangesAsync();
         }
         await _itemHistoryService.LogHistory(item.id_item, null, ItemHistoryType.ItemCreated);
@@ -178,36 +174,16 @@ public class ItemService : IItemService
         }
         if (itemDto.unset_img_item is true)
         {
-            if (itemToUpdate.url_picture_item is not null)
-            {
-                await _fileService.DeleteFile(itemToUpdate.url_picture_item);
-                hasChanges = true;
-            }
-            if (itemToUpdate.url_thumbnail_item is not null)
-            {
-                await _fileService.DeleteFile(itemToUpdate.url_thumbnail_item);
-                hasChanges = true;
-            }
+            hasChanges |= await _fileService.DeleteImageWithThumbnail(itemToUpdate.url_picture_item, itemToUpdate.url_thumbnail_item);
             itemToUpdate.url_picture_item = null;
             itemToUpdate.url_thumbnail_item = null;
         }
         else if (itemDto.img_file is not null)
         {
-            if (itemToUpdate.url_picture_item is not null)
-            {
-                await _fileService.DeleteFile(itemToUpdate.url_picture_item);
-            }
-            if (itemToUpdate.url_thumbnail_item is not null)
-            {
-                await _fileService.DeleteFile(itemToUpdate.url_thumbnail_item);
-            }
-            var savedImg = await _fileService.SaveFile(Path.Combine(_itemImagesPath, id.ToString()), itemDto.img_file.FileName, itemDto.img_file.ContentType, itemDto.img_file.OpenReadStream());
-            var savedThumbnail = await _fileService.GenerateThumbnail(
-                savedImg.path,
-                Path.Combine(_itemImagesThumbnailsPath, id.ToString()),
-                256, 256);
-            itemToUpdate.url_picture_item = savedImg.path;
-            itemToUpdate.url_thumbnail_item = savedThumbnail.path;
+            await _fileService.DeleteImageWithThumbnail(itemToUpdate.url_picture_item, itemToUpdate.url_thumbnail_item);
+            var (picturePath, thumbnailPath) = await _fileService.SaveImageWithThumbnail(Path.Combine(_itemImagesPath, id.ToString()), Path.Combine(_itemImagesThumbnailsPath, id.ToString()), itemDto.img_file);
+            itemToUpdate.url_picture_item = picturePath;
+            itemToUpdate.url_thumbnail_item = thumbnailPath;
             hasChanges = true;
         }
         await _context.SaveChangesAsync();

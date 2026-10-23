@@ -122,13 +122,9 @@ public class EquipementService : IEquipementService
         await _fileService.CreateDirectory(Path.Combine(_equipementImagesThumbnailsPath, equipement.id_equipement.ToString()));
         if (equipementDto.img_file is not null)
         {
-            var savedImg = await _fileService.SaveFile(Path.Combine(_equipementImagesPath, equipement.id_equipement.ToString()), equipementDto.img_file.FileName, equipementDto.img_file.ContentType, equipementDto.img_file.OpenReadStream());
-            var savedThumbnail = await _fileService.GenerateThumbnail(
-                savedImg.path,
-                Path.Combine(_equipementImagesThumbnailsPath, equipement.id_equipement.ToString()),
-                256, 256);
-            equipement.url_picture_equipement = savedImg.path;
-            equipement.url_thumbnail_equipement = savedThumbnail.path;
+            var (picturePath, thumbnailPath) = await _fileService.SaveImageWithThumbnail(Path.Combine(_equipementImagesPath, equipement.id_equipement.ToString()), Path.Combine(_equipementImagesThumbnailsPath, equipement.id_equipement.ToString()), equipementDto.img_file);
+            equipement.url_picture_equipement = picturePath;
+            equipement.url_thumbnail_equipement = thumbnailPath;
             await _context.SaveChangesAsync();
         }
         await _equipementStatusService.CreateEquipementStatus(new CreateEquipementStatusDto
@@ -166,34 +162,16 @@ public class EquipementService : IEquipementService
         }
         if (equipementDto.unset_img_equipement is true)
         {
-            if (equipementToUpdate.url_picture_equipement is not null)
-            {
-                await _fileService.DeleteFile(equipementToUpdate.url_picture_equipement);
-            }
-            if (equipementToUpdate.url_thumbnail_equipement is not null)
-            {
-                await _fileService.DeleteFile(equipementToUpdate.url_thumbnail_equipement);
-            }
+            await _fileService.DeleteImageWithThumbnail(equipementToUpdate.url_picture_equipement, equipementToUpdate.url_thumbnail_equipement);
             equipementToUpdate.url_picture_equipement = null;
             equipementToUpdate.url_thumbnail_equipement = null;
         }
         else if (equipementDto.img_file is not null)
         {
-            if (equipementToUpdate.url_picture_equipement is not null)
-            {
-                await _fileService.DeleteFile(equipementToUpdate.url_picture_equipement);
-            }
-            if (equipementToUpdate.url_thumbnail_equipement is not null)
-            {
-                await _fileService.DeleteFile(equipementToUpdate.url_thumbnail_equipement);
-            }
-            var savedImg = await _fileService.SaveFile(Path.Combine(_equipementImagesPath, id.ToString()), equipementDto.img_file.FileName, equipementDto.img_file.ContentType, equipementDto.img_file.OpenReadStream());
-            var savedThumbnail = await _fileService.GenerateThumbnail(
-                savedImg.path,
-                Path.Combine(_equipementImagesThumbnailsPath, id.ToString()),
-                256, 256);
-            equipementToUpdate.url_picture_equipement = savedImg.path;
-            equipementToUpdate.url_thumbnail_equipement = savedThumbnail.path;
+            await _fileService.DeleteImageWithThumbnail(equipementToUpdate.url_picture_equipement, equipementToUpdate.url_thumbnail_equipement);
+            var (picturePath, thumbnailPath) = await _fileService.SaveImageWithThumbnail(Path.Combine(_equipementImagesPath, id.ToString()), Path.Combine(_equipementImagesThumbnailsPath, id.ToString()), equipementDto.img_file);
+            equipementToUpdate.url_picture_equipement = picturePath;
+            equipementToUpdate.url_thumbnail_equipement = thumbnailPath;
         }
         await _context.SaveChangesAsync();
         if (statusChanged)
