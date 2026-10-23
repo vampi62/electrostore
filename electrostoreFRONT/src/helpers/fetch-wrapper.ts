@@ -54,9 +54,22 @@ async function ensureValidAccessToken(authStore: StoreGeneric, useToken: TokenTy
 /* JSON requests                                                      */
 /* ------------------------------------------------------------------ */
 
+function buildRequestOptions(method: string, params: RequestParams): RequestInit {
+	const { url, body = null, useToken = null, contentFile = false } = params;
+	const headers = authHeader(url, useToken);
+	if (body === null) {
+		return { method, headers };
+	}
+	if (contentFile) {
+		return { method, headers, body: body as BodyInit };
+	}
+	headers["Content-Type"] = "application/json";
+	return { method, headers, body: JSON.stringify(body) };
+}
+
 function request(method: string) {
 	const send = async<T>(params: RequestParams, hasRetried: boolean): Promise<T> => {
-		const { url, body = null, useToken = null, contentFile = false } = params;
+		const { url, useToken = null } = params;
 		const authStore = useAuthStore();
 
 		if (useToken === "refresh" && authStore.RefreshTokenIsExpired()) {
@@ -65,20 +78,7 @@ function request(method: string) {
 		}
 		await ensureValidAccessToken(authStore, useToken);
 
-		const requestOptions: { method: string; headers: Record<string, string>; body?: BodyInit } = {
-			method,
-			headers: authHeader(url, useToken),
-		};
-		if (body !== null) {
-			if (contentFile) {
-				requestOptions.body = body as BodyInit;
-			} else {
-				requestOptions.headers["Content-Type"] = "application/json";
-				requestOptions.body = JSON.stringify(body);
-			}
-		}
-
-		const response = await fetch(url, requestOptions);
+		const response = await fetch(url, buildRequestOptions(method, params));
 		const data = parseBody(await response.text(), response);
 
 		if (response.ok) {
@@ -97,15 +97,19 @@ function request(method: string) {
 				await renewToken(authStore);
 				return send(params, true);
 			}
-		} else if (response.status === 403 && authStore.user) {
-			throw new ApiError(extractApiMessage(data, "Access forbidden."), response.status, data);
 		}
-
-		const message = typeof data === "string" ? response.statusText : extractApiMessage(data, response.statusText);
-		throw new ApiError(message || `HTTP ${response.status}`, response.status, data);
+		throw buildApiError(response, data, !!authStore.user);
 	};
 
 	return <T = unknown>(params: RequestParams): Promise<T> => send<T>(params, false);
+}
+
+function buildApiError(response: Response, data: unknown, isLoggedIn: boolean): ApiError {
+	if (response.status === 403 && isLoggedIn) {
+		return new ApiError(extractApiMessage(data, "Access forbidden."), response.status, data);
+	}
+	const message = typeof data === "string" ? response.statusText : extractApiMessage(data, response.statusText);
+	return new ApiError(message || `HTTP ${response.status}`, response.status, data);
 }
 
 function parseBody(text: string, response: Response): unknown {

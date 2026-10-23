@@ -222,7 +222,11 @@ export default {
 					} else if (typeof aValue === "number" && typeof bValue === "number") {
 						comparison = aValue - bValue;
 					} else {
-						comparison = aValue > bValue ? 1 : (aValue < bValue ? -1 : 0);
+						if (aValue > bValue) {
+							comparison = 1;
+						} else if (aValue < bValue) {
+							comparison = -1;
+						}
 					}
 
 					return comparison * sortOrder;
@@ -445,71 +449,70 @@ export default {
 			if (!label) {
 				return row?.[labelKey];
 			}
-			const { storeLinkId, storeRessourceId, sourceKey, valueKey, storeLinkKeyJoinRessource } = label;
-			if (label.type === "link-list") {
-				if (storeLinkId === undefined || sourceKey === undefined) {
-					return [];
-				}
-				return Object.values<TableauRowData>(this.storeData[storeLinkId]?.[row[sourceKey]] || {}).map((linkedItem) => {
-					let printedRessource = "";
-					if (!label.ressourcePrint || label.ressourcePrint.length === 0) {
-						return "";
-					}
-					for (const print of label.ressourcePrint) {
-						if (print.from === "ressource" && storeRessourceId && storeLinkKeyJoinRessource && print.valueKey) {
-							printedRessource += this.storeData[storeRessourceId]?.[linkedItem[storeLinkKeyJoinRessource]]?.[print.valueKey] || "";
-						} else if (print.from === "link" && print.valueKey) {
-							printedRessource += linkedItem?.[print.valueKey] || "";
-						} else if (print.from === "text") {
-							printedRessource += print.text || "";
-						}
-					}
-					return printedRessource;
-				});
-			} else if (label.type === "image") {
-				if (storeRessourceId === undefined || sourceKey === undefined) {
-					return undefined;
-				}
-				if (storeLinkId && storeLinkKeyJoinRessource) {
-					const linkedItem = this.storeData[storeLinkId]?.[row[sourceKey]];
-					if (linkedItem) {
-						if (valueKey) {
-							return this.storeData[storeRessourceId]?.[linkedItem[storeLinkKeyJoinRessource]]?.[valueKey];
-						}
-						return this.storeData[storeRessourceId]?.[linkedItem[storeLinkKeyJoinRessource]];
-					}
-				}
-				if (valueKey) {
-					return this.storeData[storeRessourceId]?.[row[sourceKey]]?.[valueKey];
-				}
-				return this.storeData[storeRessourceId]?.[row[sourceKey]];
-			} else if (label.type === "buttons") {
-				return (label.buttons ?? []).map((button) => {
-					return {
-						...button,
-						show: button?.showCondition ? this.evaluateCondition(button.showCondition, row) : true,
-						enable: button?.enableCondition ? this.evaluateCondition(button.enableCondition, row) : true,
-					};
-				});
-			} else if (label.type === "bool") {
+			switch (label.type) {
+			case "link-list":
+				return this.getLinkListValue(row, label);
+			case "image":
+				return this.getImageValue(row, label);
+			case "buttons":
+				return this.getButtonsValue(row, label);
+			case "bool":
 				return this.evaluateCondition(label.condition ?? "false", row) || false;
-			} else if (storeRessourceId && storeLinkId) {
-				if (sourceKey === undefined || storeLinkKeyJoinRessource === undefined || valueKey === undefined) {
-					return undefined;
-				}
-				const linkedItem = this.storeData[storeLinkId]?.[row[sourceKey]];
-				return this.storeData[storeRessourceId]?.[linkedItem?.[storeLinkKeyJoinRessource]]?.[valueKey];
-			} else if (storeRessourceId && !storeLinkId) {
-				if (sourceKey === undefined || valueKey === undefined) {
-					return undefined;
-				}
-				return this.storeData[storeRessourceId]?.[row[sourceKey]]?.[valueKey];
-			} else {
-				if (valueKey === undefined) {
-					return undefined;
-				}
-				return row?.[valueKey];
 			}
+			return this.getRessourceValue(row, label);
+		},
+		getLinkListValue(row: TableauRowData, label: TableauLabel) {
+			const { storeLinkId, storeRessourceId, sourceKey, storeLinkKeyJoinRessource, ressourcePrint } = label;
+			if (storeLinkId === undefined || sourceKey === undefined) {
+				return [];
+			}
+			return Object.values<TableauRowData>(this.storeData[storeLinkId]?.[row[sourceKey]] || {}).map((linkedItem) => {
+				let printedRessource = "";
+				for (const print of ressourcePrint ?? []) {
+					if (print.from === "ressource" && storeRessourceId && storeLinkKeyJoinRessource && print.valueKey) {
+						printedRessource += this.storeData[storeRessourceId]?.[linkedItem[storeLinkKeyJoinRessource]]?.[print.valueKey] || "";
+					} else if (print.from === "link" && print.valueKey) {
+						printedRessource += linkedItem?.[print.valueKey] || "";
+					} else if (print.from === "text") {
+						printedRessource += print.text || "";
+					}
+				}
+				return printedRessource;
+			});
+		},
+		getImageValue(row: TableauRowData, label: TableauLabel) {
+			const { storeLinkId, storeRessourceId, sourceKey, valueKey, storeLinkKeyJoinRessource } = label;
+			if (storeRessourceId === undefined || sourceKey === undefined) {
+				return undefined;
+			}
+			const ressources = this.storeData[storeRessourceId];
+			const linkedItem = storeLinkId && storeLinkKeyJoinRessource ? this.storeData[storeLinkId]?.[row[sourceKey]] : undefined;
+			const ressource = linkedItem ? ressources?.[linkedItem[storeLinkKeyJoinRessource!]] : ressources?.[row[sourceKey]];
+			return valueKey ? ressource?.[valueKey] : ressource;
+		},
+		getButtonsValue(row: TableauRowData, label: TableauLabel) {
+			return (label.buttons ?? []).map((button) => ({
+				...button,
+				show: button?.showCondition ? this.evaluateCondition(button.showCondition, row) : true,
+				enable: button?.enableCondition ? this.evaluateCondition(button.enableCondition, row) : true,
+			}));
+		},
+		getRessourceValue(row: TableauRowData, label: TableauLabel) {
+			const { storeLinkId, storeRessourceId, sourceKey, valueKey, storeLinkKeyJoinRessource } = label;
+			if (!storeRessourceId) {
+				return valueKey === undefined ? undefined : row?.[valueKey];
+			}
+			if (sourceKey === undefined || valueKey === undefined) {
+				return undefined;
+			}
+			if (!storeLinkId) {
+				return this.storeData[storeRessourceId]?.[row[sourceKey]]?.[valueKey];
+			}
+			if (storeLinkKeyJoinRessource === undefined) {
+				return undefined;
+			}
+			const linkedItem = this.storeData[storeLinkId]?.[row[sourceKey]];
+			return this.storeData[storeRessourceId]?.[linkedItem?.[storeLinkKeyJoinRessource]]?.[valueKey];
 		},
 		evaluateCondition(condition: string, rowData: TableauRowData) {
 			try {

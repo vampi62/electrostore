@@ -198,14 +198,14 @@ const createSchema = () => {
 		.required(t("store.YLengthRequired"));
 	const isZoneSelected = (val: unknown) => !!val;
 	shape.xmin_store = Yup.number().nullable().typeError(t("store.ZoneCoordType"))
-		.when("id_zone", { is: isZoneSelected, then: (fieldSchema) => fieldSchema.required(t("store.ZoneCoordRequired")) });
+		.when("id_zone", ([zone], fieldSchema) => isZoneSelected(zone) ? fieldSchema.required(t("store.ZoneCoordRequired")) : fieldSchema);
 	shape.ymin_store = Yup.number().nullable().typeError(t("store.ZoneCoordType"))
-		.when("id_zone", { is: isZoneSelected, then: (fieldSchema) => fieldSchema.required(t("store.ZoneCoordRequired")) });
+		.when("id_zone", ([zone], fieldSchema) => isZoneSelected(zone) ? fieldSchema.required(t("store.ZoneCoordRequired")) : fieldSchema);
 	shape.xmax_store = Yup.number().nullable().typeError(t("store.ZoneCoordType"))
-		.when("id_zone", { is: isZoneSelected, then: (fieldSchema) => fieldSchema.required(t("store.ZoneCoordRequired")) })
+		.when("id_zone", ([zone], fieldSchema) => isZoneSelected(zone) ? fieldSchema.required(t("store.ZoneCoordRequired")) : fieldSchema)
 		.when("xmin_store", ([xmin], fieldSchema) => (xmin === undefined || xmin === null) ? fieldSchema : fieldSchema.moreThan(xmin, t("store.ZoneXMaxGreater")));
 	shape.ymax_store = Yup.number().nullable().typeError(t("store.ZoneCoordType"))
-		.when("id_zone", { is: isZoneSelected, then: (fieldSchema) => fieldSchema.required(t("store.ZoneCoordRequired")) })
+		.when("id_zone", ([zone], fieldSchema) => isZoneSelected(zone) ? fieldSchema.required(t("store.ZoneCoordRequired")) : fieldSchema)
 		.when("ymin_store", ([ymin], fieldSchema) => (ymin === undefined || ymin === null) ? fieldSchema : fieldSchema.moreThan(ymin, t("store.ZoneYMaxGreater")));
 	return Yup.object().shape(shape);
 };

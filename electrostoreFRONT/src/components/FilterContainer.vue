@@ -57,45 +57,70 @@ export default {
 	beforeMount() {
 		for (const filter of this.filters) {
 			if (filter.strictMode) {
-				filter._originalKey = filter.key;
-				filter._originalCompareMethod = filter.compareMethod;
-				if (filter.typeData) {
-					filter._originalTypeData = filter.typeData;
-				}
-				if (filter.disableLocalFilter) {
-					filter._originalDisableLocalFilter = filter.disableLocalFilter;
-				}
+				this._saveOriginalConfig(filter);
 			}
 		}
 		if (this.saveState) {
-			const saved = sessionStorage.getItem(this._filterStateKey());
-			if (saved) {
-				const savedValues: Record<string, FilterState> = JSON.parse(saved);
-				for (const filter of this.filters) {
-					if (filter.key in savedValues) {
-						//prevent malformed saved values from breaking the component
-						if (savedValues[filter.key].value === undefined || typeof savedValues[filter.key].value === "object") {
-							continue;
-						}
-						if (savedValues[filter.key].value === null || savedValues[filter.key].value === "undefined") {
-							savedValues[filter.key].value = "";
-						}
-						filter.value = savedValues[filter.key].value;
-						filter.preset = savedValues[filter.key].preset;
-						filter.strictModeEnabled = savedValues[filter.key].strictModeEnabled || false;
-						if (filter.strictMode && filter.strictModeEnabled) {
-							filter.key = filter.strictMode.key;
-							filter.compareMethod = "==";
-							filter.typeData = filter.strictMode.typeData;
-							filter.disableLocalFilter = filter.strictMode.disableLocalFilter || false;
-						}
-					}
-				}
-			}
+			this._restoreSavedState();
 		}
 		this.$emit("ready");
 	},
 	methods: {
+		_saveOriginalConfig(filter: FilterLabel) {
+			filter._originalKey = filter.key;
+			filter._originalCompareMethod = filter.compareMethod;
+			if (filter.typeData) {
+				filter._originalTypeData = filter.typeData;
+			}
+			if (filter.disableLocalFilter) {
+				filter._originalDisableLocalFilter = filter.disableLocalFilter;
+			}
+		},
+		_restoreSavedState() {
+			const saved = sessionStorage.getItem(this._filterStateKey());
+			if (!saved) {
+				return;
+			}
+			const savedValues: Record<string, FilterState> = JSON.parse(saved);
+			for (const filter of this.filters) {
+				const state = savedValues[filter.key];
+				//prevent malformed saved values from breaking the component
+				if (!(filter.key in savedValues) || state.value === undefined || typeof state.value === "object") {
+					continue;
+				}
+				filter.value = state.value === null || state.value === "undefined" ? "" : state.value;
+				filter.preset = state.preset;
+				filter.strictModeEnabled = state.strictModeEnabled || false;
+				if (filter.strictModeEnabled) {
+					this._enableStrictMode(filter);
+				}
+			}
+		},
+		_enableStrictMode(filter: FilterLabel) {
+			if (!filter.strictMode) {
+				return;
+			}
+			filter.strictModeEnabled = true;
+			filter.key = filter.strictMode.key;
+			filter.compareMethod = "==";
+			filter.typeData = filter.strictMode.typeData;
+			filter.disableLocalFilter = filter.strictMode.disableLocalFilter || false;
+		},
+		_disableStrictMode(filter: FilterLabel) {
+			filter.strictModeEnabled = false;
+			filter.key = filter._originalKey ?? filter.key;
+			filter.compareMethod = filter._originalCompareMethod ?? filter.compareMethod;
+			if (filter._originalTypeData) {
+				filter.typeData = filter._originalTypeData;
+			} else {
+				delete filter.typeData;
+			}
+			if (filter._originalDisableLocalFilter) {
+				filter.disableLocalFilter = filter._originalDisableLocalFilter;
+			} else {
+				delete filter.disableLocalFilter;
+			}
+		},
 		// bare eval() in a template resolves to the (nonexistent) this.eval, not the global eval — must go through a method
 		evalCondition(condition: string) {
 			return eval(condition);
@@ -159,30 +184,9 @@ export default {
 		},
 		updateText(filter: FilterLabel, value: [FilterValue, FilterValue], mode: "text" | "select" = "text") {
 			if (mode === "select") {
-				if (filter.strictMode) {
-					filter.strictModeEnabled = true;
-					filter.key = filter.strictMode.key;
-					filter.compareMethod = "==";
-					filter.typeData = filter.strictMode.typeData;
-					filter.disableLocalFilter = filter.strictMode.disableLocalFilter || false;
-				}
-			}
-			if (mode === "text" || (mode === "select" && !filter?.strictModeEnabled)) {
-				if (filter.strictModeEnabled) {
-					filter.strictModeEnabled = false;
-					filter.key = filter._originalKey ?? filter.key;
-					filter.compareMethod = filter._originalCompareMethod ?? filter.compareMethod;
-					if (filter._originalTypeData) {
-						filter.typeData = filter._originalTypeData;
-					} else {
-						delete filter.typeData;
-					}
-					if (filter._originalDisableLocalFilter) {
-						filter.disableLocalFilter = filter._originalDisableLocalFilter;
-					} else {
-						delete filter.disableLocalFilter;
-					}
-				}
+				this._enableStrictMode(filter);
+			} else if (filter.strictModeEnabled) {
+				this._disableStrictMode(filter);
 			}
 			this._validateValue(filter, value[0]);
 			filter.preset = value[1] || null;
