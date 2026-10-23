@@ -38,6 +38,12 @@ public class ItemService : IItemService
     public async Task<PaginatedResponseDto<ReadExtendedItemDto>> GetItems(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandItemTags = expand?.Contains("item_tags") == true;
+        var expandItemBoxs = expand?.Contains("item_boxs") == true;
+        var expandCommandItems = expand?.Contains("command_items") == true;
+        var expandProjectItems = expand?.Contains("project_items") == true;
+        var expandItemDocuments = expand?.Contains("item_documents") == true;
+        var expandItemHistory = expand?.Contains("item_history") == true;
         var query = _context.Items.AsQueryable();
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_item", order = "asc" })
@@ -50,12 +56,12 @@ public class ItemService : IItemService
                     CommandsItemsCount = i.CommandsItems.Count,
                     ProjectsItemsCount = i.ProjectsItems.Count,
                     ItemsDocumentsCount = i.ItemsDocuments.Count,
-                    ItemsTags = expand != null && expand.Contains("item_tags") ? i.ItemsTags.Take(20).ToList() : null,
-                    ItemsBoxs = expand != null && expand.Contains("item_boxs") ? i.ItemsBoxs.Take(20).ToList() : null,
-                    CommandsItems = expand != null && expand.Contains("command_items") ? i.CommandsItems.Take(20).ToList() : null,
-                    ProjectsItems = expand != null && expand.Contains("project_items") ? i.ProjectsItems.Take(20).ToList() : null,
-                    ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null,
-                    ItemsHistory = expand != null && expand.Contains("item_history") ? i.ItemsHistory.OrderByDescending(h => h.created_at).Take(20).ToList() : null,
+                    ItemsTags = expandItemTags ? i.ItemsTags.Take(20).ToList() : null,
+                    ItemsBoxs = expandItemBoxs ? i.ItemsBoxs.Take(20).ToList() : null,
+                    CommandsItems = expandCommandItems ? i.CommandsItems.Take(20).ToList() : null,
+                    ProjectsItems = expandProjectItems ? i.ProjectsItems.Take(20).ToList() : null,
+                    ItemsDocuments = expandItemDocuments ? i.ItemsDocuments.Take(20).ToList() : null,
+                    ItemsHistory = expandItemHistory ? i.ItemsHistory.OrderByDescending(h => h.created_at).Take(20).ToList() : null,
                     quantity_item = i.ItemsBoxs.Sum(ib => ib.quantity_item_box)
                 },
                 item => item.Select(i => {
@@ -79,6 +85,12 @@ public class ItemService : IItemService
 
     public async Task<ReadExtendedItemDto> GetItemById(int id, List<string>? expand = null)
     {
+        var expandItemTags = expand?.Contains("item_tags") == true;
+        var expandItemBoxs = expand?.Contains("item_boxs") == true;
+        var expandCommandItems = expand?.Contains("command_items") == true;
+        var expandProjectItems = expand?.Contains("project_items") == true;
+        var expandItemDocuments = expand?.Contains("item_documents") == true;
+        var expandItemHistory = expand?.Contains("item_history") == true;
         var query = _context.Items.AsQueryable();
         query = query.Where(i => i.id_item == id);
         var item = await query
@@ -90,12 +102,12 @@ public class ItemService : IItemService
                 CommandsItemsCount = i.CommandsItems.Count,
                 ProjectsItemsCount = i.ProjectsItems.Count,
                 ItemsDocumentsCount = i.ItemsDocuments.Count,
-                ItemsTags = expand != null && expand.Contains("item_tags") ? i.ItemsTags.Take(20).ToList() : null,
-                ItemsBoxs = expand != null && expand.Contains("item_boxs") ? i.ItemsBoxs.Take(20).ToList() : null,
-                CommandsItems = expand != null && expand.Contains("command_items") ? i.CommandsItems.Take(20).ToList() : null,
-                ProjectsItems = expand != null && expand.Contains("project_items") ? i.ProjectsItems.Take(20).ToList() : null,
-                ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null,
-                ItemsHistory = expand != null && expand.Contains("item_history") ? i.ItemsHistory.OrderByDescending(h => h.created_at).Take(20).ToList() : null,
+                ItemsTags = expandItemTags ? i.ItemsTags.Take(20).ToList() : null,
+                ItemsBoxs = expandItemBoxs ? i.ItemsBoxs.Take(20).ToList() : null,
+                CommandsItems = expandCommandItems ? i.CommandsItems.Take(20).ToList() : null,
+                ProjectsItems = expandProjectItems ? i.ProjectsItems.Take(20).ToList() : null,
+                ItemsDocuments = expandItemDocuments ? i.ItemsDocuments.Take(20).ToList() : null,
+                ItemsHistory = expandItemHistory ? i.ItemsHistory.OrderByDescending(h => h.created_at).Take(20).ToList() : null,
                 quantity_item = i.ItemsBoxs.Sum(ib => ib.quantity_item_box)
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Item with id '{id}' not found");

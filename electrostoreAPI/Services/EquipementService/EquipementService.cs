@@ -29,6 +29,12 @@ public class EquipementService : IEquipementService
     public async Task<PaginatedResponseDto<ReadExtendedEquipementDto>> GetEquipements(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandEquipementTags = expand?.Contains("equipement_tags") == true;
+        var expandEquipementBoxs = expand?.Contains("equipement_boxs") == true;
+        var expandEquipementDocuments = expand?.Contains("equipement_documents") == true;
+        var expandEquipementMaintenances = expand?.Contains("equipement_maintenances") == true;
+        var expandEquipementStatusHistory = expand?.Contains("equipement_status_history") == true;
+        var expandEquipementComments = expand?.Contains("equipement_comments") == true;
         var query = _context.Equipements.AsQueryable();
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_equipement", order = "asc" })
@@ -42,12 +48,12 @@ public class EquipementService : IEquipementService
                     EquipementsMaintenancesCount = e.EquipementsMaintenances.Count,
                     EquipementsStatusCount = e.EquipementsStatus.Count,
                     EquipementsCommentsCount = e.EquipementsComments.Count,
-                    EquipementsTags = expand != null && expand.Contains("equipement_tags") ? e.EquipementsTags.Take(20).ToList() : null,
-                    EquipementsBoxs = expand != null && expand.Contains("equipement_boxs") ? e.EquipementsBoxs.Take(20).ToList() : null,
-                    EquipementsDocuments = expand != null && expand.Contains("equipement_documents") ? e.EquipementsDocuments.Take(20).ToList() : null,
-                    EquipementsMaintenances = expand != null && expand.Contains("equipement_maintenances") ? e.EquipementsMaintenances.Take(20).ToList() : null,
-                    EquipementsStatusHistory = expand != null && expand.Contains("equipement_status_history") ? e.EquipementsStatus.OrderByDescending(s => s.created_at).Take(20).ToList() : null,
-                    EquipementsComments = expand != null && expand.Contains("equipement_comments") ? e.EquipementsComments.Take(20).ToList() : null
+                    EquipementsTags = expandEquipementTags ? e.EquipementsTags.Take(20).ToList() : null,
+                    EquipementsBoxs = expandEquipementBoxs ? e.EquipementsBoxs.Take(20).ToList() : null,
+                    EquipementsDocuments = expandEquipementDocuments ? e.EquipementsDocuments.Take(20).ToList() : null,
+                    EquipementsMaintenances = expandEquipementMaintenances ? e.EquipementsMaintenances.Take(20).ToList() : null,
+                    EquipementsStatusHistory = expandEquipementStatusHistory ? e.EquipementsStatus.OrderByDescending(s => s.created_at).Take(20).ToList() : null,
+                    EquipementsComments = expandEquipementComments ? e.EquipementsComments.Take(20).ToList() : null
                 },
                 equipement => equipement.Select(e => {
                     return _mapper.Map<ReadExtendedEquipementDto>(e.Equipement) with
@@ -70,6 +76,12 @@ public class EquipementService : IEquipementService
 
     public async Task<ReadExtendedEquipementDto> GetEquipementById(int id, List<string>? expand = null)
     {
+        var expandEquipementTags = expand?.Contains("equipement_tags") == true;
+        var expandEquipementBoxs = expand?.Contains("equipement_boxs") == true;
+        var expandEquipementDocuments = expand?.Contains("equipement_documents") == true;
+        var expandEquipementMaintenances = expand?.Contains("equipement_maintenances") == true;
+        var expandEquipementStatusHistory = expand?.Contains("equipement_status_history") == true;
+        var expandEquipementComments = expand?.Contains("equipement_comments") == true;
         var query = _context.Equipements.AsQueryable();
         query = query.Where(e => e.id_equipement == id);
         var equipement = await query
@@ -82,12 +94,12 @@ public class EquipementService : IEquipementService
                 EquipementsMaintenancesCount = e.EquipementsMaintenances.Count,
                 EquipementsStatusCount = e.EquipementsStatus.Count,
                 EquipementsCommentsCount = e.EquipementsComments.Count,
-                EquipementsTags = expand != null && expand.Contains("equipement_tags") ? e.EquipementsTags.Take(20).ToList() : null,
-                EquipementsBoxs = expand != null && expand.Contains("equipement_boxs") ? e.EquipementsBoxs.Take(20).ToList() : null,
-                EquipementsDocuments = expand != null && expand.Contains("equipement_documents") ? e.EquipementsDocuments.Take(20).ToList() : null,
-                EquipementsMaintenances = expand != null && expand.Contains("equipement_maintenances") ? e.EquipementsMaintenances.Take(20).ToList() : null,
-                EquipementsStatusHistory = expand != null && expand.Contains("equipement_status_history") ? e.EquipementsStatus.OrderByDescending(s => s.created_at).Take(20).ToList() : null,
-                EquipementsComments = expand != null && expand.Contains("equipement_comments") ? e.EquipementsComments.Take(20).ToList() : null
+                EquipementsTags = expandEquipementTags ? e.EquipementsTags.Take(20).ToList() : null,
+                EquipementsBoxs = expandEquipementBoxs ? e.EquipementsBoxs.Take(20).ToList() : null,
+                EquipementsDocuments = expandEquipementDocuments ? e.EquipementsDocuments.Take(20).ToList() : null,
+                EquipementsMaintenances = expandEquipementMaintenances ? e.EquipementsMaintenances.Take(20).ToList() : null,
+                EquipementsStatusHistory = expandEquipementStatusHistory ? e.EquipementsStatus.OrderByDescending(s => s.created_at).Take(20).ToList() : null,
+                EquipementsComments = expandEquipementComments ? e.EquipementsComments.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Equipement with id '{id}' not found");
         return _mapper.Map<ReadExtendedEquipementDto>(equipement.Equipement) with

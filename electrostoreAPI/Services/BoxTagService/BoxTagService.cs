@@ -24,6 +24,8 @@ public class BoxTagService : IBoxTagService
     public async Task<PaginatedResponseDto<ReadExtendedBoxTagDto>> GetBoxsTagsByBoxId(int boxId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandTag = expand?.Contains("tag") == true;
+        var expandBox = expand?.Contains("box") == true;
         // check if box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
         {
@@ -32,11 +34,11 @@ public class BoxTagService : IBoxTagService
         var query = _context.BoxsTags.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_box", search_type = "eq", value = boxId.ToString() });
-        if (expand != null && expand.Contains("tag"))
+        if (expandTag)
         {
             query = query.Include(bt => bt.Tag);
         }
-        if (expand != null && expand.Contains("box"))
+        if (expandBox)
         {
             query = query.Include(bt => bt.Box);
         }
@@ -48,6 +50,8 @@ public class BoxTagService : IBoxTagService
     public async Task<PaginatedResponseDto<ReadExtendedBoxTagDto>> GetBoxsTagsByTagId(int tagId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandTag = expand?.Contains("tag") == true;
+        var expandBox = expand?.Contains("box") == true;
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
         {
@@ -56,11 +60,11 @@ public class BoxTagService : IBoxTagService
         var query = _context.BoxsTags.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_tag", search_type = "eq", value = tagId.ToString() });
-        if (expand != null && expand.Contains("tag"))
+        if (expandTag)
         {
             query = query.Include(bt => bt.Tag);
         }
-        if (expand != null && expand.Contains("box"))
+        if (expandBox)
         {
             query = query.Include(bt => bt.Box);
         }
@@ -71,13 +75,15 @@ public class BoxTagService : IBoxTagService
 
     public async Task<ReadExtendedBoxTagDto> GetBoxTagById(int boxId, int tagId, List<string>? expand = null)
     {
+        var expandTag = expand?.Contains("tag") == true;
+        var expandBox = expand?.Contains("box") == true;
         var query = _context.BoxsTags.AsQueryable();
         query = query.Where(bt => bt.id_box == boxId && bt.id_tag == tagId);
-        if (expand != null && expand.Contains("tag"))
+        if (expandTag)
         {
             query = query.Include(bt => bt.Tag);
         }
-        if (expand != null && expand.Contains("box"))
+        if (expandBox)
         {
             query = query.Include(bt => bt.Box);
         }

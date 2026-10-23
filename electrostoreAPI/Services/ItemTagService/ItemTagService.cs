@@ -20,6 +20,8 @@ public class ItemTagService : IItemTagService
     public async Task<PaginatedResponseDto<ReadExtendedItemTagDto>> GetItemsTagsByItemId(int itemId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandTag = expand?.Contains("tag") == true;
+        var expandItem = expand?.Contains("item") == true;
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
@@ -28,11 +30,11 @@ public class ItemTagService : IItemTagService
         var query = _context.ItemsTags.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_item", search_type = "eq", value = itemId.ToString() });
-        if (expand != null && expand.Contains("tag"))
+        if (expandTag)
         {
             query = query.Include(it => it.Tag);
         }
-        if (expand != null && expand.Contains("item"))
+        if (expandItem)
         {
             query = query.Include(it => it.Item);
         }
@@ -44,6 +46,8 @@ public class ItemTagService : IItemTagService
     public async Task<PaginatedResponseDto<ReadExtendedItemTagDto>> GetItemsTagsByTagId(int tagId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandTag = expand?.Contains("tag") == true;
+        var expandItem = expand?.Contains("item") == true;
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
         {
@@ -52,11 +56,11 @@ public class ItemTagService : IItemTagService
         var query = _context.ItemsTags.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_tag", search_type = "eq", value = tagId.ToString() });
-        if (expand != null && expand.Contains("tag"))
+        if (expandTag)
         {
             query = query.Include(it => it.Tag);
         }
-        if (expand != null && expand.Contains("item"))
+        if (expandItem)
         {
             query = query.Include(it => it.Item);
         }
@@ -67,13 +71,15 @@ public class ItemTagService : IItemTagService
 
     public async Task<ReadExtendedItemTagDto> GetItemTagById(int itemId, int tagId, List<string>? expand = null)
     {
+        var expandTag = expand?.Contains("tag") == true;
+        var expandItem = expand?.Contains("item") == true;
         var query = _context.ItemsTags.AsQueryable();
         query = query.Where(it => it.id_item == itemId && it.id_tag == tagId);
-        if (expand != null && expand.Contains("tag"))
+        if (expandTag)
         {
             query = query.Include(it => it.Tag);
         }
-        if (expand != null && expand.Contains("item"))
+        if (expandItem)
         {
             query = query.Include(it => it.Item);
         }

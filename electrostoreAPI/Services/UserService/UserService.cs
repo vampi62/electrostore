@@ -37,6 +37,8 @@ public class UserService : IUserService
     public async Task<PaginatedResponseDto<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandProjectComments = expand?.Contains("project_comments") == true;
+        var expandCommandComments = expand?.Contains("command_comments") == true;
         var query = _context.Users.AsQueryable();
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_user", order = "asc" })
@@ -46,8 +48,8 @@ public class UserService : IUserService
                     User = u,
                     ProjectsCommentsCount = u.ProjectsComments.Count,
                     CommandsCommentsCount = u.CommandsComments.Count,
-                    ProjectsComments = expand != null && expand.Contains("project_comments") ? u.ProjectsComments.Take(20).ToList() : null,
-                    CommandsComments = expand != null && expand.Contains("command_comments") ? u.CommandsComments.Take(20).ToList() : null
+                    ProjectsComments = expandProjectComments ? u.ProjectsComments.Take(20).ToList() : null,
+                    CommandsComments = expandCommandComments ? u.CommandsComments.Take(20).ToList() : null
                 },
                 user => user.Select(u =>
                 {
@@ -138,6 +140,8 @@ public class UserService : IUserService
 
     public async Task<ReadExtendedUserDto> GetUserById(int id, List<string>? expand = null)
     {
+        var expandProjectComments = expand?.Contains("project_comments") == true;
+        var expandCommandComments = expand?.Contains("command_comments") == true;
         var query = _context.Users.AsQueryable();
         query = query.Where(u => u.id_user == id);
         var user = await query
@@ -146,8 +150,8 @@ public class UserService : IUserService
                 User = u,
                 ProjectsCommentsCount = u.ProjectsComments.Count,
                 CommandsCommentsCount = u.CommandsComments.Count,
-                ProjectsComments = expand != null && expand.Contains("project_comments") ? u.ProjectsComments.Take(20).ToList() : null,
-                CommandsComments = expand != null && expand.Contains("command_comments") ? u.CommandsComments.Take(20).ToList() : null
+                ProjectsComments = expandProjectComments ? u.ProjectsComments.Take(20).ToList() : null,
+                CommandsComments = expandCommandComments ? u.CommandsComments.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"User with id '{id}' not found");
         return _mapper.Map<ReadExtendedUserDto>(user.User) with

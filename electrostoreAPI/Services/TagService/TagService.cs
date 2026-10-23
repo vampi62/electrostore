@@ -20,6 +20,10 @@ public class TagService : ITagService
     public async Task<PaginatedResponseDto<ReadExtendedTagDto>> GetTags(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandStoresTags = expand?.Contains("stores_tags") == true;
+        var expandItemsTags = expand?.Contains("items_tags") == true;
+        var expandBoxsTags = expand?.Contains("boxs_tags") == true;
+        var expandEquipementTags = expand?.Contains("equipement_tags") == true;
         var query = _context.Tags.AsQueryable();
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_tag", order = "asc" })
@@ -31,10 +35,10 @@ public class TagService : ITagService
                     ItemsTagsCount = t.ItemsTags.Count,
                     BoxsTagsCount = t.BoxsTags.Count,
                     EquipementsTagsCount = t.EquipementsTags.Count,
-                    StoresTags = expand != null && expand.Contains("stores_tags") ? t.StoresTags.Take(20).ToList() : null,
-                    ItemsTags = expand != null && expand.Contains("items_tags") ? t.ItemsTags.Take(20).ToList() : null,
-                    BoxsTags = expand != null && expand.Contains("boxs_tags") ? t.BoxsTags.Take(20).ToList() : null,
-                    EquipementsTags = expand != null && expand.Contains("equipement_tags") ? t.EquipementsTags.Take(20).ToList() : null
+                    StoresTags = expandStoresTags ? t.StoresTags.Take(20).ToList() : null,
+                    ItemsTags = expandItemsTags ? t.ItemsTags.Take(20).ToList() : null,
+                    BoxsTags = expandBoxsTags ? t.BoxsTags.Take(20).ToList() : null,
+                    EquipementsTags = expandEquipementTags ? t.EquipementsTags.Take(20).ToList() : null
                 },
                 tags => tags.Select(t => {
                     return _mapper.Map<ReadExtendedTagDto>(t.Tag) with
@@ -53,6 +57,10 @@ public class TagService : ITagService
 
     public async Task<ReadExtendedTagDto> GetTagById(int id, List<string>? expand = null)
     {
+        var expandStoresTags = expand?.Contains("stores_tags") == true;
+        var expandItemsTags = expand?.Contains("items_tags") == true;
+        var expandBoxsTags = expand?.Contains("boxs_tags") == true;
+        var expandEquipementTags = expand?.Contains("equipement_tags") == true;
         var query = _context.Tags.AsQueryable();
         query = query.Where(t => t.id_tag == id);
         var tag = await query
@@ -63,10 +71,10 @@ public class TagService : ITagService
                 ItemsTagsCount = t.ItemsTags.Count,
                 BoxsTagsCount = t.BoxsTags.Count,
                 EquipementsTagsCount = t.EquipementsTags.Count,
-                StoresTags = expand != null && expand.Contains("stores_tags") ? t.StoresTags.Take(20).ToList() : null,
-                ItemsTags = expand != null && expand.Contains("items_tags") ? t.ItemsTags.Take(20).ToList() : null,
-                BoxsTags = expand != null && expand.Contains("boxs_tags") ? t.BoxsTags.Take(20).ToList() : null,
-                EquipementsTags = expand != null && expand.Contains("equipement_tags") ? t.EquipementsTags.Take(20).ToList() : null
+                StoresTags = expandStoresTags ? t.StoresTags.Take(20).ToList() : null,
+                ItemsTags = expandItemsTags ? t.ItemsTags.Take(20).ToList() : null,
+                BoxsTags = expandBoxsTags ? t.BoxsTags.Take(20).ToList() : null,
+                EquipementsTags = expandEquipementTags ? t.EquipementsTags.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Tag with id '{id}' not found");
         return _mapper.Map<ReadExtendedTagDto>(tag.Tag) with

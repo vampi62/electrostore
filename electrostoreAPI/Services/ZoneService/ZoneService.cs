@@ -29,6 +29,7 @@ public class ZoneService : IZoneService
     public async Task<PaginatedResponseDto<ReadExtendedZoneDto>> GetZones(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandStores = expand?.Contains("stores") == true;
         var query = _context.Zones.AsQueryable();
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_zone", order = "asc" })
@@ -37,7 +38,7 @@ public class ZoneService : IZoneService
                 {
                     Zone = z,
                     StoresCount = z.Stores.Count,
-                    Stores = expand != null && expand.Contains("stores") ? z.Stores.Take(20).ToList() : null
+                    Stores = expandStores ? z.Stores.Take(20).ToList() : null
                 },
                 zones => zones.Select(z =>
                 {
@@ -51,6 +52,7 @@ public class ZoneService : IZoneService
 
     public async Task<ReadExtendedZoneDto> GetZoneById(int id, List<string>? expand = null)
     {
+        var expandStores = expand?.Contains("stores") == true;
         var query = _context.Zones.AsQueryable();
         query = query.Where(z => z.id_zone == id);
         var zone = await query
@@ -58,7 +60,7 @@ public class ZoneService : IZoneService
             {
                 Zone = z,
                 StoresCount = z.Stores.Count,
-                Stores = expand != null && expand.Contains("stores") ? z.Stores.Take(20).ToList() : null
+                Stores = expandStores ? z.Stores.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Zone with id '{id}' not found");
         return _mapper.Map<ReadExtendedZoneDto>(zone.Zone) with

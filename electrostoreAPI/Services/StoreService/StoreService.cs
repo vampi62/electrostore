@@ -39,6 +39,10 @@ public class StoreService : IStoreService
     public async Task<PaginatedResponseDto<ReadExtendedStoreDto>> GetStores(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandBoxs = expand?.Contains("boxs") == true;
+        var expandLeds = expand?.Contains("leds") == true;
+        var expandStoresTags = expand?.Contains("stores_tags") == true;
+        var expandZone = expand?.Contains("zone") == true;
         var query = _context.Stores.AsQueryable();
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_store", order = "asc" })
@@ -49,10 +53,10 @@ public class StoreService : IStoreService
                     BoxsCount = s.Boxs.Count,
                     LedsCount = s.Leds.Count,
                     StoresTagsCount = s.StoresTags.Count,
-                    Boxs = expand != null && expand.Contains("boxs") ? s.Boxs.Take(20).ToList() : null,
-                    Leds = expand != null && expand.Contains("leds") ? s.Leds.Take(20).ToList() : null,
-                    StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null,
-                    Zone = expand != null && expand.Contains("zone") ? s.Zone : null
+                    Boxs = expandBoxs ? s.Boxs.Take(20).ToList() : null,
+                    Leds = expandLeds ? s.Leds.Take(20).ToList() : null,
+                    StoresTags = expandStoresTags ? s.StoresTags.Take(20).ToList() : null,
+                    Zone = expandZone ? s.Zone : null
                 },
                 store => store.Select(s =>
                 {
@@ -72,6 +76,10 @@ public class StoreService : IStoreService
 
     public async Task<ReadExtendedStoreDto> GetStoreById(int id, List<string>? expand = null)
     {
+        var expandBoxs = expand?.Contains("boxs") == true;
+        var expandLeds = expand?.Contains("leds") == true;
+        var expandStoresTags = expand?.Contains("stores_tags") == true;
+        var expandZone = expand?.Contains("zone") == true;
         var query = _context.Stores.AsQueryable();
         query = query.Where(s => s.id_store == id);
         var store = await query
@@ -81,10 +89,10 @@ public class StoreService : IStoreService
                 BoxsCount = s.Boxs.Count,
                 LedsCount = s.Leds.Count,
                 StoresTagsCount = s.StoresTags.Count,
-                Boxs = expand != null && expand.Contains("boxs") ? s.Boxs.Take(20).ToList() : null,
-                Leds = expand != null && expand.Contains("leds") ? s.Leds.Take(20).ToList() : null,
-                StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null,
-                Zone = expand != null && expand.Contains("zone") ? s.Zone : null
+                Boxs = expandBoxs ? s.Boxs.Take(20).ToList() : null,
+                Leds = expandLeds ? s.Leds.Take(20).ToList() : null,
+                StoresTags = expandStoresTags ? s.StoresTags.Take(20).ToList() : null,
+                Zone = expandZone ? s.Zone : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
         var clientRole = _sessionService.GetClientRole();

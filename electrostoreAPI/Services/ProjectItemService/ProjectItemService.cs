@@ -20,6 +20,8 @@ public class ProjectItemService : IProjectItemService
     public async Task<PaginatedResponseDto<ReadExtendedProjectItemDto>> GetProjectItemsByProjectId(int projectId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandItem = expand?.Contains("item") == true;
+        var expandProject = expand?.Contains("project") == true;
         // check if the project exists
         if (!await _context.Projects.AnyAsync(p => p.id_project == projectId))
         {
@@ -28,11 +30,11 @@ public class ProjectItemService : IProjectItemService
         var query = _context.ProjectsItems.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_project", search_type = "eq", value = projectId.ToString() });
-        if (expand != null && expand.Contains("item"))
+        if (expandItem)
         {
             query = query.Include(pi => pi.Item);
         }
-        if (expand != null && expand.Contains("project"))
+        if (expandProject)
         {
             query = query.Include(pi => pi.Project);
         }
@@ -44,6 +46,8 @@ public class ProjectItemService : IProjectItemService
     public async Task<PaginatedResponseDto<ReadExtendedProjectItemDto>> GetProjectItemsByItemId(int itemId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandItem = expand?.Contains("item") == true;
+        var expandProject = expand?.Contains("project") == true;
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
@@ -52,11 +56,11 @@ public class ProjectItemService : IProjectItemService
         var query = _context.ProjectsItems.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_item", search_type = "eq", value = itemId.ToString() });
-        if (expand != null && expand.Contains("item"))
+        if (expandItem)
         {
             query = query.Include(pi => pi.Item);
         }
-        if (expand != null && expand.Contains("project"))
+        if (expandProject)
         {
             query = query.Include(pi => pi.Project);
         }
@@ -67,13 +71,15 @@ public class ProjectItemService : IProjectItemService
 
     public async Task<ReadExtendedProjectItemDto> GetProjectItemById(int projectId, int itemId, List<string>? expand = null)
     {
+        var expandItem = expand?.Contains("item") == true;
+        var expandProject = expand?.Contains("project") == true;
         var query = _context.ProjectsItems.AsQueryable();
         query = query.Where(pi => pi.id_project == projectId && pi.id_item == itemId);
-        if (expand != null && expand.Contains("item"))
+        if (expandItem)
         {
             query = query.Include(pi => pi.Item);
         }
-        if (expand != null && expand.Contains("project"))
+        if (expandProject)
         {
             query = query.Include(pi => pi.Project);
         }

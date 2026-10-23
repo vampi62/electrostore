@@ -28,6 +28,11 @@ public class ProjectService : IProjectService
     public async Task<PaginatedResponseDto<ReadExtendedProjectDto>> GetProjects(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        var expandProjectComments = expand?.Contains("project_comments") == true;
+        var expandProjectDocuments = expand?.Contains("project_documents") == true;
+        var expandProjectItems = expand?.Contains("project_items") == true;
+        var expandProjectTags = expand?.Contains("project_tags") == true;
+        var expandProjectStatusHistory = expand?.Contains("project_status_history") == true;
         var query = _context.Projects.AsQueryable();
         return await query
             .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_project", order = "asc" })
@@ -50,11 +55,11 @@ public class ProjectService : IProjectService
                         .OrderByDescending(ps => ps.created_at)
                         .Select(ps => (DateTime?)ps.created_at)
                         .FirstOrDefault(),
-                    ProjectsComments = expand != null && expand.Contains("project_comments") ? p.ProjectsComments.Take(20).ToList() : null,
-                    ProjectsDocuments = expand != null && expand.Contains("project_documents") ? p.ProjectsDocuments.Take(20).ToList() : null,
-                    ProjectsItems = expand != null && expand.Contains("project_items") ? p.ProjectsItems.Take(20).ToList() : null,
-                    ProjectsProjectTags = expand != null && expand.Contains("project_tags") ? p.ProjectsProjectTags.Take(20).ToList() : null,
-                    ProjectsStatus = expand != null && expand.Contains("project_status_history") ? p.ProjectsStatus.Take(20).ToList() : null
+                    ProjectsComments = expandProjectComments ? p.ProjectsComments.Take(20).ToList() : null,
+                    ProjectsDocuments = expandProjectDocuments ? p.ProjectsDocuments.Take(20).ToList() : null,
+                    ProjectsItems = expandProjectItems ? p.ProjectsItems.Take(20).ToList() : null,
+                    ProjectsProjectTags = expandProjectTags ? p.ProjectsProjectTags.Take(20).ToList() : null,
+                    ProjectsStatus = expandProjectStatusHistory ? p.ProjectsStatus.Take(20).ToList() : null
                 },
                 project => project.Select(p => {
                     return _mapper.Map<ReadExtendedProjectDto>(p.Project) with
@@ -77,6 +82,11 @@ public class ProjectService : IProjectService
 
     public async Task<ReadExtendedProjectDto> GetProjectById(int id, List<string>? expand = null)
     {
+        var expandProjectComments = expand?.Contains("project_comments") == true;
+        var expandProjectDocuments = expand?.Contains("project_documents") == true;
+        var expandProjectItems = expand?.Contains("project_items") == true;
+        var expandProjectTags = expand?.Contains("project_tags") == true;
+        var expandProjectStatusHistory = expand?.Contains("project_status_history") == true;
         var query = _context.Projects.AsQueryable();
         query = query.Where(p => p.id_project == id);
         var project = await query
@@ -98,11 +108,11 @@ public class ProjectService : IProjectService
                     .OrderByDescending(ps => ps.created_at)
                     .Select(ps => (DateTime?)ps.created_at)
                     .FirstOrDefault(),
-                ProjectsComments = expand != null && expand.Contains("project_comments") ? p.ProjectsComments.Take(20).ToList() : null,
-                ProjectsDocuments = expand != null && expand.Contains("project_documents") ? p.ProjectsDocuments.Take(20).ToList() : null,
-                ProjectsItems = expand != null && expand.Contains("project_items") ? p.ProjectsItems.Take(20).ToList() : null,
-                ProjectsProjectTags = expand != null && expand.Contains("project_tags") ? p.ProjectsProjectTags.Take(20).ToList() : null,
-                ProjectsStatus = expand != null && expand.Contains("project_status_history") ? p.ProjectsStatus.Take(20).ToList() : null
+                ProjectsComments = expandProjectComments ? p.ProjectsComments.Take(20).ToList() : null,
+                ProjectsDocuments = expandProjectDocuments ? p.ProjectsDocuments.Take(20).ToList() : null,
+                ProjectsItems = expandProjectItems ? p.ProjectsItems.Take(20).ToList() : null,
+                ProjectsProjectTags = expandProjectTags ? p.ProjectsProjectTags.Take(20).ToList() : null,
+                ProjectsStatus = expandProjectStatusHistory ? p.ProjectsStatus.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Project with id '{id}' not found");
         return _mapper.Map<ReadExtendedProjectDto>(project.Project) with
