@@ -13,6 +13,15 @@ namespace ElectrostoreAPI.Services.AiToolExecutorService;
 
 public class AiToolExecutorService : IAiToolExecutorService
 {
+    private static class JsonSchemaTypes
+    {
+        public const string Object = "object";
+        public const string Integer = "integer";
+        public const string String = "string";
+        public const string Boolean = "boolean";
+        public const string Number = "number";
+    }
+
     private readonly IItemService _itemService;
     private readonly IItemBoxService _itemBoxService;
     private readonly ITagService _tagService;
@@ -44,42 +53,42 @@ public class AiToolExecutorService : IAiToolExecutorService
         [
             Def("search_items", "Search items by reference or friendly name.", new
             {
-                type = "object",
+                type = JsonSchemaTypes.Object,
                 properties = new
                 {
-                    query = new { type = "string", description = "Free-text search on the item name." },
-                    limit = new { type = "integer", description = "Max number of results (default 20)." }
+                    query = new { type = JsonSchemaTypes.String, description = "Free-text search on the item name." },
+                    limit = new { type = JsonSchemaTypes.Integer, description = "Max number of results (default 20)." }
                 },
                 required = SearchItemsRequired
             }),
             Def("get_item_stock_location", "Get the boxes (and quantities) an item is currently stored in.", new
             {
-                type = "object",
+                type = JsonSchemaTypes.Object,
                 properties = new
                 {
-                    id_item = new { type = "integer", description = "The item id." }
+                    id_item = new { type = JsonSchemaTypes.Integer, description = "The item id." }
                 },
                 required = GetItemStockLocationRequired
             }),
             Def("list_boxes", "List boxes, optionally filtered by store.", new
             {
-                type = "object",
+                type = JsonSchemaTypes.Object,
                 properties = new
                 {
-                    id_store = new { type = "integer", description = "Optional store id to filter on." }
+                    id_store = new { type = JsonSchemaTypes.Integer, description = "Optional store id to filter on." }
                 }
             }),
             Def("list_stores", "List all stores.", new
             {
-                type = "object",
+                type = JsonSchemaTypes.Object,
                 properties = new { }
             }),
             Def("list_tags", "List tags, optionally filtered by name.", new
             {
-                type = "object",
+                type = JsonSchemaTypes.Object,
                 properties = new
                 {
-                    query = new { type = "string", description = "Optional free-text search on the tag name." }
+                    query = new { type = JsonSchemaTypes.String, description = "Optional free-text search on the tag name." }
                 }
             }),
             Def("create_item", "Propose creating a new item. This does not create anything: it only returns the proposed data for the user to validate.", BuildDtoSchema<CreateItemDto>()),
@@ -285,7 +294,7 @@ public class AiToolExecutorService : IAiToolExecutorService
         }
         return new Dictionary<string, object>
         {
-            ["type"] = "object",
+            ["type"] = JsonSchemaTypes.Object,
             ["properties"] = properties,
             ["required"] = required
         };
@@ -294,10 +303,10 @@ public class AiToolExecutorService : IAiToolExecutorService
     private static string JsonSchemaType(Type type)
     {
         var underlying = Nullable.GetUnderlyingType(type) ?? type;
-        if (underlying == typeof(bool)) return "boolean";
-        if (underlying == typeof(int) || underlying == typeof(long) || underlying == typeof(short)) return "integer";
-        if (underlying == typeof(double) || underlying == typeof(float) || underlying == typeof(decimal)) return "number";
-        return "string";
+        if (underlying == typeof(bool)) return JsonSchemaTypes.Boolean;
+        if (underlying == typeof(int) || underlying == typeof(long) || underlying == typeof(short)) return JsonSchemaTypes.Integer;
+        if (underlying == typeof(double) || underlying == typeof(float) || underlying == typeof(decimal)) return JsonSchemaTypes.Number;
+        return JsonSchemaTypes.String;
     }
 
     private sealed class SearchItemsArgs

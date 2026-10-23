@@ -51,8 +51,7 @@ public class SttService : ISttService
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "Error while calling the STT transcription endpoint");
-            throw;
+            throw new HttpRequestException("Error while calling the STT transcription endpoint", ex, ex.StatusCode);
         }
         if (!response.IsSuccessStatusCode)
         {

@@ -1,7 +1,6 @@
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Services.BoxService;
-using ElectrostoreAPI.Services.LedService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -14,12 +13,10 @@ namespace ElectrostoreAPI.Controllers
     public class StoreBoxController : ControllerBase
     {
         private readonly IBoxService _boxService;
-        private readonly ILedService _ledService;
 
-        public StoreBoxController(IBoxService boxService, ILedService ledService)
+        public StoreBoxController(IBoxService boxService)
         {
             _boxService = boxService;
-            _ledService = ledService;
         }
 
         [HttpGet]
@@ -121,14 +118,6 @@ namespace ElectrostoreAPI.Controllers
         {
             var boxs = await _boxService.DeleteBulkBox(ids, id_store);
             return Ok(boxs);
-        }
-
-        [HttpPost("{id_box}/show")]
-        [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> showLedBox([FromRoute] int id_store, [FromRoute] int id_box, [FromQuery] int red, [FromQuery] int green, [FromQuery] int blue, [FromQuery] int timeshow, [FromQuery] int animation)
-        {
-            await _ledService.ShowLedsByBox(id_store, id_box, red, green, blue, timeshow, animation);
-            return NoContent();
         }
     }
 }
