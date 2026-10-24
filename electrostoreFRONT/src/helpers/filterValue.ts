@@ -57,6 +57,7 @@ function matchValue(compareMethod: string, rowValue: unknown, value: NonNullable
 	}
 	switch (compareMethod) {
 	case "==":
+	case "=any=":
 		// "1" must match 1 and "true" must match true, the inputs only give strings
 		return normalize(rowValue) === normalize(value);
 	case "=like=":
@@ -71,7 +72,7 @@ function matchValue(compareMethod: string, rowValue: unknown, value: NonNullable
 	}
 }
 
-// does a row satisfy a filter, with several values they are combined according to the matchMode of the filter
+// does a row satisfy a filter, with several values the row must match all of them, or at least one for "=any="
 // the value of the row is only read if the filter is applied
 export function matchFilter(filter: RSQLFilter & Pick<FilterLabel, "disableLocalFilter">, getRowValue: () => unknown): boolean {
 	const values = filledValues(filter);
@@ -80,5 +81,5 @@ export function matchFilter(filter: RSQLFilter & Pick<FilterLabel, "disableLocal
 	}
 	const rowValue = getRowValue();
 	const matches = (value: RSQLValue) => matchValue(filter.compareMethod, rowValue, value as NonNullable<RSQLValue>);
-	return filter.matchMode === "any" ? values.some(matches) : values.every(matches);
+	return filter.compareMethod === "=any=" ? values.some(matches) : values.every(matches);
 }

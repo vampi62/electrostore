@@ -7,7 +7,7 @@
 					ref="filterBox"
 					class="relative flex flex-wrap items-center gap-1 border border-gray-300 rounded px-2 py-1 pr-8 bg-white"
 					:class="[classCss, label.length > 0 ? 'mr-2' : '', disabled ? 'opacity-50' : '']">
-					<span v-for="item in selected" :key="String(item.value)"
+					<span v-for="item in chips" :key="String(item.value)"
 						class="flex items-center gap-1 bg-blue-100 text-blue-800 rounded px-2 text-sm">
 						{{ item.text }}
 						<button type="button" class="font-bold hover:text-blue-950" :disabled="disabled"
@@ -222,6 +222,10 @@ export default {
 				return { value: value as ListItem["value"], text: option?.text ?? String(value) };
 			});
 		},
+		// selected options displayed as removable chips, a single value is displayed as the text of the input
+		chips(): ListItem[] {
+			return this.multiple ? this.selected : [];
+		},
 		// options of the datalist that can be chosen
 		listOptions(): ListItem[] {
 			const search = this.typed ? toLowerCaseWithoutAccents(this.query) : "";
@@ -305,7 +309,8 @@ export default {
 			this.query = option.text;
 			this.typed = false;
 			this.isOpen = false;
-			(this.$refs.filterInput as HTMLInputElement).blur();
+			// the blur restores the text of the selected option, which is only the new one once the value came back through modelValue
+			void nextTick(() => (this.$refs.filterInput as HTMLInputElement | undefined)?.blur());
 		},
 		removeValue(value: ListItem["value"]) {
 			if (this.multiple) {

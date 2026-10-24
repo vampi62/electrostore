@@ -2,10 +2,10 @@ import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 import { filledValues } from "@/helpers/filterValue";
 
 // RSQL conditions of a filter: none if it has no value, one per value if every value must match,
-// one "=any=" condition (equal to at least one of the comma separated values) if at least one value must match
+// a single condition with the comma separated values for "=any=" (equal to at least one of the values)
 function buildRSQLConditions(filter: RSQLFilter): string[] {
 	const values = filledValues(filter);
-	if (values.length > 1 && filter.matchMode === "any") {
+	if (filter.compareMethod === "=any=" && values.length > 0) {
 		return [`${filter.key}=any=${values.join(",")}`];
 	}
 	return values.map((value) => filter.key + filter.compareMethod + String(value));

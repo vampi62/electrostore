@@ -11,7 +11,7 @@ export interface FilterOption {
 	value: string;
 }
 
-// a filter is sent to the api as it is, so it extends RSQLFilter (key, compareMethod, value, matchMode)
+// a filter is sent to the api as it is, so it extends RSQLFilter (key, compareMethod, value)
 export interface FilterLabel extends RSQLFilter {
 	// translation key for the label
 	label: string;

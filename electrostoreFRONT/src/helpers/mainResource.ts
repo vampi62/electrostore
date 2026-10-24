@@ -18,6 +18,7 @@ export function createMainResource<T extends EntityTypes>({ path, idField, count
 			this[loadingKey] = true;
 			try {
 				const query = buildQuery({ offset, limit, expand, filter, sort });
+				console.log(`Fetching ${path()} with query: ${query}`);
 				const res = await fetchWrapper.get<PaginatedResponseDto<ReadExtended>>({ url: `${baseUrl}${path()}?${query}`, useToken: "access" });
 				for (const entity of res.data) {
 					this[stateKey][entity[idField]] = entity;

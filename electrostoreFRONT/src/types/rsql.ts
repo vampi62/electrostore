@@ -3,10 +3,8 @@ export type RSQLValue = string | number | boolean | null | undefined;
 export interface RSQLFilter {
 	key: string;
 	compareMethod: string;
-	// an array is a filter with several values, matchMode tells how they are combined
+	// an array is a filter with several values: every value must match, except with "=any=" where at least one must
 	value: RSQLValue | RSQLValue[];
-	// "all": every value must match (default), "any": at least one value must match
-	matchMode?: "all" | "any";
 }
 
 export interface RSQLSort {
