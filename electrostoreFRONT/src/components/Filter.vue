@@ -175,6 +175,8 @@ export default {
 			// text of the input of a datalist, the options are only filtered by it once the user typed in the input
 			query: "",
 			typed: false,
+			// an option was chosen in the list, so leaving the input keeps it
+			chosen: false,
 			// text of the other inputs
 			text: this.modelValue === null || this.modelValue === undefined || Array.isArray(this.modelValue) ? "" : String(this.modelValue),
 			debouncedRefetchData: null as (() => void) | null,
@@ -251,7 +253,8 @@ export default {
 		onFocus() {
 			this.isOpen = true;
 			this.typed = false;
-			// the whole list of options is displayed, the selected text comes back if the user leaves without typing
+			this.chosen = false;
+			// the whole list of options is displayed, the filter is cleared if the user leaves without choosing an option
 			this.query = "";
 			window.addEventListener("scroll", this.updatePosition, true);
 			window.addEventListener("resize", this.updatePosition);
@@ -275,28 +278,31 @@ export default {
 				this.removeValue(this.selected[this.selected.length - 1].value);
 			}
 		},
-		// what the user typed becomes the value of the filter when the input is left
+		// leaving the input keeps the chosen option, what the user typed becomes the value, otherwise the filter is cleared
 		commitQuery() {
-			const selectedText = this.multiple ? "" : (this.selected[0]?.text ?? "");
-			if (!this.typed || this.multiple) {
-				this.query = selectedText;
-			} else if (this.hasStore) {
-				// the text is the value, the table also finds what is not in the options
-				this.$emit("update", this.query);
-			} else {
+			if (this.multiple) {
+				this.query = "";
+			} else if (!this.chosen) {
 				const typedText = toLowerCaseWithoutAccents(this.query);
-				const match = this.allOptions.find((option) => toLowerCaseWithoutAccents(option.text) === typedText);
+				const match = this.typed && !this.hasStore ? this.allOptions.find((option) => toLowerCaseWithoutAccents(option.text) === typedText) : undefined;
 				if (match) {
 					this.$emit("update", match.value);
 					this.query = match.text;
-				} else if (typedText.trim() === "") {
-					this.$emit("update", "");
-					this.query = "";
+				} else if (this.typed && this.hasStore && typedText.trim() !== "") {
+					// the text is the value, the table also finds what is not in the options
+					this.$emit("update", this.query);
 				} else {
-					this.query = selectedText;
+					this.clear();
 				}
 			}
 			this.typed = false;
+			this.chosen = false;
+		},
+		clear() {
+			if (filledValues({ value: this.modelValue }).length > 0) {
+				this.$emit("update", "");
+			}
+			this.query = "";
 		},
 		selectOption(option: ListItem) {
 			if (this.multiple) {
@@ -308,9 +314,9 @@ export default {
 			this.$emit("update", option.value);
 			this.query = option.text;
 			this.typed = false;
+			this.chosen = true;
 			this.isOpen = false;
-			// the blur restores the text of the selected option, which is only the new one once the value came back through modelValue
-			void nextTick(() => (this.$refs.filterInput as HTMLInputElement | undefined)?.blur());
+			(this.$refs.filterInput as HTMLInputElement).blur();
 		},
 		removeValue(value: ListItem["value"]) {
 			if (this.multiple) {
