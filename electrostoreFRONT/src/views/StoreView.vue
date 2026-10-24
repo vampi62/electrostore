@@ -553,8 +553,8 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores");
 					<button type="button" @click="storeBoxEditModalShow = false"
 						class="text-xl text-gray-500 hover:text-gray-700">&times;</button>
 				</div>
-				<div>
-					<Tableau v-if="boxId != null" :labels="labelTableauBoxItem" :meta="metaTableauBoxItem"
+				<div v-if="boxId != ''">
+					<Tableau :labels="labelTableauBoxItem" :meta="metaTableauBoxItem"
 						:store-data="[storesStore.boxItems[boxId],itemsStore.items,itemsStore.thumbnailsURL]"
 						:loading="storesStore.boxItemsLoading"
 						:total-count="Number(storesStore.boxItemsTotalCount[boxId] || 0)"
@@ -570,7 +570,7 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores");
 							</tr>
 						</template>
 					</Tableau>
-					<Tableau v-if="boxId != null" :labels="labelTableauBoxEquipement" :meta="metaTableauBoxEquipement"
+					<Tableau :labels="labelTableauBoxEquipement" :meta="metaTableauBoxEquipement"
 						:store-data="[storesStore.boxEquipements[boxId],equipementsStore.equipements, equipementsStore.thumbnailsURL]"
 						:loading="storesStore.boxEquipementsLoading"
 						:total-count="Number(storesStore.boxEquipementsTotalCount[boxId] || 0)"
