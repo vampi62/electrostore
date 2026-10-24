@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { useViewScroll } from "@/composables";
 import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 
 import { useStoresStore, useTagsStore, useAuthStore } from "@/stores";
 
 import type { FilterLabel } from "@/types/filter";
 import type { TableauLabel, TableauMeta } from "@/types/tableau";
 import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+
+const { t } = useI18n();
+
 const storesStore = useStoresStore();
 const tagsStore = useTagsStore();
 const authStore = useAuthStore();
@@ -30,7 +34,7 @@ const filter = ref<FilterLabel[]>([
 	{ key: "mqtt_name_store", value: "", type: "text", label: "stores.FilterMqttName", compareMethod: "=like=" },
 	{ key: "xlength_store", value: "", type: "number", label: "stores.FilterXLength", compareMethod: "=le=" },
 	{ key: "ylength_store", value: "", type: "number", label: "stores.FilterYLength", compareMethod: "=le=" },
-	{ key: "is_mqtt_connected_store", value: "", type: "boolean", label: "stores.FilterMqttConnected", compareMethod: "=" },
+	{ key: "is_mqtt_connected_store", value: undefined, type: "datalist", options: { ["false"]: t("stores.FilterConnected0"), ["true"]: t("stores.FilterConnected1") }, label: "stores.FilterMqttConnected", compareMethod: "=" },
 	{ key: "mqtt_last_seen_store", value: "", type: "date", label: "stores.FilterMqttLastSeen", compareMethod: "=le=" },
 	/* { key: "StoresTags.Tag.name_tag", value: "", type: "datalist", label: "stores.FilterTag", compareMethod: "=like=",
 		fetchOptions: (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear),
@@ -42,7 +46,7 @@ const tableauLabel = ref<TableauLabel[]>([
 	{ label: "stores.XLength", sortable: true, key: "xlength_store", valueKey: "xlength_store", type: "number" },
 	{ label: "stores.YLength", sortable: true, key: "ylength_store", valueKey: "ylength_store", type: "number" },
 	{ label: "stores.MqttName", sortable: true, key: "mqtt_name_store", valueKey: "mqtt_name_store", type: "text" },
-	{ label: "stores.MqttConnected", sortable: true, key: "is_mqtt_connected_store", valueKey: "is_mqtt_connected_store", type: "boolean" },
+	{ label: "stores.MqttConnected", sortable: true, key: "is_mqtt_connected_store", valueKey: "is_mqtt_connected_store", type: "bool", condition: "rowData?.is_mqtt_connected_store" },
 	{ label: "stores.MqttLastSeen", sortable: true, key: "mqtt_last_seen_store", valueKey: "mqtt_last_seen_store", type: "date" },
 	{ label: "stores.TagsList", sortable: false, key: "", sourceKey: "id_store", type: "link-list", 
 		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_store", storeLinkKeyJoinRessource: "id_tag",

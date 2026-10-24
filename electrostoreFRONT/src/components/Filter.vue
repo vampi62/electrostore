@@ -1,93 +1,71 @@
 <template>
 	<div v-if="type !== 'hidden'">
-		<label v-if="label.length > 0" :for="`filter-input-${$.uid}`" class="text-sm text-gray-700 mr-2">{{ $t(label) }}</label>
+		<label v-if="label.length > 0" :for="inputId" class="text-sm text-gray-700 mr-2">{{ $t(label) }}</label>
 		<div>
-		<template v-if="type === 'select'">
-			<select
-				:id="`filter-input-${$.uid}`"
-				class="border border-gray-300 rounded px-2 py-1"
-				:class="[classCss, label.length > 0 ? 'mr-2' : '']"
-				:disabled="disabled"
-				@change="$emit('updateText', [($event.target as HTMLSelectElement).value, ($event.target as HTMLSelectElement).value])">
-				<option value=""></option>
-				<template v-if="options">
-					<option v-for="option in filterOption" :key="option.id" :value="option.id" :selected="preset === option.id">{{ option.value }}
-					</option>
-				</template>
-			</select>
-		</template>
-		<template v-else-if="type === 'datalist'">
-			<div class="relative max-w-xs mx-auto">
-				<input
-					:id="`filter-input-${$.uid}`"
-					ref="filterInput"
-					type="text"
-					class="border border-gray-300 rounded px-2 py-1"
-					:class="[classCss, label.length > 0 ? 'mr-2' : '']"
-					:placeholder="placeholder"
-					:disabled="disabled"
-					v-model="inputText"
-					@input="storeData && storeKey ? debouncedRefetchData?.() : null"
-					@focus="isOpen = true; inputText='', startEventUpdatePosition()"
-					@blur="isOpen = false; validateInput(); endEventUpdatePosition()" />
-				<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+			<template v-if="isList">
+				<div
+					ref="filterBox"
+					class="relative flex flex-wrap items-center gap-1 border border-gray-300 rounded px-2 py-1 pr-8 bg-white"
+					:class="[classCss, label.length > 0 ? 'mr-2' : '', disabled ? 'opacity-50' : '']">
+					<span v-for="item in chips" :key="String(item.value)"
+						class="flex items-center gap-1 bg-blue-100 text-blue-800 rounded px-2 text-sm">
+						{{ item.text }}
+						<button type="button" class="font-bold hover:text-blue-950" :disabled="disabled"
+							@mousedown.prevent="removeValue(item.value)">&times;</button>
+					</span>
+					<input
+						:id="inputId"
+						ref="filterInput"
+						type="text"
+						class="flex-1 min-w-24 outline-none bg-transparent"
+						:placeholder="selected.length === 0 || !multiple ? placeholder : ''"
+						:disabled="disabled"
+						autocomplete="off"
+						v-model="query"
+						@input="onInput"
+						@focus="onFocus"
+						@blur="onBlur"
+						@keydown.backspace="onBackspace" />
 					<svg
-						class="w-4 h-4 text-gray-500"
+						class="w-4 h-4 text-gray-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
 						fill="none"
 						stroke="currentColor"
 						viewBox="0 0 24 24"
 						xmlns="http://www.w3.org/2000/svg">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M19 9l-7 7-7-7" />
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
 					</svg>
 				</div>
-			</div>
-			<teleport to="body">
-				<div v-show="isOpen"
-					:ref="`filterList`"
-					class="absolute border max-h-48 overflow-y-auto bg-white left-0" style="width: calc(100% - 8px);">
-					<template v-if="options && !storeData">
-						<div v-for="option in filterOption" :key="option.id"
-							@mousedown.prevent="selectOption(option.id, option.value)"
-							class="flex flex-col p-2 hover:bg-gray-100 cursor-pointer">
-							<span class="text-sm">{{ option.value }}</span>
+				<teleport to="body">
+					<div v-show="isOpen" ref="filterList"
+						class="absolute z-50 border max-h-48 overflow-y-auto bg-white left-0">
+						<div v-for="option in listOptions" :key="String(option.value)"
+							class="flex flex-col p-2 hover:bg-gray-100 cursor-pointer"
+							@mousedown.prevent="selectOption(option)">
+							<span class="text-sm">{{ option.text }}</span>
 						</div>
-					</template>
-					<template v-else>
-						<div v-for="[index, option] in filterStoreOption" :key="index"
-							@mousedown.prevent="selectOption(index, option)"
-							class="flex flex-col p-2 hover:bg-gray-100 cursor-pointer">
-							<span class="text-sm">{{ option }}</span>
-						</div>
-					</template>
-				</div>
-			</teleport>
-		</template>
-		<template v-else-if="type === 'checkbox'">
+					</div>
+				</teleport>
+			</template>
 			<input
-				:id="`filter-input-${$.uid}`"
+				v-else-if="type === 'checkbox'"
+				:id="inputId"
 				type="checkbox"
 				class="form-checkbox h-5 w-5 text-blue-600"
 				:class="[classCss, label.length > 0 ? 'mr-2' : '']"
 				:disabled="disabled"
-				v-model="inputText"
-				@change="$emit('updateText', [($event.target as HTMLInputElement).checked, ($event.target as HTMLInputElement).checked])" />
-		</template>
-		<template v-else>
+				:checked="modelValue === true"
+				@change="$emit('update', ($event.target as HTMLInputElement).checked)" />
 			<input
-				:id="`filter-input-${$.uid}`"
+				v-else
+				:id="inputId"
 				:type="type"
 				:placeholder="placeholder"
-				:value="preset"
+				:value="text"
 				autocomplete="off"
 				class="border border-gray-300 rounded px-2 py-1"
 				:class="[classCss, label.length > 0 ? 'mr-2' : '']"
 				:disabled="disabled"
-				@input="$emit('updateText', [($event.target as HTMLInputElement).value, ($event.target as HTMLInputElement).value])" />
-		</template>
+				@input="onTextInput" />
 		</div>
 	</div>
 </template>
@@ -98,9 +76,17 @@ import type { PropType } from "vue";
 import type { StateTree } from "pinia";
 import { debounce } from "lodash-es";
 import { toLowerCaseWithoutAccents } from "@/utils";
+import { filledValues } from "@/helpers";
 import type { FetchFunction, FetchPage } from "@/types/fetch";
-import type { FilterOption, FilterStrictMode, FilterValue } from "@/types/filter";
+import type { FilterOption, FilterValue } from "@/types/filter";
 import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+
+// value sent to the filter and text displayed for an option of a datalist
+interface ListItem {
+	value: string | number | boolean;
+	text: string;
+}
+
 export default {
 	name: "Filter",
 	props: {
@@ -114,7 +100,14 @@ export default {
 			type: String,
 			required: true,
 			// This should be a valid input type
-			// 'text', 'number', 'select', 'datalist', etc.
+			// 'text', 'number', 'datalist', 'checkbox', etc.
+		},
+		modelValue: {
+			type: [String, Number, Boolean, Array] as PropType<RSQLFilter["value"]>,
+			required: false,
+			// The current value of the filter, an array if the filter is multiple.
+			// Only used to initialize the text inputs, a datalist and a checkbox always display it
+			default: "",
 		},
 		disabled: {
 			type: Boolean,
@@ -128,12 +121,6 @@ export default {
 			// e.g., 'write here your text'
 			default: "",
 		},
-		preset: {
-			type: [String, Number, Boolean] as PropType<FilterValue>,
-			required: false,
-			// This should be the value to preset the input with
-			default: "",
-		},
 		classCss: {
 			type: String,
 			required: false,
@@ -143,10 +130,9 @@ export default {
 		options: {
 			type: Array as PropType<FilterOption[]>,
 			required: false,
-			// This should be an array of options for select/datalist input
+			// This should be an array of options for a datalist
 			// e.g., [{id: 'id1', value: 'Option 1'}, {id: 'id2', value: 'Option 2'}]
-			// translate the values before passing
-			// to the component
+			// translate the values before passing to the component
 			default: () => ([]),
 		},
 		sortOptions: {
@@ -173,155 +159,189 @@ export default {
 		storeKey: {
 			type: String,
 			required: false,
-			// This should be the key in storeData of the value displayed, it is also the key sent to fetchOptions function
+			// This should be the key in storeData of the value displayed and filtered, it is also the key sent to fetchOptions function
 			default: undefined,
 		},
-		strictMode: {
-			type: Object as PropType<FilterStrictMode>,
+		multiple: {
+			type: Boolean,
 			required: false,
-			// This should be an object containing the configuration for strict mode
-			// e.g., { key: 'region_signaleur.id', storeKey: 'id', typeData: 'number' }
-			default: undefined,
+			// Several options can be selected, the value is then an array
+			default: false,
 		},
 	},
 	data() {
 		return {
 			isOpen: false,
-			inputText: this.preset,
+			// text of the input of a datalist, the options are only filtered by it once the user typed in the input
+			query: "",
+			typed: false,
+			// an option was chosen in the list, so leaving the input keeps it
+			chosen: false,
+			// text of the other inputs
+			text: this.modelValue === null || this.modelValue === undefined || Array.isArray(this.modelValue) ? "" : String(this.modelValue),
 			debouncedRefetchData: null as (() => void) | null,
-			justSelected: false,
 		};
 	},
 	created() {
 		this.debouncedRefetchData = debounce(this.refetchData, 500);
-		this.justSelected = false;
 	},
 	async mounted() {
-		if (this.type === "datalist" && this.preset) {
-			const found = this.options && this.options.find((o) => String(o.id) === String(this.preset));
-			if (found) {
-				this.inputText = found.value;
-			} else if (this.storeData && this.storeKey) {
-				this.inputText = this.preset;
-			}
+		if (!this.isList) {
+			return;
 		}
-		if (this.type === "datalist" && this.storeData && this.storeKey) {
+		this.query = this.multiple ? "" : (this.selected[0]?.text ?? "");
+		if (this.hasStore) {
 			await this.refetchData();
-			const valueKey = this.strictMode ? (this.strictMode.storeKey ?? "") : this.storeKey;
-			const foundInStore = Object.values(this.storeData).find((o) => String(o[valueKey]) === String(this.preset));
-			if (foundInStore) {
-				this.inputText = foundInStore[valueKey];
-			}
 		}
 	},
+	// the value is the id of the option, "update" gives the values chosen by the user (an array if multiple), converting them is up to the container
 	emits: {
-		// value is [value, displayed text], mode "select" is sent when an option of a strictMode filter is chosen
-		updateText: (_value: [FilterValue, FilterValue], _mode?: "text" | "select") => true,
+		update: (_value: FilterValue | FilterValue[]) => true,
 	},
 	computed: {
-		filterOption(): FilterOption[] {
-			if (!this.options) {
-				return [];
+		inputId(): string {
+			return `filter-input-${this.$.uid}`;
+		},
+		isList(): boolean {
+			return this.type === "datalist" || this.type === "select";
+		},
+		// the options come from a store, the user can also type a text that is not an option
+		hasStore(): boolean {
+			return this.storeData !== undefined && this.storeKey !== undefined;
+		},
+		// every option of the datalist
+		allOptions(): ListItem[] {
+			if (this.hasStore) {
+				const storeKey = this.storeKey ?? "";
+				return Object.values(this.storeData ?? {}).map((element) => ({ value: element[storeKey], text: String(element[storeKey]) }));
 			}
-			let result = this.options.filter((option) => {
-				if (this.inputText !== null && this.inputText !== "") {
-					return toLowerCaseWithoutAccents(String(option.value)).includes(toLowerCaseWithoutAccents(String(this.inputText)));
+			return this.options.map((option) => ({ value: option.id, text: option.value }));
+		},
+		// options of the datalist that are currently selected
+		selected(): ListItem[] {
+			return filledValues({ value: this.modelValue }).map((value) => {
+				const option = this.allOptions.find((o) => String(o.value) === String(value));
+				return { value: value as ListItem["value"], text: option?.text ?? String(value) };
+			});
+		},
+		// selected options displayed as removable chips, a single value is displayed as the text of the input
+		chips(): ListItem[] {
+			return this.multiple ? this.selected : [];
+		},
+		// options of the datalist that can be chosen
+		listOptions(): ListItem[] {
+			const search = this.typed ? toLowerCaseWithoutAccents(this.query) : "";
+			const selectedValues = new Set(this.selected.map((item) => String(item.value)));
+			const result = this.allOptions.filter((option) => {
+				if (this.multiple && selectedValues.has(String(option.value))) {
+					return false;
 				}
-				return true;
+				return toLowerCaseWithoutAccents(option.text).includes(search);
 			});
 			if (this.sortOptions) {
-				result = result.slice().sort((a, b) => {
-					const aVal = toLowerCaseWithoutAccents(String(a.value));
-					const bVal = toLowerCaseWithoutAccents(String(b.value));
-					return this.sortOptions === "desc" ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
-				});
-			}
-			return result;
-		},
-		// [value, displayed text] of each element of storeData
-		filterStoreOption(): [string | number, string][] {
-			if (!this.storeData || !this.storeKey) {
-				return [];
-			}
-			const storeKey = this.storeKey;
-			const valueKey = this.strictMode ? (this.strictMode.storeKey ?? "") : storeKey;
-			let result = Object.values(this.storeData).filter((element) => {
-				if (this.inputText !== null && this.inputText !== "") {
-					return toLowerCaseWithoutAccents(element[storeKey]).includes(toLowerCaseWithoutAccents(String(this.inputText)));
-				}
-				return true;
-			}).map((element): [string | number, string] => [element[valueKey], element[storeKey]]);
-			if (this.sortOptions) {
-				result = result.slice().sort((a, b) => {
-					const aVal = toLowerCaseWithoutAccents(String(a[1]));
-					const bVal = toLowerCaseWithoutAccents(String(b[1]));
-					return this.sortOptions === "desc" ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
-				});
+				const order = this.sortOptions === "desc" ? -1 : 1;
+				result.sort((a, b) => order * toLowerCaseWithoutAccents(a.text).localeCompare(toLowerCaseWithoutAccents(b.text)));
 			}
 			return result;
 		},
 	},
 	methods: {
-		selectOption(index: string | number, option: string){
-			this.inputText = option;
-			this.isOpen = false;
-			if (this.strictMode) {
-				this.justSelected = true;
-				this.$emit("updateText", [index, option], "select");
-			} else {
-				this.$emit("updateText", [index, option], "text");
-			}
-			(this.$refs.filterInput as HTMLInputElement).blur();
+		onTextInput(event: Event) {
+			this.text = (event.target as HTMLInputElement).value;
+			this.$emit("update", this.text);
 		},
-		validateInput(){
-			if (this.justSelected) {
-				this.justSelected = false;
-				return;
-			}
-			if (this.options && this.options.length > 0 && !this.storeData) {
-				const result = this.options.find((option) => {
-					return toLowerCaseWithoutAccents(String(option.value)) === toLowerCaseWithoutAccents(String(this.inputText));
-				});
-				if (result) {
-					this.inputText = result.value;
-					this.$emit("updateText", [result.id, result.value]);
-				} else {
-					this.inputText = "";
-					this.$emit("updateText", ["", ""]);
-				}
-			} else if (this.storeData && this.storeKey) {
-				this.$emit("updateText", [this.inputText, this.inputText]);
-			}
-		},
-		startEventUpdatePosition(){
+		onFocus() {
+			this.isOpen = true;
+			this.typed = false;
+			this.chosen = false;
+			// the whole list of options is displayed, the filter is cleared if the user leaves without choosing an option
+			this.query = "";
 			window.addEventListener("scroll", this.updatePosition, true);
 			window.addEventListener("resize", this.updatePosition);
-			nextTick(() => {
-				this.updatePosition();
-			});
+			void nextTick(() => this.updatePosition());
 		},
-		endEventUpdatePosition(){
+		onInput() {
+			this.typed = true;
+			this.isOpen = true;
+			if (this.hasStore) {
+				this.debouncedRefetchData?.();
+			}
+		},
+		onBlur() {
+			this.isOpen = false;
 			window.removeEventListener("scroll", this.updatePosition, true);
 			window.removeEventListener("resize", this.updatePosition);
+			this.commitQuery();
 		},
-		updatePosition(){
-			if (!this.isOpen) {
+		onBackspace() {
+			if (this.multiple && this.query === "" && this.selected.length > 0) {
+				this.removeValue(this.selected[this.selected.length - 1].value);
+			}
+		},
+		// leaving the input keeps the chosen option, what the user typed becomes the value, otherwise the filter is cleared
+		commitQuery() {
+			if (this.multiple) {
+				this.query = "";
+			} else if (!this.chosen) {
+				const typedText = toLowerCaseWithoutAccents(this.query);
+				const match = this.typed && !this.hasStore ? this.allOptions.find((option) => toLowerCaseWithoutAccents(option.text) === typedText) : undefined;
+				if (match) {
+					this.$emit("update", match.value);
+					this.query = match.text;
+				} else if (this.typed && this.hasStore && typedText.trim() !== "") {
+					// the text is the value, the table also finds what is not in the options
+					this.$emit("update", this.query);
+				} else {
+					this.clear();
+				}
+			}
+			this.typed = false;
+			this.chosen = false;
+		},
+		clear() {
+			if (filledValues({ value: this.modelValue }).length > 0) {
+				this.$emit("update", "");
+			}
+			this.query = "";
+		},
+		selectOption(option: ListItem) {
+			if (this.multiple) {
+				this.$emit("update", [...this.selected.map((item) => item.value), option.value]);
+				this.query = "";
+				this.typed = false;
 				return;
 			}
-			let inputElement = this.$refs.filterInput as HTMLInputElement | undefined;
-			let listElement = this.$refs.filterList as HTMLElement | undefined;
-			if (inputElement && listElement) {
-				let rect = inputElement.getBoundingClientRect();
-				listElement.style.top = `${rect.bottom + window.scrollY}px`;
-				listElement.style.left = `${rect.left + window.scrollX}px`;
-				listElement.style.width = `${rect.width}px`;
+			this.$emit("update", option.value);
+			this.query = option.text;
+			this.typed = false;
+			this.chosen = true;
+			this.isOpen = false;
+			(this.$refs.filterInput as HTMLInputElement).blur();
+		},
+		removeValue(value: ListItem["value"]) {
+			if (this.multiple) {
+				this.$emit("update", this.selected.map((item) => item.value).filter((v) => String(v) !== String(value)));
+			} else {
+				this.$emit("update", "");
+				this.query = "";
 			}
+		},
+		updatePosition() {
+			const box = this.$refs.filterBox as HTMLElement | undefined;
+			const list = this.$refs.filterList as HTMLElement | undefined;
+			if (!this.isOpen || !box || !list) {
+				return;
+			}
+			const rect = box.getBoundingClientRect();
+			list.style.top = `${rect.bottom + window.scrollY}px`;
+			list.style.left = `${rect.left + window.scrollX}px`;
+			list.style.width = `${rect.width}px`;
 		},
 		async refetchData() {
 			const filter: RSQLFilter[] = [{
 				key: this.storeKey ?? "",
 				compareMethod: "=like=",
-				value: this.inputText,
+				value: this.multiple || !this.typed ? "" : this.query,
 			}];
 			const sort: RSQLSort = {
 				key: this.storeKey,

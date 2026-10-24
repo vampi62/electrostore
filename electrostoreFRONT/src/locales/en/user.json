@@ -50,7 +50,7 @@
 	"TokenLastLoginDate": "Last login date",
 	"TokenCreatedIP": "IP login",
 	"TokenExpireDate": "Expire date",
-	"TokenIsRevoked": "Is revoked",
+	"TokenIsValid": "Is valid",
 	"TokenAuthMethod": "Authentication method",
 	"TokenRevokedDate": "Revoked date",
 	"TokenRevokedIP": "Revoked IP",

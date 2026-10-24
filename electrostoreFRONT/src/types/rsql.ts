@@ -1,7 +1,10 @@
+export type RSQLValue = string | number | boolean | null | undefined;
+
 export interface RSQLFilter {
 	key: string;
 	compareMethod: string;
-	value: string | number | boolean | null | undefined;
+	// an array is a filter with several values: every value must match, except with "=any=" where at least one must
+	value: RSQLValue | RSQLValue[];
 }
 
 export interface RSQLSort {

@@ -50,7 +50,7 @@ import { defineAsyncComponent } from "vue";
 import type { PropType } from "vue";
 import { useRouter } from "vue-router";
 import { debounce } from "lodash-es";
-import { toLowerCaseWithoutAccents } from "@/utils";
+import { matchFilter } from "@/helpers";
 import { useTabsStore } from "@/stores";
 import type { TableauLabel, TableauMeta, TableauCss, TableauRowData } from "@/types/tableau";
 import type { FetchFunction, FetchPage, ListFetchFunction } from "@/types/fetch";
@@ -403,44 +403,7 @@ export default {
 			}
 		},
 		matchesFilters(element: TableauRowData) {
-			if (!this.filters || this.filters.length === 0) {
-				return true;
-			}
-			return this.filters.every((f) => {
-				if (f.value === "" || f.value === null || f.value === undefined || f.disableLocalFilter) {
-					return true;
-				}
-				const elementValue = this.getDataValue(element, f.key);
-				const filterValue = String(f.value);
-				switch (f.compareMethod) {
-				case "==":
-					switch (f?.typeData || f.type) {
-					case "bool":
-						return elementValue === (f.value === "true");
-					case "number":
-						return Number.parseInt(elementValue) === Number.parseInt(filterValue);
-					case "string":
-						if (Array.isArray(elementValue)) {
-							return elementValue.some((item) =>
-								toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(filterValue)),
-							);
-						}
-						return toLowerCaseWithoutAccents(elementValue) === toLowerCaseWithoutAccents(filterValue);
-					}
-					return elementValue === f.value;
-				case "=ge=":
-					return elementValue >= f.value;
-				case "=le=":
-					return elementValue <= f.value;
-				case "=like=":
-					if (Array.isArray(elementValue)) {
-						return elementValue.some((item) =>
-							toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(filterValue)),
-						);
-					}
-					return toLowerCaseWithoutAccents(elementValue).includes(toLowerCaseWithoutAccents(filterValue));
-				}
-			});
+			return this.filters.every((filter) => matchFilter(filter, () => this.getDataValue(element, filter.key)));
 		},
 		getDataValue(row: TableauRowData, labelKey: string) {
 			const label = this.labels.find((l) => l.key === labelKey);
