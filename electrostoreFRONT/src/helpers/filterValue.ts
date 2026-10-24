@@ -13,14 +13,33 @@ export function filledValues(filter: Pick<RSQLFilter, "value">): RSQLValue[] {
 	return values.filter(isFilled);
 }
 
+function toNumber(text: string, parse: (text: string) => number): number | "" {
+	const number = parse(text);
+	return Number.isNaN(number) ? "" : number;
+}
+
+// convert the text of a list or hidden filter according to the typeData of the filter, without typeData it is left as it is
+function toTypedValue(typeData: string | undefined, raw: FilterValue, text: string): FilterValue {
+	switch (typeData) {
+	case "number":
+		return toNumber(text, Number.parseInt);
+	case "float":
+		return toNumber(text, Number.parseFloat);
+	case "string":
+		return text.toLowerCase();
+	case "bool":
+		return text === "" ? "" : text === "true";
+	default:
+		return raw;
+	}
+}
+
 // convert what the user typed or chose to the value of the filter, according to the type of the filter
 export function toFilterValue(filter: Pick<FilterLabel, "type" | "typeData" | "valueIfTrue" | "valueIfFalse">, raw: FilterValue): FilterValue {
 	const text = String(raw ?? "");
 	switch (filter.type) {
-	case "number": {
-		const number = Number.parseFloat(text);
-		return Number.isNaN(number) ? "" : number;
-	}
+	case "number":
+		return toNumber(text, Number.parseFloat);
 	case "text":
 		return text.toLowerCase();
 	case "checkbox":
@@ -28,22 +47,10 @@ export function toFilterValue(filter: Pick<FilterLabel, "type" | "typeData" | "v
 	case "select":
 	case "datalist":
 	case "hidden":
-		switch (filter.typeData) {
-		case "number": {
-			const number = Number.parseInt(text);
-			return Number.isNaN(number) ? "" : number;
-		}
-		case "float": {
-			const number = Number.parseFloat(text);
-			return Number.isNaN(number) ? "" : number;
-		}
-		case "string":
-			return text.toLowerCase();
-		case "bool":
-			return text === "" ? "" : text === "true";
-		}
+		return toTypedValue(filter.typeData, raw, text);
+	default:
+		return raw;
 	}
-	return raw;
 }
 
 function normalize(value: unknown): string {
