@@ -69,6 +69,12 @@ public static class RsqlParserExtensions
         return current;
     }
 
+    private static bool HasMember(Type type, string name)
+    {
+        const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase;
+        return type.GetProperty(name, flags) != null || type.GetField(name, flags) != null;
+    }
+
     private static (Expression? aggregateExpr, Type? resultType) BuildAggregateExpression(
         Expression parameter, string aggregateFunc, string innerField)
     {
@@ -78,43 +84,45 @@ public static class RsqlParserExtensions
         for (int i = 0; i < parts.Length; i++)
         {
             var part = parts[i];
-            var propInfo = current.Type.GetProperty(part, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-            var fieldInfoMember = current.Type.GetField(part, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-
-            if (propInfo == null && fieldInfoMember == null) return (null, null);
+            if (!HasMember(current.Type, part)) return (null, null);
 
             var nextExpr = Expression.PropertyOrField(current, part);
 
             if (IsCollectionType(nextExpr.Type))
             {
-                var elemType = GetCollectionElementType(nextExpr.Type);
-                if (elemType == null) return (null, null);
-
-                if (aggregateFunc.Equals("COUNT", StringComparison.OrdinalIgnoreCase))
-                {
-                    var countMethod = typeof(Enumerable).GetMethods()
-                        .First(m => m.Name == "Count" && m.GetParameters().Length == 1)
-                        .MakeGenericMethod(elemType);
-                    return (Expression.Call(countMethod, nextExpr), typeof(int));
-                }
-
                 var remainingPath = string.Join(".", parts.Skip(i + 1));
-                if (string.IsNullOrEmpty(remainingPath)) return (null, null);
-
-                var innerParam = Expression.Parameter(elemType, "item");
-                var innerProp = BuildNestedPropertyAccess(innerParam, remainingPath, out _, out _, out _);
-                if (innerProp == null) return (null, null);
-
-                var propType = innerProp.Type;
-                var selector = Expression.Lambda(innerProp, innerParam);
-
-                return BuildEnumerableAggregateCall(aggregateFunc, nextExpr, selector, elemType, propType);
+                return BuildCollectionAggregate(aggregateFunc, nextExpr, remainingPath);
             }
 
             current = nextExpr;
         }
 
         return (null, null);
+    }
+
+    private static (Expression? aggregateExpr, Type? resultType) BuildCollectionAggregate(
+        string aggregateFunc, Expression collection, string remainingPath)
+    {
+        var elemType = GetCollectionElementType(collection.Type);
+        if (elemType == null) return (null, null);
+
+        if (aggregateFunc.Equals("COUNT", StringComparison.OrdinalIgnoreCase))
+        {
+            var countMethod = typeof(Enumerable).GetMethods()
+                .First(m => m.Name == "Count" && m.GetParameters().Length == 1)
+                .MakeGenericMethod(elemType);
+            return (Expression.Call(countMethod, collection), typeof(int));
+        }
+
+        if (string.IsNullOrEmpty(remainingPath)) return (null, null);
+
+        var innerParam = Expression.Parameter(elemType, "item");
+        var innerProp = BuildNestedPropertyAccess(innerParam, remainingPath, out _, out _, out _);
+        if (innerProp == null) return (null, null);
+
+        var selector = Expression.Lambda(innerProp, innerParam);
+
+        return BuildEnumerableAggregateCall(aggregateFunc, collection, selector, elemType, innerProp.Type);
     }
 
     private static (Expression? aggregateExpr, Type? resultType) BuildEnumerableAggregateCall(
@@ -141,10 +149,9 @@ public static class RsqlParserExtensions
         {
             var methodName = aggregateFunc.Equals("MAX", StringComparison.OrdinalIgnoreCase) ? "Max" : "Min";
             method = typeof(Enumerable).GetMethods()
-                .Where(m => m.Name == methodName && m.IsGenericMethod &&
-                            m.GetParameters().Length == 2 &&
-                            m.GetGenericArguments().Length == 2)
-                .FirstOrDefault()
+                .FirstOrDefault(m => m.Name == methodName && m.IsGenericMethod &&
+                                     m.GetParameters().Length == 2 &&
+                                     m.GetGenericArguments().Length == 2)
                 ?.MakeGenericMethod(elemType, propType);
             resultType = propType;
         }
@@ -219,36 +226,7 @@ public static class RsqlParserExtensions
         var aggregateMatch = AggregateRegex.Match(field);
         if (aggregateMatch.Success)
         {
-            var aggregateFunc = aggregateMatch.Groups[1].Value;
-            var innerField = aggregateMatch.Groups[2].Value;
-
-            var (aggregateExpr, resultType) = BuildAggregateExpression(param, aggregateFunc, innerField);
-            if (aggregateExpr == null || resultType == null)
-            {
-                return null;
-            }
-            object? convertedValue;
-            try
-            {
-                var underlyingType = Nullable.GetUnderlyingType(resultType) ?? resultType;
-                convertedValue = Convert.ChangeType(value, underlyingType);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-
-            Expression right = Expression.Constant(convertedValue, resultType);
-            return searchType switch
-            {
-                "eq" => Expression.Equal(aggregateExpr, right),
-                "ne" => Expression.NotEqual(aggregateExpr, right),
-                "gt" => Expression.GreaterThan(aggregateExpr, right),
-                "lt" => Expression.LessThan(aggregateExpr, right),
-                "ge" => Expression.GreaterThanOrEqual(aggregateExpr, right),
-                "le" => Expression.LessThanOrEqual(aggregateExpr, right),
-                _ => null
-            };
+            return BuildAggregateCondition(param, aggregateMatch.Groups[1].Value, aggregateMatch.Groups[2].Value, searchType, value);
         }
 
         var left = BuildNestedPropertyAccess(param, field, out bool isCollection, out Type? collectionElementType, out string? collectionProperty);
@@ -259,30 +237,72 @@ public static class RsqlParserExtensions
 
         if (isCollection && collectionElementType != null && collectionProperty != null)
         {
-            // Expression for collection properties using Any()
-            var collectionParam = Expression.Parameter(collectionElementType, "item");
-            var itemProperty = BuildNestedPropertyAccess(collectionParam, collectionProperty, out _, out _, out _);
-            if (itemProperty == null)
-            {
-                return null;
-            }
-
-            var itemCondition = BuildComparison(itemProperty, searchType, value);
-            if (itemCondition == null)
-            {
-                return null;
-            }
-
-            var lambda = Expression.Lambda(itemCondition, collectionParam);
-            var anyMethod = typeof(Enumerable).GetMethods()
-                .First(m => m.Name == "Any" && m.GetParameters().Length == 2)
-                .MakeGenericMethod(collectionElementType);
-
-            return Expression.Call(anyMethod, left, lambda);
+            return BuildCollectionCondition(left, collectionElementType, collectionProperty, searchType, value);
         }
 
         // Expression for non-collection properties
         return BuildComparison(left, searchType, value);
+    }
+
+    private static Expression? BuildAggregateCondition(ParameterExpression param, string aggregateFunc, string innerField, string searchType, string? value)
+    {
+        var (aggregateExpr, resultType) = BuildAggregateExpression(param, aggregateFunc, innerField);
+        if (aggregateExpr == null || resultType == null)
+        {
+            return null;
+        }
+        object? convertedValue;
+        try
+        {
+            var underlyingType = Nullable.GetUnderlyingType(resultType) ?? resultType;
+            convertedValue = Convert.ChangeType(value, underlyingType);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+
+        return BuildBinaryComparison(aggregateExpr, Expression.Constant(convertedValue, resultType), searchType);
+    }
+
+    /// <summary>
+    /// Expression for collection properties using Any()
+    /// </summary>
+    private static Expression? BuildCollectionCondition(Expression collection, Type elementType, string itemField, string searchType, string? value)
+    {
+        var collectionParam = Expression.Parameter(elementType, "item");
+        var itemProperty = BuildNestedPropertyAccess(collectionParam, itemField, out _, out _, out _);
+        if (itemProperty == null)
+        {
+            return null;
+        }
+
+        var itemCondition = BuildComparison(itemProperty, searchType, value);
+        if (itemCondition == null)
+        {
+            return null;
+        }
+
+        var lambda = Expression.Lambda(itemCondition, collectionParam);
+        var anyMethod = typeof(Enumerable).GetMethods()
+            .First(m => m.Name == "Any" && m.GetParameters().Length == 2)
+            .MakeGenericMethod(elementType);
+
+        return Expression.Call(anyMethod, collection, lambda);
+    }
+
+    private static Expression? BuildBinaryComparison(Expression left, Expression right, string searchType)
+    {
+        return searchType switch
+        {
+            "eq" => Expression.Equal(left, right),
+            "ne" => Expression.NotEqual(left, right),
+            "gt" => Expression.GreaterThan(left, right),
+            "lt" => Expression.LessThan(left, right),
+            "ge" => Expression.GreaterThanOrEqual(left, right),
+            "le" => Expression.LessThanOrEqual(left, right),
+            _ => null
+        };
     }
 
     private static Expression? BuildComparison(Expression left, string searchType, string? value)
@@ -311,12 +331,7 @@ public static class RsqlParserExtensions
 
         return searchType switch
         {
-            "eq" => Expression.Equal(left, right),
-            "ne" => Expression.NotEqual(left, right),
-            "gt" => Expression.GreaterThan(left, right),
-            "lt" => Expression.LessThan(left, right),
-            "ge" => Expression.GreaterThanOrEqual(left, right),
-            "le" => Expression.LessThanOrEqual(left, right),
+            "eq" or "ne" or "gt" or "lt" or "ge" or "le" => BuildBinaryComparison(left, right, searchType),
             "like" => Expression.Call(left, typeof(string).GetMethod("Contains", new[] { typeof(string) })!, right),
             "null" => Expression.Equal(left, Expression.Constant(null)),
             "notnull" => Expression.NotEqual(left, Expression.Constant(null)),
