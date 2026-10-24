@@ -3,7 +3,6 @@ using Moq;
 using Xunit;
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Enums;
-using ElectrostoreAPI.Kafka.Producer;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.CommandService;
 using ElectrostoreAPI.Services.FileService;
@@ -14,10 +13,9 @@ namespace ElectrostoreAPI.Tests.Services
     public class CommandServiceTests : TestBase
     {
         private readonly Mock<IFileService> _fileService = new();
-        private readonly Mock<IKafkaProducerService> _kafkaProducerService = new();
 
         private CommandService CreateService(ApplicationDbContext context) =>
-            new(_mapper, context, _fileService.Object, _kafkaProducerService.Object);
+            new(_mapper, context, _fileService.Object);
 
         private static Commands BuildCommand(string url = "https://example.com") => new()
         {
