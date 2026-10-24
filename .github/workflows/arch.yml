@@ -85,6 +85,7 @@ jobs:
       contents: read
     with:
       branch: ${{needs.init-work.outputs.BRANCH}}
+      sonar_fail_severities: BLOCKER,HIGH
     secrets: inherit
 
   build:
