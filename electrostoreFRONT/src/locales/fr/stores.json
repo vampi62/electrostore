@@ -4,6 +4,8 @@
 	"FilterXLength": "Longueur X",
 	"FilterYLength": "Longueur Y",
 	"FilterMqttConnected": "MQTT Connecté",
+	"FilterConnected0": "Déconnecté",
+	"FilterConnected1": "Connecté",
 	"FilterMqttLastSeen": "MQTT Dernière Connection",
 	"FilterTag": "Tag",
 	"Title": "Rangements",
