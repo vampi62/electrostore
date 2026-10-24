@@ -331,9 +331,12 @@ export const useStoresStore = defineStore("stores",{
 		pushBoxChange: boxResource.pushChange,
 		async showBoxById(idStore: string, id: string, params: ShowParams) {
 			await fetchWrapper.post({
-				url: `${baseUrl}/store/${idStore}/box/${id}/show`,
+				url: `${baseUrl}/store/${idStore}/box/${id}/show?${new URLSearchParams(
+					Object.entries(params)
+						.filter(([, v]) => v !== undefined && v !== null)
+						.map(([k, v]) => [k, String(v)]),
+				)}`,
 				useToken: "access",
-				body: params,
 			});
 		},
 
@@ -352,9 +355,12 @@ export const useStoresStore = defineStore("stores",{
 		pushLedChange: ledResource.pushChange,
 		async showLedById(idStore: string, id: string, params: ShowParams) {
 			await fetchWrapper.post({
-				url: `${baseUrl}/store/${idStore}/led/${id}/show`,
+				url: `${baseUrl}/store/${idStore}/led/${id}/show?${new URLSearchParams(
+					Object.entries(params)
+						.filter(([, v]) => v !== undefined && v !== null)
+						.map(([k, v]) => [k, String(v)]),
+				)}`,
 				useToken: "access",
-				body: params,
 			});
 		},
 
