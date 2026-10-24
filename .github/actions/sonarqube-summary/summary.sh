@@ -3,7 +3,7 @@ set -uo pipefail
 
 # Required env: SONAR_HOST_URL, SONAR_TOKEN, PROJECT_KEY.
 # Optional: SUMMARY_TITLE, CE_TIMEOUT (seconds to wait for the analysis to be processed, default 600),
-#           FAIL_ON_SEVERITIES (comma-separated: HIGH, MEDIUM, LOW),
+#           FAIL_ON_SEVERITIES (comma-separated: BLOCKER, HIGH, MEDIUM, LOW, INFO)
 #           FAIL_ON_QUALITIES (comma-separated: MAINTAINABILITY, RELIABILITY, SECURITY).
 #
 # Without FAIL_ON_* this script only reports and never fails the job (the Quality Gate is
@@ -43,7 +43,7 @@ validate_list() {
     esac
   done
 }
-validate_list FAIL_ON_SEVERITIES "$FAIL_ON_SEVERITIES" "HIGH,MEDIUM,LOW"
+validate_list FAIL_ON_SEVERITIES "$FAIL_ON_SEVERITIES" "BLOCKER,HIGH,MEDIUM,LOW,INFO"
 validate_list FAIL_ON_QUALITIES "$FAIL_ON_QUALITIES" "MAINTAINABILITY,RELIABILITY,SECURITY"
 
 # SonarQube token auth is HTTP Basic with the token as user and an empty password.

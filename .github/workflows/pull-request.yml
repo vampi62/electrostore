@@ -66,6 +66,7 @@ jobs:
     with:
       branch: ${{ github.head_ref }}
       sonar_prefix: PR-${{ github.event.pull_request.number }}
+      sonar_fail_severities: BLOCKER,HIGH
       api: ${{ needs.detect-changes.outputs.api == 'true' || needs.detect-changes.outputs.testAPI == 'true' }}
       cron: ${{ needs.detect-changes.outputs.cron == 'true' || needs.detect-changes.outputs.testCRON == 'true' }}
       front: ${{ needs.detect-changes.outputs.front == 'true' || needs.detect-changes.outputs.testFRONT == 'true' }}

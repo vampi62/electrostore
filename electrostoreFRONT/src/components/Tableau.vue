@@ -221,12 +221,10 @@ export default {
 						comparison = aValue.localeCompare(bValue, undefined, { numeric: true });
 					} else if (typeof aValue === "number" && typeof bValue === "number") {
 						comparison = aValue - bValue;
-					} else {
-						if (aValue > bValue) {
-							comparison = 1;
-						} else if (aValue < bValue) {
-							comparison = -1;
-						}
+					} else if (aValue > bValue) {
+						comparison = 1;
+					} else if (aValue < bValue) {
+						comparison = -1;
 					}
 
 					return comparison * sortOrder;

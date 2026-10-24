@@ -288,8 +288,8 @@ export const useEquipementsStore = defineStore("equipements", {
 			if (imageChanged) {
 				delete this.thumbnailsURL[realId];
 				delete this.imagesURL[realId];
-				void this.showThumbnailById(realId);
-				void this.showImageById(realId);
+				// reload in the background (not awaited); allSettled never rejects, so no unhandled rejection
+				Promise.allSettled([this.showThumbnailById(realId)]);
 			}
 			return realId;
 		},
