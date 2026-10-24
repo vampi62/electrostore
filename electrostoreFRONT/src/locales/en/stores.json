@@ -4,6 +4,8 @@
 	"FilterXLength": "X Length",
 	"FilterYLength": "Y Length",
 	"FilterMqttConnected": "MQTT Connected",
+	"FilterConnected0": "Disconnected",
+	"FilterConnected1": "Connected",
 	"FilterMqttLastSeen": "MQTT Last Seen",
 	"FilterTag": "Tag",
 	"Title": "Stores",

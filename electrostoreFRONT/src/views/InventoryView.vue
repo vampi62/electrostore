@@ -30,7 +30,7 @@ const filter = ref<FilterLabel[]>([
 	{ key: "threshold_min_item", value: "", type: "number", label: "items.FilterSeuilMin", compareMethod: "=ge=" },
 	{ key: "threshold_min_item", value: "", type: "number", label: "items.FilterSeuilMax", compareMethod: "=le=" },
 	{ key: "SUM(ItemsBoxs.quantity_item_box)", value: "", type: "number", label: "items.FilterQteTotal", compareMethod: "=ge=" },
-	{ key: "ItemsTags.Tag.name_tag", value: "", type: "datalist", label: "items.FilterTag", compareMethod: "=like=",
+	{ key: "ItemsTags.Tag.name_tag", value: [], type: "datalist", label: "items.FilterTag", compareMethod: "=any=", multiple: true,
 		fetchOptions: (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear),
 		storeData: tagsStore.tags, storeKey: "name_tag",
 	},

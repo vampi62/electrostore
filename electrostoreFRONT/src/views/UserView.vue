@@ -203,7 +203,7 @@ const labelForm = ref<FormLabel[]>([
 ]);
 
 const filterSession = ref<FilterLabel[]>([
-	{ key: "is_revoked", disableLocalFilter: true, value: "", typeData: "bool", valueIfTrue: "true", valueIfFalse: "", preset: false,
+	{ key: "is_revoked", disableLocalFilter: true, value: "", typeData: "bool", valueIfTrue: "true", valueIfFalse: "",
 		type: "checkbox", label: "user.ShowExpiredAndRevokedTokens", compareMethod: "==" },
 ]);
 const labelTableauSession = ref<TableauLabel[]>([
@@ -211,7 +211,7 @@ const labelTableauSession = ref<TableauLabel[]>([
 	{ label: "user.TokenLastLoginDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
 	{ label: "user.TokenCreatedIP", sortable: true, key: "created_by_ip", valueKey: "created_by_ip", type: "text" },
 	{ label: "user.TokenExpireDate", sortable: true, key: "expires_at", valueKey: "expires_at", type: "datetime" },
-	{ label: "user.TokenIsRevoked", sortable: true, key: "is_revoked", valueKey: "is_revoked", type: "bool" },
+	{ label: "user.TokenIsValid", sortable: true, key: "is_revoked", valueKey: "is_revoked", type: "bool", condition: "!rowData?.is_revoked" },
 	{ label: "user.TokenAuthMethod", sortable: true, key: "auth_method", valueKey: "auth_method", type: "text" },
 	{ label: "user.TokenRevokedDate", sortable: true, key: "revoked_at", valueKey: "revoked_at", type: "datetime" },
 	{ label: "user.TokenRevokedIP", sortable: true, key: "revoked_by_ip", valueKey: "revoked_by_ip", type: "text" },
