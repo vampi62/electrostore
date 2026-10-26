@@ -245,7 +245,7 @@ namespace ElectrostoreAPI.Tests.Services
             await context.SaveChangesAsync();
             var service = CreateService(context);
 
-            var result = await service.GetZones(rsql: [new FilterDto { field = "id_zone", search_type = "any", value = b.id_zone.ToString() }]);
+            var result = await service.GetZones(rsql: [new FilterDto { field = "id_zone", search_type = "eq", value = b.id_zone.ToString() }]);
 
             var single = Assert.Single(result.data);
             Assert.Equal(b.id_zone, single.id_zone);

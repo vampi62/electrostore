@@ -29,7 +29,7 @@ const cronJobStatusOptions = {
 
 const filter = ref<FilterLabel[]>([
 	{ key: "name_cronjob", value: "", type: "text", label: "cronJobs.FilterName", compareMethod: "=like=" },
-	{ key: "action_cronjob", value: undefined, type: "datalist", options: cronJobActionOptions, label: "cronJobs.FilterAction", compareMethod: "=any=", multiple: true },
+	{ key: "action_cronjob", value: undefined, type: "datalist", options: cronJobActionOptions, label: "cronJobs.FilterAction", compareMethod: "=in=", multiple: true },
 	{ key: "is_enabled", value: undefined, type: "datalist", typeData: "bool", options: { ["false"]: t("cronJobs.FilterEnabled0"), ["true"]: t("cronJobs.FilterEnabled1") }, label: "cronJobs.FilterEnabled", compareMethod: "==" },
 ]);
 const tableauLabel = ref<TableauLabel[]>([

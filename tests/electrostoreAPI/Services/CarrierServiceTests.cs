@@ -54,7 +54,7 @@ namespace ElectrostoreAPI.Tests.Services
             await context.SaveChangesAsync();
             var service = CreateService(context);
 
-            var result = await service.GetCarriers(rsql: [new FilterDto { field = "id_carrier", search_type = "any", value = b.id_carrier.ToString() }]);
+            var result = await service.GetCarriers(rsql: [new FilterDto { field = "id_carrier", search_type = "eq", value = b.id_carrier.ToString() }]);
 
             var single = Assert.Single(result.data);
             Assert.Equal(b.id_carrier, single.id_carrier);

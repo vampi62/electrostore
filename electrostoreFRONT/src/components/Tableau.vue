@@ -175,7 +175,7 @@ export default {
 			});
 		},
 		filterValues() {
-			return this.filters.map((f) => f.value);
+			return this.filters.map((f) => [f.value, f.partialValues]);
 		},
 		filteredData() {
 			// Merge storeData[0] (saved data), storeReady (validated but not yet saved changes) and

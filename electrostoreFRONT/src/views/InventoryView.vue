@@ -20,7 +20,7 @@ async function fetchTagData(minOffset: number, maxOffset: number) {
 		}
 	}
 	if (tagsNotFound.length > 0) {
-		await tagsStore.getTagByInterval(tagsNotFound.length, 0, [], [{ key: "id_tag", compareMethod: "=any=", value: tagsNotFound.join(",") }]);
+		await tagsStore.getTagByInterval(tagsNotFound.length, 0, [], [{ key: "id_tag", compareMethod: "=in=", value: tagsNotFound }]);
 	}
 }
 
@@ -30,7 +30,7 @@ const filter = ref<FilterLabel[]>([
 	{ key: "threshold_min_item", value: "", type: "number", label: "items.FilterSeuilMin", compareMethod: "=ge=" },
 	{ key: "threshold_min_item", value: "", type: "number", label: "items.FilterSeuilMax", compareMethod: "=le=" },
 	{ key: "SUM(ItemsBoxs.quantity_item_box)", value: "", type: "number", label: "items.FilterQteTotal", compareMethod: "=ge=" },
-	{ key: "ItemsTags.Tag.name_tag", value: [], type: "datalist", label: "items.FilterTag", compareMethod: "=any=", multiple: true,
+	{ key: "ItemsTags.Tag.name_tag", value: [], partialValues: [], type: "datalist", label: "items.FilterTag", compareMethod: "=in=", multiple: true, mode: "permissive",
 		fetchOptions: (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear),
 		storeData: tagsStore.tags, storeKey: "name_tag",
 	},

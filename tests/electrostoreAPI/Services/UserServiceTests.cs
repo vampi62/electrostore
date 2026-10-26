@@ -305,7 +305,7 @@ namespace ElectrostoreAPI.Tests.Services
             await context.SaveChangesAsync();
             var service = CreateService(context);
 
-            var result = await service.GetUsers(rsql: [new FilterDto { field = "id_user", search_type = "any", value = b.id_user.ToString() }]);
+            var result = await service.GetUsers(rsql: [new FilterDto { field = "id_user", search_type = "eq", value = b.id_user.ToString() }]);
 
             var single = Assert.Single(result.data);
             Assert.Equal(b.id_user, single.id_user);

@@ -158,7 +158,7 @@ namespace ElectrostoreAPI.Tests.Services
             await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DeleteTag(999));
         }
 
-        // --- additional coverage: any filter, expand, bulk ---
+        // --- additional coverage: eq filter, expand, bulk ---
 
         [Fact]
         public async Task GetTags_ShouldRestrictToIds_WhenAnyFilterProvided()
@@ -170,7 +170,7 @@ namespace ElectrostoreAPI.Tests.Services
             await context.SaveChangesAsync();
             var service = CreateService(context);
 
-            var result = await service.GetTags(rsql: [new FilterDto { field = "id_tag", search_type = "any", value = b.id_tag.ToString() }]);
+            var result = await service.GetTags(rsql: [new FilterDto { field = "id_tag", search_type = "eq", value = b.id_tag.ToString() }]);
 
             var single = Assert.Single(result.data);
             Assert.Equal(b.id_tag, single.id_tag);

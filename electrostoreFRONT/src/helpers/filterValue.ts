@@ -13,6 +13,11 @@ export function filledValues(filter: Pick<RSQLFilter, "value">): RSQLValue[] {
 	return values.filter(isFilled);
 }
 
+// texts of a filter that are applied, a text that only has spaces is not
+export function filledPartialValues(filter: Pick<RSQLFilter, "partialValues">): string[] {
+	return (filter.partialValues ?? []).filter((text) => text.trim() !== "");
+}
+
 function toNumber(text: string, parse: (text: string) => number): number | "" {
 	const number = parse(text);
 	return Number.isNaN(number) ? "" : number;
@@ -64,7 +69,7 @@ function matchValue(compareMethod: string, rowValue: unknown, value: NonNullable
 	}
 	switch (compareMethod) {
 	case "==":
-	case "=any=":
+	case "=in=":
 		// "1" must match 1 and "true" must match true, the inputs only give strings
 		return normalize(rowValue) === normalize(value);
 	case "=like=":
@@ -79,14 +84,20 @@ function matchValue(compareMethod: string, rowValue: unknown, value: NonNullable
 	}
 }
 
-// does a row satisfy a filter, with several values the row must match all of them, or at least one for "=any="
+// does a row satisfy a filter, with several values the row must match all of them,
+// or at least one of the values and of the partial values for "=in="
 // the value of the row is only read if the filter is applied
 export function matchFilter(filter: RSQLFilter & Pick<FilterLabel, "disableLocalFilter">, getRowValue: () => unknown): boolean {
 	const values = filledValues(filter);
-	if (values.length === 0 || filter.disableLocalFilter) {
+	const isIn = filter.compareMethod === "=in=";
+	const partialValues = isIn ? filledPartialValues(filter) : [];
+	if ((values.length === 0 && partialValues.length === 0) || filter.disableLocalFilter) {
 		return true;
 	}
 	const rowValue = getRowValue();
 	const matches = (value: RSQLValue) => matchValue(filter.compareMethod, rowValue, value as NonNullable<RSQLValue>);
-	return filter.compareMethod === "=any=" ? values.some(matches) : values.every(matches);
+	if (isIn) {
+		return values.some(matches) || partialValues.some((text) => matchValue("=like=", rowValue, text));
+	}
+	return values.every(matches);
 }

@@ -29,8 +29,11 @@ export interface FilterLabel extends RSQLFilter {
 	storeData?: StateTree;
 	storeKey?: string;
 	// datalist only: several options can be selected, value is then an array.
-	// The options are matched exactly (the compareMethod of a multiple filter should be "==")
+	// The options are matched exactly, at least one of them (the compareMethod of a multiple filter should be "=in=")
 	multiple?: boolean;
+	// multiple datalist only: "strict" (default) only allows the options, "permissive" also allows a text the value contains,
+	// kept in partialValues and sent with "=like=" as an alternative to the options (compareMethod "=in=")
+	mode?: "strict" | "permissive";
 	// JavaScript expressions evaluated to show / enable the filter
 	showCondition?: string;
 	enableCondition?: string;
@@ -44,4 +47,5 @@ export interface FilterLabel extends RSQLFilter {
 // state of a filter saved in the sessionStorage
 export interface FilterState {
 	value: FilterLabel["value"];
+	partialValues?: FilterLabel["partialValues"];
 }

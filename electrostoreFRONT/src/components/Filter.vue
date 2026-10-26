@@ -7,24 +7,26 @@
 					ref="filterBox"
 					class="relative flex flex-wrap items-center gap-1 border border-gray-300 rounded px-2 py-1 pr-8 bg-white"
 					:class="[classCss, label.length > 0 ? 'mr-2' : '', disabled ? 'opacity-50' : '']">
-					<span v-for="item in chips" :key="String(item.value)"
-						class="flex items-center gap-1 bg-blue-100 text-blue-800 rounded px-2 text-sm">
-						{{ item.text }}
+					<span v-for="item in chips" :key="`${item.partial}-${String(item.value)}`"
+						class="flex items-center gap-1 rounded px-2 text-sm"
+						:class="item.partial ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'">
+						{{ item.partial ? `*${item.text}*` : item.text }}
 						<button type="button" class="font-bold hover:text-blue-950" :disabled="disabled"
-							@mousedown.prevent="removeValue(item.value)">&times;</button>
+							@mousedown.prevent="removeChip(item)">&times;</button>
 					</span>
 					<input
 						:id="inputId"
 						ref="filterInput"
 						type="text"
 						class="flex-1 min-w-24 outline-none bg-transparent"
-						:placeholder="selected.length === 0 || !multiple ? placeholder : ''"
+						:placeholder="chips.length === 0 ? placeholder : ''"
 						:disabled="disabled"
 						autocomplete="off"
 						v-model="query"
 						@input="onInput"
 						@focus="onFocus"
 						@blur="onBlur"
+						@keydown.enter="onEnter"
 						@keydown.backspace="onBackspace" />
 					<svg
 						class="w-4 h-4 text-gray-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
@@ -85,6 +87,11 @@ import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 interface ListItem {
 	value: string | number | boolean;
 	text: string;
+}
+
+// selected option, or text typed in permissive mode, displayed as a removable chip
+interface Chip extends ListItem {
+	partial: boolean;
 }
 
 export default {
@@ -168,6 +175,18 @@ export default {
 			// Several options can be selected, the value is then an array
 			default: false,
 		},
+		mode: {
+			type: String as PropType<"strict" | "permissive">,
+			required: false,
+			// multiple only, "strict" only allows the options, "permissive" also allows a text the value contains (see partialValues)
+			default: "strict",
+		},
+		partialValues: {
+			type: Array as PropType<string[]>,
+			required: false,
+			// multiple and permissive only, the texts typed by the user that are not an option
+			default: () => ([]),
+		},
 	},
 	data() {
 		return {
@@ -197,6 +216,8 @@ export default {
 	// the value is the id of the option, "update" gives the values chosen by the user (an array if multiple), converting them is up to the container
 	emits: {
 		update: (_value: FilterValue | FilterValue[]) => true,
+		// "update-partial" gives the texts typed by the user in permissive mode
+		"update-partial": (_value: string[]) => true,
 	},
 	computed: {
 		inputId(): string {
@@ -224,9 +245,20 @@ export default {
 				return { value: value as ListItem["value"], text: option?.text ?? String(value) };
 			});
 		},
-		// selected options displayed as removable chips, a single value is displayed as the text of the input
-		chips(): ListItem[] {
-			return this.multiple ? this.selected : [];
+		// the user can type a text that is not an option and keep it
+		permissive(): boolean {
+			return this.multiple && this.mode === "permissive";
+		},
+		// selected options then typed texts displayed as removable chips, a single value is displayed as the text of the input
+		chips(): Chip[] {
+			if (!this.multiple) {
+				return [];
+			}
+			const chips: Chip[] = this.selected.map((item) => ({ ...item, partial: false }));
+			if (this.permissive) {
+				chips.push(...this.partialValues.map((text) => ({ value: text, text, partial: true })));
+			}
+			return chips;
 		},
 		// options of the datalist that can be chosen
 		listOptions(): ListItem[] {
@@ -273,14 +305,41 @@ export default {
 			window.removeEventListener("resize", this.updatePosition);
 			this.commitQuery();
 		},
+		onEnter(event: Event) {
+			if (this.permissive) {
+				event.preventDefault();
+				this.commitTyped();
+			}
+		},
 		onBackspace() {
-			if (this.multiple && this.query === "" && this.selected.length > 0) {
-				this.removeValue(this.selected[this.selected.length - 1].value);
+			if (this.multiple && this.query === "" && this.chips.length > 0) {
+				this.removeChip(this.chips[this.chips.length - 1]);
+			}
+		},
+		// permissive mode: the text typed by the user is the option it is equal to, otherwise a text the value contains
+		commitTyped() {
+			const text = this.query.trim();
+			this.query = "";
+			this.typed = false;
+			if (text === "") {
+				return;
+			}
+			const typedText = toLowerCaseWithoutAccents(text);
+			const option = this.allOptions.find((o) => toLowerCaseWithoutAccents(o.text) === typedText);
+			if (option) {
+				if (!this.selected.some((item) => String(item.value) === String(option.value))) {
+					this.$emit("update", [...this.selected.map((item) => item.value), option.value]);
+				}
+			} else if (!this.partialValues.some((partial) => toLowerCaseWithoutAccents(partial) === typedText)) {
+				this.$emit("update-partial", [...this.partialValues, text]);
 			}
 		},
 		// leaving the input keeps the chosen option, what the user typed becomes the value, otherwise the filter is cleared
 		commitQuery() {
 			if (this.multiple) {
+				if (this.permissive) {
+					this.commitTyped();
+				}
 				this.query = "";
 			} else if (!this.chosen) {
 				const typedText = toLowerCaseWithoutAccents(this.query);
@@ -318,12 +377,11 @@ export default {
 			this.isOpen = false;
 			(this.$refs.filterInput as HTMLInputElement).blur();
 		},
-		removeValue(value: ListItem["value"]) {
-			if (this.multiple) {
-				this.$emit("update", this.selected.map((item) => item.value).filter((v) => String(v) !== String(value)));
+		removeChip(chip: Chip) {
+			if (chip.partial) {
+				this.$emit("update-partial", this.partialValues.filter((partial) => partial !== chip.value));
 			} else {
-				this.$emit("update", "");
-				this.query = "";
+				this.$emit("update", this.selected.map((item) => item.value).filter((v) => String(v) !== String(chip.value)));
 			}
 		},
 		updatePosition() {

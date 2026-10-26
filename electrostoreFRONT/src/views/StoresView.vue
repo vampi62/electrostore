@@ -25,7 +25,7 @@ async function fetchTagData(minOffset: number, maxOffset: number) {
 		}
 	}
 	if (tagsNotFound.length > 0) {
-		await tagsStore.getTagByInterval(tagsNotFound.length, 0, [], [{ key: "id_tag", compareMethod: "=any=", value: tagsNotFound.join(",") }]);
+		await tagsStore.getTagByInterval(tagsNotFound.length, 0, [], [{ key: "id_tag", compareMethod: "=in=", value: tagsNotFound }]);
 	}
 }
 

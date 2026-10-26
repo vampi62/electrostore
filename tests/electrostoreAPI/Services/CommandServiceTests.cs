@@ -62,7 +62,7 @@ namespace ElectrostoreAPI.Tests.Services
             await context.SaveChangesAsync();
             var service = CreateService(context);
 
-            var result = await service.GetCommands(rsql: [new FilterDto { field = "id_command", search_type = "any", value = a.id_command.ToString() }]);
+            var result = await service.GetCommands(rsql: [new FilterDto { field = "id_command", search_type = "eq", value = a.id_command.ToString() }]);
 
             var single = Assert.Single(result.data);
             Assert.Equal(a.id_command, single.id_command);

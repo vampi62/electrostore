@@ -96,6 +96,140 @@ public class ParserExtensionsTests
         Assert.Equal("a", filter.field);
     }
 
+    [Fact]
+    public void ParseFilter_ShouldReadInAsOrOfEqualities_WhenValuesAreInParentheses()
+    {
+        // Act
+        var result = ParserExtensions.ParseFilter("tag=in=(a,b,c)");
+
+        // Assert
+        var group = Assert.Single(result);
+        Assert.Equal("or", group.search_type);
+        Assert.Equal(["a", "b", "c"], group.children!.Select(c => c.value));
+        Assert.All(group.children!, c =>
+        {
+            Assert.Equal("tag", c.field);
+            Assert.Equal("eq", c.search_type);
+        });
+    }
+
+    [Fact]
+    public void ParseFilter_ShouldReadInAsEquality_WhenThereIsASingleValue()
+    {
+        // Act
+        var result = ParserExtensions.ParseFilter("tag=in=(a)");
+
+        // Assert
+        var filter = Assert.Single(result);
+        Assert.Equal("eq", filter.search_type);
+        Assert.Equal("a", filter.value);
+    }
+
+    [Fact]
+    public void ParseFilter_ShouldParseOrGroup_BetweenInAndLike()
+    {
+        // Act
+        var result = ParserExtensions.ParseFilter("(tag=in=(a,b),tag=like=res)");
+
+        // Assert
+        var group = Assert.Single(result);
+        Assert.Equal("or", group.search_type);
+        // the or of the "=in=" is merged in the group
+        Assert.Equal(["eq", "eq", "like"], group.children!.Select(c => c.search_type));
+        Assert.Equal(["a", "b", "res"], group.children!.Select(c => c.value));
+    }
+
+    [Fact]
+    public void ParseFilter_ShouldGiveAndPrecedenceOverOr()
+    {
+        // Act
+        var result = ParserExtensions.ParseFilter("a==1,b==2;c==3");
+
+        // Assert
+        var group = Assert.Single(result);
+        Assert.Equal("or", group.search_type);
+        Assert.Equal(2, group.children!.Count);
+        Assert.Equal("eq", group.children![0].search_type);
+        Assert.Equal("and", group.children![1].search_type);
+    }
+
+    [Fact]
+    public void ParseFilter_ShouldKeepGroupAndOtherConditions_AsTopLevelAnd()
+    {
+        // Act
+        var result = ParserExtensions.ParseFilter("x=ge=1;(a==1,b==2);y=le=5");
+
+        // Assert
+        Assert.Equal(3, result.Count);
+        Assert.Equal("x", result[0].field);
+        Assert.Equal("or", result[1].search_type);
+        Assert.Equal("y", result[2].field);
+    }
+
+    [Fact]
+    public void ParseFilter_ShouldFlattenParenthesizedAnd()
+    {
+        // Act
+        var result = ParserExtensions.ParseFilter("(a==1;b==2);c==3");
+
+        // Assert
+        Assert.Equal(["a", "b", "c"], result.Select(f => f.field));
+    }
+
+    [Fact]
+    public void ParseFilter_ShouldKeepParentheses_OfAnAggregateField()
+    {
+        // Act
+        var result = ParserExtensions.ParseFilter("SUM(ItemsBoxs.quantity_item_box)=ge=5");
+
+        // Assert
+        var filter = Assert.Single(result);
+        Assert.Equal("SUM(ItemsBoxs.quantity_item_box)", filter.field);
+        Assert.Equal("ge", filter.search_type);
+        Assert.Equal("5", filter.value);
+    }
+
+    [Theory]
+    [InlineData("name=like='a,b;(c)'", "a,b;(c)")]
+    [InlineData("name==\"it's\"", "it's")]
+    [InlineData("name=='it\\'s'", "it's")]
+    [InlineData("name=like=res (1k)", "res (1k)")]
+    public void ParseFilter_ShouldReadQuotedValues(string condition, string expectedValue)
+    {
+        // Act
+        var result = ParserExtensions.ParseFilter(condition);
+
+        // Assert
+        var filter = Assert.Single(result);
+        Assert.Equal("name", filter.field);
+        Assert.Equal(expectedValue, filter.value);
+    }
+
+    [Fact]
+    public void ParseFilter_ShouldReadQuotedValues_InAList()
+    {
+        // Act
+        var result = ParserExtensions.ParseFilter("tag=in=('a,b', c)");
+
+        // Assert
+        var group = Assert.Single(result);
+        Assert.Equal(["a,b", "c"], group.children!.Select(c => c.value));
+    }
+
+    [Theory]
+    [InlineData("(a==1,garbage);b==2", 2)]
+    [InlineData("tag=in=(a;b==2", 1)]
+    [InlineData("a==1)garbage;b==2", 2)]
+    [InlineData("()", 0)]
+    public void ParseFilter_ShouldSkipMalformedGroups_ButKeepValidOnes(string condition, int expectedCount)
+    {
+        // Act
+        var result = ParserExtensions.ParseFilter(condition);
+
+        // Assert
+        Assert.Equal(expectedCount, result.Count);
+    }
+
     // --- ParseSort ---
 
     [Fact]

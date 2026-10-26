@@ -49,7 +49,10 @@ namespace ElectrostoreAPI.Tests.Services
             await context.SaveChangesAsync();
             var service = CreateService(context);
 
-            var result = await service.GetProjectTags(rsql: [new FilterDto { field = "id_project_tag", search_type = "any", value = a.id_project_tag.ToString() + "," + c.id_project_tag.ToString() }]);
+            var result = await service.GetProjectTags(rsql: [FilterDto.Or([
+                new FilterDto { field = "id_project_tag", search_type = "eq", value = a.id_project_tag.ToString() },
+                new FilterDto { field = "id_project_tag", search_type = "eq", value = c.id_project_tag.ToString() },
+            ])]);
 
             Assert.Equal(2, result.data.Count());
             Assert.DoesNotContain(result.data, t => t.id_project_tag == b.id_project_tag);
