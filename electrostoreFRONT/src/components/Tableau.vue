@@ -403,7 +403,7 @@ export default {
 			}
 		},
 		matchesFilters(element: TableauRowData) {
-			return this.filters.every((filter) => matchFilter(filter, () => this.getDataValue(element, filter.key)));
+			return this.filters.every((filter) => matchFilter(filter, (key) => this.getDataValue(element, key)));
 		},
 		getDataValue(row: TableauRowData, labelKey: string) {
 			const label = this.labels.find((l) => l.key === labelKey);
