@@ -16,8 +16,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="librdkafka.redist" Version="2.16.0" />
-    <PackageReference Include="MailKit" Version="4.17.0" />
-    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" /><!-- sub dependency used by MailKit keep this until MailKit updates and fix the dependency issue -->
+    <PackageReference Include="MailKit" Version="4.18.2" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" /><!-- sub dependency used by MailKit keep this until MailKit updates and fix the dependency issue -->
     <PackageReference Include="VaultSharp" Version="1.17.5.1" />
     <PackageReference Include="WebPush" Version="1.0.13" />
   </ItemGroup>
