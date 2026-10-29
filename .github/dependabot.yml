@@ -10,6 +10,10 @@ updates:
       - /electrostoreNOTIF
       - /electrostoreCRON
       - /electrostoreWORKER
+      - /tests/electrostoreAPI
+      - /tests/electrostoreNOTIF
+      - /tests/electrostoreCRON
+      - /tests/electrostoreWORKER
     schedule:
       interval: weekly
     commit-message:
@@ -19,7 +23,9 @@ updates:
         patterns: ["*"]
 
   - package-ecosystem: npm
-    directory: /electrostoreFRONT
+    directories:
+      - /electrostoreFRONT
+      - /tests/electrostoreFRONT
     schedule:
       interval: weekly
     commit-message:
