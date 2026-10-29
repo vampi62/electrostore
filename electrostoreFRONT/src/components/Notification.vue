@@ -91,15 +91,11 @@ export default {
 			(this.$refs.notification as HTMLElement).classList.add("fade-out");
 		},
 		startTimer() {
-			let duration = 0;
-			if (this.type === "info") {
-				duration = 7700; // 7.7s (progress)
-			} else if (this.type === "success") {
-				duration = 7700;
-			} else if (this.type === "error") {
+			let duration;
+			if (this.type === "error") {
 				duration = 17700;
 			} else {
-				duration = 7700;
+				duration = 7700; // 7.7s (progress)
 			}
 			this.timer = setTimeout(() => {
 				this.close();
