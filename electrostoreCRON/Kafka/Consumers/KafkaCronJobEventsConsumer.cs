@@ -216,9 +216,9 @@ public partial class KafkaCronJobEventsConsumer : BackgroundService
     private async Task ForceRunJobAsync(IScheduler scheduler, int idCronjob, CancellationToken ct)
     {
         var jobKey = new JobKey($"job-{idCronjob}", SchedulerGroup);
-        if (await scheduler.CheckExists(jobKey, ct))
+        if (await scheduler.Exists(jobKey, ct))
         {
-            await scheduler.TriggerJob(jobKey, ct);
+            await scheduler.TriggerJob(jobKey, null, ct);
             _logger.LogInformation("CronJob #{Id}: force-run triggered.", idCronjob);
         }
         else
@@ -281,7 +281,7 @@ public partial class KafkaCronJobEventsConsumer : BackgroundService
             return;
         }
 
-        await scheduler.ScheduleJob(jobDetail, trigger, ct);
+        await scheduler.ScheduleJob(jobDetail, trigger, default, ct);
         _logger.LogInformation(
             "CronJob #{Id} scheduled via event - action={Action}, expr={Expr}",
             job.id_cronjob, job.action_cronjob, job.cron_expression_cronjob);
@@ -290,7 +290,7 @@ public partial class KafkaCronJobEventsConsumer : BackgroundService
     private async Task RemoveJobAsync(IScheduler scheduler, int idCronjob, CancellationToken ct)
     {
         var jobKey = new JobKey($"job-{idCronjob}", SchedulerGroup);
-        if (await scheduler.CheckExists(jobKey, ct))
+        if (await scheduler.Exists(jobKey, ct))
         {
             await scheduler.DeleteJob(jobKey, ct);
             _logger.LogInformation("CronJob #{Id} removed from scheduler.", idCronjob);

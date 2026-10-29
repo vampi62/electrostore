@@ -58,13 +58,13 @@ public class ElectrostoreCronJobTests
     private static Mock<IJobExecutionContext> CreateContext(int id, CronJobAction? action, DateTimeOffset? nextFireTimeUtc = null, string jobParams = "", string lastRunAt = "")
     {
         var dataMap = new JobDataMap();
-        dataMap.Put(ElectrostoreCronJob.KeyId, id);
+        dataMap[ElectrostoreCronJob.KeyId] = id;
         if (action.HasValue)
         {
-            dataMap.Put(ElectrostoreCronJob.KeyAction, (int)action.Value);
+            dataMap[ElectrostoreCronJob.KeyAction] = (int)action.Value;
         }
-        dataMap.Put(ElectrostoreCronJob.KeyParams, jobParams);
-        dataMap.Put(ElectrostoreCronJob.KeyLastRunAt, lastRunAt);
+        dataMap[ElectrostoreCronJob.KeyParams] = jobParams;
+        dataMap[ElectrostoreCronJob.KeyLastRunAt] = lastRunAt;
 
         var jobKey = new JobKey($"job-{id}");
         var jobDetail = new Mock<IJobDetail>();
@@ -72,9 +72,13 @@ public class ElectrostoreCronJobTests
         jobDetail.SetupGet(d => d.Key).Returns(jobKey);
 
         var scheduler = new Mock<IScheduler>();
+        // GetTriggersOfJob is an extension over QueryTriggers + GetTriggers, so no trigger is reported for the job.
         scheduler
-            .Setup(s => s.GetTriggersOfJob(jobKey, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IReadOnlyCollection<ITrigger>)Array.Empty<ITrigger>());
+            .Setup(s => s.QueryTriggers(It.IsAny<TriggerQuery>(), It.IsAny<CancellationToken>()))
+            .Returns(new ValueTask<PagedResult<TriggerHeader>>(new PagedResult<TriggerHeader>([], false, null)));
+        scheduler
+            .Setup(s => s.GetTriggers(It.IsAny<IReadOnlyCollection<TriggerKey>>(), It.IsAny<CancellationToken>()))
+            .Returns(new ValueTask<List<ITrigger>>([]));
 
         var context = new Mock<IJobExecutionContext>();
         context.SetupGet(c => c.JobDetail).Returns(jobDetail.Object);
@@ -215,7 +219,7 @@ public class ElectrostoreCronJobTests
         var context = CreateContext(7, CronJobAction.WeeklyItemMovementReport);
 
         // Act
-        var exception = await Record.ExceptionAsync(() => job.Execute(context.Object));
+        var exception = await Record.ExceptionAsync(() => job.Execute(context.Object).AsTask());
 
         // Assert
         Assert.Null(exception);
@@ -358,7 +362,7 @@ public class ElectrostoreCronJobTests
             .Returns(CreateFailingAsyncUnaryCall<UpdateCronJobRunReply>(new RpcException(new Status(StatusCode.Unavailable, "down"))));
 
         // Act
-        var exception = await Record.ExceptionAsync(() => job.Execute(context.Object));
+        var exception = await Record.ExceptionAsync(() => job.Execute(context.Object).AsTask());
 
         // Assert
         Assert.Null(exception);
@@ -375,7 +379,7 @@ public class ElectrostoreCronJobTests
             .Returns(CreateFailingAsyncUnaryCall<UpdateCronJobStatusReply>(new RpcException(new Status(StatusCode.Unavailable, "down"))));
 
         // Act
-        var exception = await Record.ExceptionAsync(() => job.Execute(context.Object));
+        var exception = await Record.ExceptionAsync(() => job.Execute(context.Object).AsTask());
 
         // Assert
         Assert.Null(exception);

@@ -21,7 +21,7 @@ public class KafkaCronJobEventsConsumerTests
     public KafkaCronJobEventsConsumerTests()
     {
         _schedulerFactory.Setup(f => f.GetScheduler(It.IsAny<CancellationToken>())).ReturnsAsync(_scheduler.Object);
-        _scheduler.Setup(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<CancellationToken>())).ReturnsAsync(DateTimeOffset.UtcNow);
+        _scheduler.Setup(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<ScheduleJobOptions>(), It.IsAny<CancellationToken>())).ReturnsAsync(DateTimeOffset.UtcNow);
     }
 
     private KafkaCronJobEventsConsumer CreateConsumer()
@@ -87,7 +87,7 @@ public class KafkaCronJobEventsConsumerTests
     {
         // Arrange
         var consumer = CreateConsumer();
-        _scheduler.Setup(s => s.CheckExists(It.IsAny<JobKey>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _scheduler.Setup(s => s.Exists(It.IsAny<JobKey>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
         var evt = new CronJobEvent
         {
             action = "created",
@@ -98,7 +98,7 @@ public class KafkaCronJobEventsConsumerTests
         await HandleEventAsync(consumer, evt);
 
         // Assert
-        _scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<CancellationToken>()), Times.Once);
+        _scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<ScheduleJobOptions>(), It.IsAny<CancellationToken>()), Times.Once);
         _scheduler.Verify(s => s.DeleteJob(It.IsAny<JobKey>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -117,8 +117,8 @@ public class KafkaCronJobEventsConsumerTests
         await HandleEventAsync(consumer, evt);
 
         // Assert
-        _scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<CancellationToken>()), Times.Never);
-        _scheduler.Verify(s => s.CheckExists(It.IsAny<JobKey>(), It.IsAny<CancellationToken>()), Times.Never);
+        _scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<ScheduleJobOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+        _scheduler.Verify(s => s.Exists(It.IsAny<JobKey>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -136,8 +136,8 @@ public class KafkaCronJobEventsConsumerTests
         await HandleEventAsync(consumer, evt);
 
         // Assert
-        _scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<CancellationToken>()), Times.Never);
-        _scheduler.Verify(s => s.CheckExists(It.IsAny<JobKey>(), It.IsAny<CancellationToken>()), Times.Never);
+        _scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<ScheduleJobOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+        _scheduler.Verify(s => s.Exists(It.IsAny<JobKey>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public class KafkaCronJobEventsConsumerTests
     {
         // Arrange
         var consumer = CreateConsumer();
-        _scheduler.Setup(s => s.CheckExists(It.IsAny<JobKey>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _scheduler.Setup(s => s.Exists(It.IsAny<JobKey>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
         _scheduler.Setup(s => s.DeleteJob(It.IsAny<JobKey>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
         var evt = new CronJobEvent
         {
@@ -160,7 +160,7 @@ public class KafkaCronJobEventsConsumerTests
         // "updated" removes the existing job before delegating to ScheduleOrReplaceJobAsync,
         // which itself also removes any existing job before scheduling - hence two deletions.
         _scheduler.Verify(s => s.DeleteJob(It.Is<JobKey>(k => k.Name == "job-2"), It.IsAny<CancellationToken>()), Times.Exactly(2));
-        _scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<CancellationToken>()), Times.Once);
+        _scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<ScheduleJobOptions>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -168,7 +168,7 @@ public class KafkaCronJobEventsConsumerTests
     {
         // Arrange
         var consumer = CreateConsumer();
-        _scheduler.Setup(s => s.CheckExists(It.IsAny<JobKey>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _scheduler.Setup(s => s.Exists(It.IsAny<JobKey>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
         _scheduler.Setup(s => s.DeleteJob(It.IsAny<JobKey>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
         var evt = new CronJobEvent
         {
@@ -181,7 +181,7 @@ public class KafkaCronJobEventsConsumerTests
 
         // Assert
         _scheduler.Verify(s => s.DeleteJob(It.Is<JobKey>(k => k.Name == "job-3"), It.IsAny<CancellationToken>()), Times.Once);
-        _scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<CancellationToken>()), Times.Never);
+        _scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<ScheduleJobOptions>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -189,7 +189,7 @@ public class KafkaCronJobEventsConsumerTests
     {
         // Arrange
         var consumer = CreateConsumer();
-        _scheduler.Setup(s => s.CheckExists(It.IsAny<JobKey>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _scheduler.Setup(s => s.Exists(It.IsAny<JobKey>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
         _scheduler.Setup(s => s.DeleteJob(It.IsAny<JobKey>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
         var evt = new CronJobEvent
         {
@@ -202,7 +202,7 @@ public class KafkaCronJobEventsConsumerTests
 
         // Assert
         _scheduler.Verify(s => s.DeleteJob(It.Is<JobKey>(k => k.Name == "job-4"), It.IsAny<CancellationToken>()), Times.Once);
-        _scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<CancellationToken>()), Times.Never);
+        _scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<ScheduleJobOptions>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -221,7 +221,7 @@ public class KafkaCronJobEventsConsumerTests
 
         // Assert
         Assert.Null(exception);
-        _scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<CancellationToken>()), Times.Never);
+        _scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<ScheduleJobOptions>(), It.IsAny<CancellationToken>()), Times.Never);
         _scheduler.Verify(s => s.DeleteJob(It.IsAny<JobKey>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -362,7 +362,7 @@ public class KafkaCronJobEventsConsumerTests
         var consumer = CreateConsumer();
         var kafkaConsumer = new Mock<IConsumer<string, string>>();
         var result = CreateConsumeResult("""{"action":"deleted","data":{"id_cronjob":9}}""");
-        _scheduler.Setup(s => s.CheckExists(It.IsAny<JobKey>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _scheduler.Setup(s => s.Exists(It.IsAny<JobKey>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
         _scheduler.Setup(s => s.DeleteJob(It.IsAny<JobKey>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         // Act
@@ -381,7 +381,7 @@ public class KafkaCronJobEventsConsumerTests
         var kafkaConsumer = new Mock<IConsumer<string, string>>();
         var result = CreateConsumeResult("""{"action":"deleted","data":{"id_cronjob":9}}""");
         _scheduler
-            .Setup(s => s.CheckExists(It.IsAny<JobKey>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.Exists(It.IsAny<JobKey>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("scheduler down"));
 
         // Act

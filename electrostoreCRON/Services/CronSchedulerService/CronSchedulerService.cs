@@ -2,7 +2,6 @@ using System.Globalization;
 using ElectrostoreCRON.Grpc;
 using Grpc.Core;
 using Quartz;
-using Quartz.Impl.Matchers;
 
 namespace ElectrostoreCRON.Services.CronSchedulerService;
 
@@ -101,7 +100,7 @@ public class CronSchedulerService : BackgroundService
                 continue;
             }
 
-            await scheduler.ScheduleJob(jobDetail, trigger, ct);
+            await scheduler.ScheduleJob(jobDetail, trigger, default, ct);
             _logger.LogInformation(
                 "Cron job #{Id} ({Name}) scheduled - action={Action}, expr={Expr}",
                 job.IdCronjob, job.NameCronjob, job.ActionCronjob, job.CronExpressionCronjob);
@@ -111,7 +110,7 @@ public class CronSchedulerService : BackgroundService
                 _logger.LogInformation(
                     "Cron job #{Id} ({Name}) is overdue (next_run_at={NextRunAt}) - triggering immediately.",
                     job.IdCronjob, job.NameCronjob, job.NextRunAt);
-                await scheduler.TriggerJob(jobKey, ct);
+                await scheduler.TriggerJob(jobKey, null, ct);
             }
         }
     }
