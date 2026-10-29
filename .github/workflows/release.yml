@@ -57,7 +57,7 @@ jobs:
 
       - name: Generate Changelog
         if: ${{ steps.previous_tag.outputs.previous_tag != 'none' }}
-        uses: metcalfc/changelog-generator@v4.7.0
+        uses: metcalfc/changelog-generator@v5.0.1
         id: changelog
         with:
           mytoken: ${{ secrets.GITHUB_TOKEN }}
