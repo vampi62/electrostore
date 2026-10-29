@@ -99,7 +99,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Helper to convert github repo to lowercase
       id: repo
-      uses: ASzc/change-string-case-action@v6
+      uses: ASzc/change-string-case-action@v8
       with:
         string: ${{ github.repository }}
     - name: Get unique random number
@@ -168,7 +168,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Helper to convert github repo to lowercase
       id: repo
-      uses: ASzc/change-string-case-action@v6
+      uses: ASzc/change-string-case-action@v8
       with:
         string: ${{ github.repository }}
     - name: Get unique random number
@@ -238,7 +238,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Helper to convert github repo to lowercase
       id: repo
-      uses: ASzc/change-string-case-action@v6
+      uses: ASzc/change-string-case-action@v8
       with:
         string: ${{ github.repository }}
     - name: Compute image tags
