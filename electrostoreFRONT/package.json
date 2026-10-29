@@ -6,8 +6,8 @@
         "dev": "vite",
         "build": "vite build",
         "preview": "vite preview --port 5050",
-        "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts --fix --ignore-path .gitignore",
-        "lint:check": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts --ignore-path .gitignore",
+        "lint": "eslint . --fix",
+        "lint:check": "eslint .",
         "gen:api-types": "openapi-typescript ../openapi/swagger.json -o src/types/api.d.ts",
         "typecheck": "vue-tsc -p tsconfig.json",
         "typecheck:worker": "tsc -p tsconfig.worker.json"
@@ -32,13 +32,16 @@
         "yup": "^1.7.1"
     },
     "devDependencies": {
+        "@eslint/js": "^10.0.1",
         "@typescript-eslint/eslint-plugin": "^8.72.0",
         "@typescript-eslint/parser": "^8.71.0",
         "@vitejs/plugin-vue": "^6.0.10",
         "eslint": "^10.13.0",
         "eslint-plugin-vue": "^10.11.1",
+        "globals": "^17.13.0",
         "openapi-typescript": "^7.13.0",
-        "typescript": "^7.0.2",
+        "typescript": "^5.9.3",
+        "typescript-eslint": "^8.72.1",
         "vite": "^8.3.5",
         "vite-plugin-pwa": "^2.0.0",
         "vue-tsc": "^3.3.13"
