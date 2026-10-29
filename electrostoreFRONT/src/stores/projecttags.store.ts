@@ -1,95 +1,59 @@
 import { defineStore } from "pinia";
 
-import { createMainResource, createNestedResource } from "@/helpers";
+import { createResource } from "@/helpers";
 import { isNewId } from "@/utils";
 
-import { useProjectsStore } from "@/stores";
+import { useProjectsTagsStore } from "@/stores";
 
 import type { StoreGeneric } from "pinia";
-import type { Ready, Edition } from "@/types/resource";
+import type { Edition } from "@/types/resource";
 import type { components } from "@/types/api";
 type ReadProjectTagDto = components["schemas"]["ReadProjectTagDto"];
 type ReadExtendedProjectTagDto = components["schemas"]["ReadExtendedProjectTagDto"];
 type CreateProjectTagDto = components["schemas"]["CreateProjectTagDto"];
 type UpdateProjectTagDto = components["schemas"]["UpdateProjectTagDto"];
 
-type ReadProjectProjectTagDto = components["schemas"]["ReadProjectProjectTagDto"];
-type ReadExtendedProjectProjectTagDto = components["schemas"]["ReadExtendedProjectProjectTagDto"];
-type CreateProjectProjectTagByProjectTagDto = components["schemas"]["CreateProjectProjectTagByProjectTagDto"];
-
-const EXPAND_HANDLERS: Record<string, (store: StoreGeneric, idProjectTag: string, data: ReadExtendedProjectTagDto) => void> = {
-	project_tags: (store, idProjectTag, data) => {
-		store.projectTagsProject[idProjectTag] = {};
-		for (const projectTagProject of data.project_tags ?? []) {
-			if (!projectTagProject.id_project) {
-				continue;
-			}
-			store.projectTagsProject[idProjectTag][projectTagProject.id_project] = projectTagProject;
-		}
-	},
-};
-
-function hydrateProjectTag(store: StoreGeneric, idProjectTag: string, projectTag: ReadExtendedProjectTagDto, expand: string[] = []) {
-	store.projectTagsProjectTotalCount[idProjectTag] = projectTag.project_tags_count;
-	for (const key of expand) {
-		if (EXPAND_HANDLERS[key]) {
-			EXPAND_HANDLERS[key](store, idProjectTag, projectTag);
-		}
+function hydrateProjectTag(idProjectTag: string, projectTag: ReadExtendedProjectTagDto, expand: string[] = []) {
+	const scope = { id_project_tag: idProjectTag };
+	const projectsTagsStore = useProjectsTagsStore();
+	projectsTagsStore.hydrateProjectProjectTags(scope, undefined, projectTag.project_tags_count);
+	if (expand.includes("project_tags")) {
+		projectsTagsStore.hydrateProjectProjectTags(scope, projectTag.project_tags ?? []);
 	}
 }
 
-const projectTagResource = createMainResource<{ readExtended: ReadExtendedProjectTagDto, readBasic: ReadProjectTagDto, create: CreateProjectTagDto, update: UpdateProjectTagDto, createBulk: CreateProjectTagDto[] }>({
-	path: () => "/project-tag",
-	idField: "id_project_tag",
+const projectTagResource = createResource<{ readExtended: ReadExtendedProjectTagDto, readBasic: ReadProjectTagDto, create: CreateProjectTagDto, update: UpdateProjectTagDto, createBulk: CreateProjectTagDto[] }>({
+	compositeKey: ["id_project_tag"],
+	generatedField: "id_project_tag",
+	path: [{ keys: [], url: () => "/project-tag" }],
+	entityPath: [{ keys: ["id_project_tag"], url: ({ id_project_tag }) => `/project-tag/${id_project_tag}` }],
 	stateKey: "projectTags",
 	countKey: "projectTagsTotalCount",
 	loadingKey: "projectTagsLoading",
 	editionKey: "projectTagEdition",
-	onHydrate: (store, entity: ReadExtendedProjectTagDto, expand) => {
+	onHydrate: (store: StoreGeneric, entity: ReadExtendedProjectTagDto, expand) => {
 		if (entity.id_project_tag === undefined) {
 			return;
 		}
-		hydrateProjectTag(store, String(entity.id_project_tag), entity, expand);
+		hydrateProjectTag(String(entity.id_project_tag), entity, expand);
 	},
 });
 
-const projectTagProjectResource = createNestedResource<{ readExtended: ReadExtendedProjectProjectTagDto, readBasic: ReadProjectProjectTagDto, create: CreateProjectProjectTagByProjectTagDto }>({
-	path: (idProjectTag) => `/project-tag/${idProjectTag}/project`,
-	idField: "id_project",
-	stateKey: "projectTagsProject",
-	countKey: "projectTagsProjectTotalCount",
-	loadingKey: "projectTagsProjectLoading",
-	editionKey: "projectTagProjectEdition",
-	readyKey: "projectTagProjectReady",
-	onHydrate: (store, entity: ReadExtendedProjectProjectTagDto, expand) => {
-		if (expand.includes("project") && entity.project && entity.id_project) {
-			const projectsStore = useProjectsStore();
-			projectsStore.projects[entity.id_project] = entity.project;
-		}
-	},
-});
-
-export const useProjectTagsStore = defineStore("projectTags",{
+export const useProjectTagsStore = defineStore("projectTags", {
 	state: () => ({
 		projectTagsLoading: false,
 		projectTagsTotalCount: 0,
 		projectTags: {} as Record<string, ReadProjectTagDto>,
 		projectTagEdition: {} as Record<string, Edition<{ create: CreateProjectTagDto, update: UpdateProjectTagDto }>>,
-
-		projectTagsProjectLoading: false,
-		projectTagsProjectTotalCount: {} as Record<string, number>,
-		projectTagsProject: {} as Record<string, Record<string, ReadProjectProjectTagDto>>,
-		projectTagProjectEdition: {} as Record<string, Record<string, Edition<{ create: CreateProjectProjectTagByProjectTagDto }>>>,
-		projectTagProjectReady: {} as Record<string, Record<string, Ready<{ create: CreateProjectProjectTagByProjectTagDto }>>>,
 	}),
 	actions: {
-		getProjectTagByInterval: projectTagResource.getByInterval,
-		getProjectTagById: projectTagResource.getById,
-		createProjectTag: projectTagResource.create,
-		getAvailableNewProjectTagId: projectTagResource.getAvailableNewId,
-		updateProjectTag: projectTagResource.update,
-		deleteProjectTag: projectTagResource.remove,
-		createProjectTagBulk: projectTagResource.createBulk,
+		getProjectTagByInterval: projectTagResource.single.getByInterval,
+		getProjectTagById: projectTagResource.single.getById,
+		createProjectTag: projectTagResource.single.create,
+		getAvailableNewProjectTagId: projectTagResource.single.getAvailableNewId,
+		updateProjectTag: projectTagResource.single.update,
+		deleteProjectTag: projectTagResource.single.remove,
+		createProjectTagBulk: projectTagResource.single.createBulk,
 		loadToEdition(id: string, preset: string | null = null) {
 			if (!isNewId(id) && this.projectTags[id]) {
 				this.projectTagEdition[id] = {
@@ -101,10 +65,9 @@ export const useProjectTagsStore = defineStore("projectTags",{
 				this.projectTagEdition[id] = {
 					loading: false,
 				};
-				projectTagResource.loadEditionPreset.call(this, id, preset);
+				projectTagResource.single.loadEditionPreset.call(this, id, preset);
 			}
-			this.projectTagProjectEdition[id] = {};
-			this.projectTagProjectReady[id] = {};
+			useProjectsTagsStore().clearProjectProjectTagEdition({ id_project_tag: id });
 		},
 		setLoadingEdition(id: string, loading: boolean) {
 			if (!this.projectTagEdition[id]) {
@@ -114,32 +77,21 @@ export const useProjectTagsStore = defineStore("projectTags",{
 		},
 		clearEdition(id: string) {
 			delete this.projectTagEdition[id];
-			delete this.projectTagProjectEdition[id];
-			delete this.projectTagProjectReady[id];
+			useProjectsTagsStore().clearProjectProjectTagEdition({ id_project_tag: id });
 		},
 		async saveAllChanges(id: string) {
 			let realId = id;
+			const projectsTagsStore = useProjectsTagsStore();
 			if (isNewId(id)) {
 				realId = await this.createProjectTag(this.projectTagEdition[id] as CreateProjectTagDto);
-				this.copyProjectTagProjectAllId(id, realId);
+				// what was staged for the new tag now belongs to the saved one
+				projectsTagsStore.copyProjectProjectTagByKeyPart("id_project_tag", id, realId);
 			} else {
 				await this.updateProjectTag(realId, this.projectTagEdition[id]);
 			}
-			await this.pushProjectTagProjectChange(realId);
+			await projectsTagsStore.pushProjectProjectTagChange({ id_project_tag: realId });
 			await this.getProjectTagById(realId, ["project_tags"]);
 			return realId;
 		},
-
-		getProjectTagProjectByInterval: projectTagProjectResource.getByInterval,
-		getProjectTagProjectById: projectTagProjectResource.getById,
-		createProjectTagProject: projectTagProjectResource.create,
-		deleteProjectTagProject: projectTagProjectResource.remove,
-		createProjectTagProjectBulk: projectTagProjectResource.createBulk,
-		deleteProjectTagProjectBulk: projectTagProjectResource.removeBulk,
-		getAvailableNewProjectTagProjectId: projectTagProjectResource.getAvailableNewId,
-		valideProjectTagProjectEditionById: projectTagProjectResource.valideEditionById,
-		copyProjectTagProjectPerId: projectTagProjectResource.copyPerId,
-		copyProjectTagProjectAllId: projectTagProjectResource.copyAllId,
-		pushProjectTagProjectChange: projectTagProjectResource.pushChange,
 	},
 });

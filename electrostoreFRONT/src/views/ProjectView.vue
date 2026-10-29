@@ -9,7 +9,7 @@ import type { useNotification } from "@/composables";
 import type FormContainer from "@/components/FormContainer.vue";
 import { downloadFile, viewFile, isNewId } from "@/utils";
 import { ProjectStatus } from "@/enums";
-import { useConfigsStore, useProjectsStore, useUsersStore, useItemsStore, useProjectTagsStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useProjectsStore, useProjectsCommentsStore, useProjectsDocumentsStore, useProjectsStatusStore, useProjectsTagsStore, useItemsProjectsStore, useUsersStore, useItemsStore, useProjectTagsStore, useAuthStore } from "@/stores";
 
 import type { FilterLabel } from "@/types/filter";
 import type { FormLabel } from "@/types/form";
@@ -23,6 +23,11 @@ const router = useRouter();
 
 const configsStore = useConfigsStore();
 const projectsStore = useProjectsStore();
+const projectCommentsStore = useProjectsCommentsStore();
+const projectDocumentsStore = useProjectsDocumentsStore();
+const projectStatusStore = useProjectsStatusStore();
+const projectsTagsStore = useProjectsTagsStore();
+const itemProjectsStore = useItemsProjectsStore();
 const usersStore = useUsersStore();
 const itemsStore = useItemsStore();
 const projectTagsStore = useProjectTagsStore();
@@ -51,7 +56,7 @@ async function fetchAllData() {
 			router.push("/projects");
 			return;
 		}
-		projectsStore.getProjectTagProjectByInterval(projectId.value, 100, 0, ["project_tag"]);
+		projectsTagsStore.getProjectProjectTagByInterval({ id_project: projectId.value }, 100, 0, ["project_tag"]);
 		projectsStore.loadToEdition(projectId.value);
 		usersStore.users[authStore.user.id_user] = authStore.user; // avoids undefined user when the current user posts first comment
 	}
@@ -76,14 +81,14 @@ const filterTag = ref<FilterLabel[]>([
 function tagSave(id_tag: number) {
 	try {
 		// re-adding a tag that is only pending deletion locally just cancels that pending deletion
-		if (projectsStore.projectTagProjectReady[projectId.value]?.[id_tag]?.status === "deleted") {
-			delete projectsStore.projectTagProjectReady[projectId.value][id_tag];
+		if (projectsTagsStore.projectProjectTagReadyByProject(projectId.value)?.[id_tag]?.status === "deleted") {
+			delete projectsTagsStore.projectProjectTagReadyByProject(projectId.value)[id_tag];
 			addNotification({ message: t("project.TagRestored"), type: "success" });
 			return;
 		}
-		projectsStore.projectTagProjectEdition[projectId.value][id_tag] = { id_project_tag: id_tag };
-		projectsStore.valideProjectTagProjectEditionById(projectId.value, String(id_tag), "created");
-		delete projectsStore.projectTagProjectEdition[projectId.value][id_tag];
+		projectsTagsStore.projectProjectTagEditionByProject(projectId.value)[id_tag] = { id_project_tag: id_tag };
+		projectsTagsStore.valideProjectProjectTagEditionByKey({ id_project: projectId.value, id_project_tag: String(id_tag) }, "created");
+		delete projectsTagsStore.projectProjectTagEditionByProject(projectId.value)[id_tag];
 		addNotification({ message: t("project.TagAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -92,10 +97,10 @@ function tagSave(id_tag: number) {
 function tagDelete(id_tag: string) {
 	try {
 		// a tag that was only staged as a pending creation is simply dropped, nothing to push
-		if (projectsStore.projectTagProjectReady[projectId.value]?.[id_tag]?.status === "created") {
-			delete projectsStore.projectTagProjectReady[projectId.value][id_tag];
+		if (projectsTagsStore.projectProjectTagReadyByProject(projectId.value)?.[id_tag]?.status === "created") {
+			delete projectsTagsStore.projectProjectTagReadyByProject(projectId.value)[id_tag];
 		} else {
-			projectsStore.valideProjectTagProjectEditionById(projectId.value, id_tag, "deleted");
+			projectsTagsStore.valideProjectProjectTagEditionByKey({ id_project: projectId.value, id_project_tag: id_tag }, "deleted");
 		}
 		addNotification({ message: t("project.TagDeleted"), type: "success" });
 	} catch (e) {
@@ -104,7 +109,7 @@ function tagDelete(id_tag: string) {
 }
 function tagRestore(id_tag: string) {
 	try {
-		delete projectsStore.projectTagProjectReady[projectId.value][id_tag];
+		delete projectsTagsStore.projectProjectTagReadyByProject(projectId.value)[id_tag];
 		addNotification({ message: t("project.TagRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -182,12 +187,12 @@ const documentAddModalShow = ref(false);
 const documentAdd = async(files: { name: string; document: File }[]) => {
 	for (const file of files) {
 		const documentModalData = { name_project_document: file.name, document: file.document, type_project_document: file.document.type, created_at: new Date() };
-		const newId = projectsStore.getAvailableNewDocumentId(projectId.value);
-		projectsStore.documentEdition[projectId.value][newId] = documentModalData;
+		const newId = projectDocumentsStore.getAvailableNewProjectDocumentId({ id_project: projectId.value });
+		projectDocumentsStore.projectDocumentEditionByProject(projectId.value)[newId] = documentModalData;
 		try {
 			schemaAddDocument.validateSync(documentModalData, { abortEarly: false });
-			projectsStore.valideDocumentEditionById(projectId.value, newId, "created", true);
-			delete projectsStore.documentEdition[projectId.value][newId];
+			projectDocumentsStore.valideProjectDocumentEditionByKey({ id_project: projectId.value, id_project_document: newId }, "created", true);
+			delete projectDocumentsStore.projectDocumentEditionByProject(projectId.value)[newId];
 			addNotification({ message: t("project.DocumentAdded"), type: "success" });
 		} catch (e) {
 			addNotification({ message: e, type: "error" });
@@ -198,9 +203,9 @@ const documentAdd = async(files: { name: string; document: File }[]) => {
 const documentEdit = (row: TableauRowData) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
-		projectsStore.valideDocumentEditionById(projectId.value, row.id_project_document,
-			projectsStore.documentReady[projectId.value]?.[row.id_project_document]?.status === "created" ? "created" : "modified");
-		delete projectsStore.documentEdition[projectId.value][row.id_project_document];
+		projectDocumentsStore.valideProjectDocumentEditionByKey({ id_project: projectId.value, id_project_document: row.id_project_document },
+			projectDocumentsStore.projectDocumentReadyByProject(projectId.value)?.[row.id_project_document]?.status === "created" ? "created" : "modified");
+		delete projectDocumentsStore.projectDocumentEditionByProject(projectId.value)[row.id_project_document];
 		addNotification({ message: t("project.DocumentUpdated"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -209,7 +214,7 @@ const documentEdit = (row: TableauRowData) => {
 };
 const documentRestore = (row: TableauRowData) => {
 	try {
-		delete projectsStore.documentReady[projectId.value][row.id_project_document];
+		delete projectDocumentsStore.projectDocumentReadyByProject(projectId.value)[row.id_project_document];
 		addNotification({ message: t("project.DocumentRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -217,18 +222,18 @@ const documentRestore = (row: TableauRowData) => {
 };
 const documentDelete = (row: TableauRowData) => {
 	try {
-		projectsStore.valideDocumentEditionById(projectId.value, row.id_project_document, "deleted");
+		projectDocumentsStore.valideProjectDocumentEditionByKey({ id_project: projectId.value, id_project_document: row.id_project_document }, "deleted");
 		addNotification({ message: t("project.DocumentDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
 };
 const documentDownload = async(fileContent: TableauRowData) => {
-	const file = await projectsStore.downloadDocument(projectId.value, fileContent.id_project_document);
+	const file = await projectDocumentsStore.downloadProjectDocument(projectId.value, fileContent.id_project_document);
 	downloadFile(file, { keyName: fileContent.name_project_document, keyType: fileContent.type_project_document });
 };
 const documentView = async(fileContent: TableauRowData) => {
-	const file = await projectsStore.downloadDocument(projectId.value, fileContent.id_project_document);
+	const file = await projectDocumentsStore.downloadProjectDocument(projectId.value, fileContent.id_project_document);
 	if (viewFile(file, { keyName: fileContent.name_project_document, keyType: fileContent.type_project_document })) {
 		addNotification({ message: t("project.DocumentOpenInNewTab"), type: "success" });
 	} else {
@@ -241,9 +246,9 @@ const itemModalShow = ref(false);
 const itemSave = (row: TableauRowData) => {
 	try {
 		schemaItem.validateSync(row, { abortEarly: false });
-		projectsStore.valideItemEditionById(projectId.value, row.id_item,
-			projectsStore.items[projectId.value]?.[row.id_item] ? "modified" : "created");
-		delete projectsStore.itemEdition[projectId.value][row.id_item];
+		itemProjectsStore.valideItemProjectEditionByKey({ id_project: projectId.value, id_item: row.id_item },
+			itemProjectsStore.itemProjectsByProject(projectId.value)?.[row.id_item] ? "modified" : "created");
+		delete itemProjectsStore.itemProjectEditionByProject(projectId.value)[row.id_item];
 		addNotification({ message: t("project.ItemUpdated"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -251,10 +256,10 @@ const itemSave = (row: TableauRowData) => {
 };
 const itemDelete = (row: TableauRowData) => {
 	try {
-		if (projectsStore.itemReady[projectId.value]?.[row.id_item]?.status === "created") {
-			delete projectsStore.itemReady[projectId.value][row.id_item];
+		if (itemProjectsStore.itemProjectReadyByProject(projectId.value)?.[row.id_item]?.status === "created") {
+			delete itemProjectsStore.itemProjectReadyByProject(projectId.value)[row.id_item];
 		} else {
-			projectsStore.valideItemEditionById(projectId.value, row.id_item, "deleted");
+			itemProjectsStore.valideItemProjectEditionByKey({ id_project: projectId.value, id_item: row.id_item }, "deleted");
 		}
 		addNotification({ message: t("project.ItemDeleted"), type: "success" });
 	} catch (e) {
@@ -263,7 +268,7 @@ const itemDelete = (row: TableauRowData) => {
 };
 const itemRestore = (row: TableauRowData) => {
 	try {
-		delete projectsStore.itemReady[projectId.value][row.id_item];
+		delete itemProjectsStore.itemProjectReadyByProject(projectId.value)[row.id_item];
 		addNotification({ message: t("project.ItemRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -340,7 +345,7 @@ const labelTableauDocument = ref<TableauLabel[]>([
 			icon: "fa-solid fa-edit",
 			showCondition: "!edition?.id_project_document && ready?.status !== 'deleted'",
 			action: (row: TableauRowData) => {
-				projectsStore.documentEdition[projectId.value][row.id_project_document] = { ...row };
+				projectDocumentsStore.projectDocumentEditionByProject(projectId.value)[row.id_project_document] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -349,7 +354,7 @@ const labelTableauDocument = ref<TableauLabel[]>([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_project_document",
 			action: (row: TableauRowData) => {
-				delete projectsStore.documentEdition[projectId.value][row.id_project_document];
+				delete projectDocumentsStore.projectDocumentEditionByProject(projectId.value)[row.id_project_document];
 			},
 			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
 		},
@@ -357,7 +362,7 @@ const labelTableauDocument = ref<TableauLabel[]>([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_project_document",
-			action: (row: TableauRowData) => documentEdit(projectsStore.documentEdition[projectId.value][row.id_project_document]),
+			action: (row: TableauRowData) => documentEdit(projectDocumentsStore.projectDocumentEditionByProject(projectId.value)[row.id_project_document]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -402,7 +407,7 @@ const labelTableauItem = ref<TableauLabel[]>([
 			icon: "fa-solid fa-edit",
 			showCondition: "!edition?.id_item && ready?.status !== 'deleted'",
 			action: (row: TableauRowData) => {
-				projectsStore.itemEdition[projectId.value][row.id_item] = { ...row };
+				itemProjectsStore.itemProjectEditionByProject(projectId.value)[row.id_item] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -410,7 +415,7 @@ const labelTableauItem = ref<TableauLabel[]>([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_item",
-			action: (row: TableauRowData) => itemSave(projectsStore.itemEdition[projectId.value][row.id_item]),
+			action: (row: TableauRowData) => itemSave(itemProjectsStore.itemProjectEditionByProject(projectId.value)[row.id_item]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -419,7 +424,7 @@ const labelTableauItem = ref<TableauLabel[]>([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_item",
 			action: (row: TableauRowData) => {
-				delete projectsStore.itemEdition[projectId.value][row.id_item];
+				delete itemProjectsStore.itemProjectEditionByProject(projectId.value)[row.id_item];
 			},
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
 		},
@@ -478,7 +483,7 @@ const labelTableauModalItem = ref<TableauLabel[]>([
 			icon: "fa-solid fa-plus",
 			showCondition: "!ready?.status && store[1]?.[rowData.id_item] === undefined && !edition?.id_item",
 			action: (row: TableauRowData) => {
-				projectsStore.itemEdition[projectId.value][row.id_item] = { quantity_project_item: 1, id_item: row.id_item };
+				itemProjectsStore.itemProjectEditionByProject(projectId.value)[row.id_item] = { quantity_project_item: 1, id_item: row.id_item };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -487,7 +492,7 @@ const labelTableauModalItem = ref<TableauLabel[]>([
 			icon: "fa-solid fa-edit",
 			showCondition: "!ready?.status && store[1]?.[rowData.id_item] && !edition?.id_item",
 			action: (row: TableauRowData) => {
-				projectsStore.itemEdition[projectId.value][row.id_item] = { ...row };
+				itemProjectsStore.itemProjectEditionByProject(projectId.value)[row.id_item] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -495,7 +500,7 @@ const labelTableauModalItem = ref<TableauLabel[]>([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_item",
-			action: (row: TableauRowData) => itemSave(projectsStore.itemEdition[projectId.value][row.id_item]),
+			action: (row: TableauRowData) => itemSave(itemProjectsStore.itemProjectEditionByProject(projectId.value)[row.id_item]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -504,7 +509,7 @@ const labelTableauModalItem = ref<TableauLabel[]>([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_item",
 			action: (row: TableauRowData) => {
-				delete projectsStore.itemEdition[projectId.value][row.id_item];
+				delete itemProjectsStore.itemProjectEditionByProject(projectId.value)[row.id_item];
 			},
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
 		},
@@ -526,7 +531,11 @@ const labelTableauModalItem = ref<TableauLabel[]>([
 	] },
 ]);
 useViewScroll(true);
-useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects");
+useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects", [
+	{ key: "documentReady", get: (id) => projectDocumentsStore.projectDocumentReadyByProject(id), set: (id, entries) => projectDocumentsStore.setProjectDocumentStagedSlice("ready", { id_project: id }, entries) },
+	{ key: "itemReady", get: (id) => itemProjectsStore.itemProjectReadyByProject(id), set: (id, entries) => itemProjectsStore.setItemProjectStagedSlice("ready", { id_project: id }, entries) },
+	{ key: "projectTagProjectReady", get: (id) => projectsTagsStore.projectProjectTagReadyByProject(id), set: (id, entries) => projectsTagsStore.setProjectProjectTagStagedSlice("ready", { id_project: id }, entries) },
+]);
 </script>
 
 <template>
@@ -552,7 +561,7 @@ useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects");
 		/>
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-edition="projectsStore.projectEdition[projectId]" :store-data="projectsStore.projects[projectId]"/>
-			<Tags :current-tags="projectsStore.projectTagProject[projectId] || {}" :ready-store="projectsStore.projectTagProjectReady[projectId] || {}" :tags-store="projectTagsStore.projectTags" :can-edit="authStore.hasPermission([2])"
+			<Tags :current-tags="projectsTagsStore.projectProjectTagsByProject(projectId)" :ready-store="projectsTagsStore.projectProjectTagReadyByProject(projectId)" :tags-store="projectTagsStore.projectTags" :can-edit="authStore.hasPermission([2])"
 				:delete-function="(value: string) => tagDelete(value)"
 				:restore-function="(value: string) => tagRestore(value)"
 				:filter-modal="filterTag"
@@ -563,70 +572,70 @@ useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects");
 				/>
 		</div>
 		<CollapsibleSection title="project.HistoryStatus"
-			:total-count="Number(projectsStore.statusHistoryTotalCount[projectId] || 0)">
+			:total-count="projectStatusStore.projectStatusCountByProject(projectId)">
 			<template #append-row>
 				<Tableau :labels="labelTableauHistoryStatus" :meta="{ key: 'id_project_status' }"
-					:store-data="[projectsStore.statusHistory[projectId]]"
-					:loading="projectsStore.statusHistoryLoading"
-					:total-count="Number(projectsStore.statusHistoryTotalCount[projectId])"
-					:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectsStore.getStatusHistoryByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
+					:store-data="[projectStatusStore.projectStatusByProject(projectId)]"
+					:loading="projectStatusStore.projectStatusLoading"
+					:total-count="projectStatusStore.projectStatusCountByProject(projectId)"
+					:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectStatusStore.getProjectStatusByInterval({ id_project: projectId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="project.Documents"
-			:total-count="Number(projectsStore.documentsTotalCount[projectId] || 0)">
+			:total-count="projectDocumentsStore.projectDocumentsCountByProject(projectId)">
 			<template #append-row>
 				<button type="button" @click="documentAddModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('project.AddDocument') }}
 				</button>
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_project_document' }"
-					:store-data="[projectsStore.documents[projectId]]"
-					:store-edition="projectsStore.documentEdition[projectId]"
-					:store-ready="projectsStore.documentReady[projectId]"
+					:store-data="[projectDocumentsStore.projectDocumentsByProject(projectId)]"
+					:store-edition="projectDocumentsStore.projectDocumentEditionByProject(projectId)"
+					:store-ready="projectDocumentsStore.projectDocumentReadyByProject(projectId)"
 					:schema="schemaEditDocument"
-					:loading="projectsStore.documentsLoading"
-					:total-count="Number(projectsStore.documentsTotalCount[projectId])"
-					:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectsStore.getDocumentByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
+					:loading="projectDocumentsStore.projectDocumentsLoading"
+					:total-count="projectDocumentsStore.projectDocumentsCountByProject(projectId)"
+					:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectDocumentsStore.getProjectDocumentByInterval({ id_project: projectId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="project.Items"
-			:total-count="Number(projectsStore.itemsTotalCount[projectId] || 0)">
+			:total-count="itemProjectsStore.itemProjectsCountByProject(projectId)">
 			<template #append-row>
 				<button type="button" @click="itemModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('project.AddItem') }}
 				</button>
 				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
-					:store-data="[projectsStore.items[projectId], itemsStore.items]"
-					:store-edition="projectsStore.itemEdition[projectId]"
-					:store-ready="projectsStore.itemReady[projectId]"
-					:loading="projectsStore.itemsLoading"
+					:store-data="[itemProjectsStore.itemProjectsByProject(projectId), itemsStore.items]"
+					:store-edition="itemProjectsStore.itemProjectEditionByProject(projectId)"
+					:store-ready="itemProjectsStore.itemProjectReadyByProject(projectId)"
+					:loading="itemProjectsStore.itemProjectsLoading"
 					:schema="schemaItem"
-					:total-count="Number(projectsStore.itemsTotalCount[projectId] || 0)"
-					:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectsStore.getItemByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
+					:total-count="itemProjectsStore.itemProjectsCountByProject(projectId)"
+					:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemProjectsStore.getItemProjectByInterval({ id_project: projectId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="project.Comments"
-			:total-count="Number(projectsStore.commentsTotalCount[projectId] || 0)" :permission="!isNewId(projectId)">
+			:total-count="projectCommentsStore.projectCommentsCountByProject(projectId)" :permission="!isNewId(projectId)">
 			<template #append-row>
 				<Comment :meta="{ contenu: 'content_project_comment', key: 'id_project_comment', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
-					:store-data="[projectsStore.comments[projectId], usersStore.users]"
+					:store-data="[projectCommentsStore.projectCommentsByProject(projectId), usersStore.users]"
 					:store-user="authStore.user" :store-config="configsStore"
-					:store-edition="projectsStore.commentEdition[projectId]"
+					:store-edition="projectCommentsStore.projectCommentEditionByProject(projectId)"
 					:store-function="{
-						create: (data: Record<string, string>) => projectsStore.createComment(projectId, { content_project_comment: data.content_project_comment }),
-						update: (id: string, data: Record<string, string>) => projectsStore.updateComment(projectId, id, { content_project_comment: data.content_project_comment }),
-						delete: (id: string) => projectsStore.deleteComment(projectId, id),
+						create: (data: Record<string, string>) => projectCommentsStore.createProjectComment({ id_project: projectId }, { content_project_comment: data.content_project_comment }),
+						update: (id: string, data: Record<string, string>) => projectCommentsStore.updateProjectComment({ id_project: projectId, id_project_comment: id }, { content_project_comment: data.content_project_comment }),
+						delete: (id: string) => projectCommentsStore.deleteProjectComment({ id_project: projectId, id_project_comment: id }),
 					}"
-					:loading="projectsStore.commentsLoading" :texte-modal-delete="{ textTitle: 'project.CommentDeleteTitle', textP: 'project.CommentDeleteText' }"
-					:total-count="Number(projectsStore.commentsTotalCount[projectId])"
-					:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectsStore.getCommentByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
+					:loading="projectCommentsStore.projectCommentsLoading" :texte-modal-delete="{ textTitle: 'project.CommentDeleteTitle', textP: 'project.CommentDeleteText' }"
+					:total-count="projectCommentsStore.projectCommentsCountByProject(projectId)"
+					:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectCommentsStore.getProjectCommentByInterval({ id_project: projectId }, limit, offset, expand, filter, sort, clear) : undefined"
 				/>
 			</template>
 		</CollapsibleSection>
@@ -658,11 +667,11 @@ useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects");
 			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" />
 
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
-				:store-data="[itemsStore.items, projectsStore.items[projectId]]"
-				:store-edition="projectsStore.itemEdition[projectId]"
-				:store-ready="projectsStore.itemReady[projectId]"
+				:store-data="[itemsStore.items, itemProjectsStore.itemProjectsByProject(projectId)]"
+				:store-edition="itemProjectsStore.itemProjectEditionByProject(projectId)"
+				:store-ready="itemProjectsStore.itemProjectReadyByProject(projectId)"
 				:filters="filterItem"
-				:loading="projectsStore.itemsLoading" :schema="schemaItem"
+				:loading="itemProjectsStore.itemProjectsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
 				:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"

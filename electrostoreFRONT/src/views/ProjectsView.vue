@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 
 import { useViewScroll } from "@/composables";
 import { ProjectStatus } from "@/enums";
-import { useProjectsStore, useItemsStore, useProjectTagsStore } from "@/stores";
+import { useProjectsStore, useItemsProjectsStore, useProjectsTagsStore, useItemsStore, useProjectTagsStore } from "@/stores";
 
 import type { FilterLabel } from "@/types/filter";
 import type { TableauLabel, TableauMeta } from "@/types/tableau";
@@ -12,13 +12,15 @@ import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 
 const { t } = useI18n();
 const projectsStore = useProjectsStore();
+const itemProjectsStore = useItemsProjectsStore();
+const projectsTagsStore = useProjectsTagsStore();
 const itemsStore = useItemsStore();
 const projectTagsStore = useProjectTagsStore();
 
 async function fetchItemData(minOffset: number, maxOffset: number) {
 	let itemsNotFound: string[] = [];
 	for (let id = minOffset; id < maxOffset; id++) {
-		for (const item in projectsStore.items[id]) {
+		for (const item in itemProjectsStore.itemProjectsGroupedByProject[id]) {
 			if (!itemsStore.items[item]) {
 				itemsNotFound.push(item);
 			}
@@ -31,7 +33,7 @@ async function fetchItemData(minOffset: number, maxOffset: number) {
 async function fetchTagData(minOffset: number, maxOffset: number) {
 	let tagsNotFound: string[] = [];
 	for (let id = minOffset; id < maxOffset; id++) {
-		for (const tag in projectsStore.projectTagProject[id]) {
+		for (const tag in projectsTagsStore.projectProjectTagsGroupedByProject[id]) {
 			if (!projectTagsStore.projectTags[tag]) {
 				tagsNotFound.push(tag);
 			}
@@ -97,7 +99,7 @@ useViewScroll(false);
 		<FilterContainer :filters="filter" :store-data="projectsStore.projects" @ready="filterReady = true" :save-state="true" state-key="projectsFilterState" />
 	</div>
 	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
-		:store-data="[projectsStore.projects,projectsStore.items,itemsStore.items,projectsStore.projectTagProject,projectTagsStore.projectTags]"
+		:store-data="[projectsStore.projects,itemProjectsStore.itemProjectsGroupedByProject,itemsStore.items,projectsTagsStore.projectProjectTagsGroupedByProject,projectTagsStore.projectTags]"
 		:filters="filter"
 		:loading="projectsStore.projectsLoading"
 		:total-count="Number(projectsStore.projectsTotalCount) || 0"

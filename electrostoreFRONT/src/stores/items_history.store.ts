@@ -8,8 +8,12 @@ type ReadItemHistoryDto = components["schemas"]["ReadItemHistoryDto"];
 
 const itemHistoryResource = createResource<{ readBasic: ReadItemHistoryDto }>({
 	compositeKey: ["id_item", "id_item_history"],
-	path: [{ keys: ["id_item"], url: ({ id_item }) => `/item/${id_item}/history` }],
-	entityPath: [{ keys: ["id_item", "id_item_history"], url: ({ id_item, id_item_history }) => `/item/${id_item}/history/${id_item_history}` }],
+	path: [
+		{ keys: ["id_item"], url: ({ id_item }) => `/item/${id_item}/history` },
+	],
+	entityPath: [
+		{ keys: ["id_item", "id_item_history"], url: ({ id_item, id_item_history }) => `/item/${id_item}/history/${id_item_history}` },
+	],
 	stateKey: "itemHistory",
 	countKey: "itemHistoryTotalCount",
 	loadingKey: "itemHistoryLoading",
@@ -24,9 +28,9 @@ export const useItemsHistoryStore = defineStore("itemsHistory", {
 		itemHistory: {} as Record<string, ReadItemHistoryDto>,
 	}),
 	getters: {
-		// the records of an item, indexed by id_item_history
-		itemHistoryByItem: (state) => (idItem: string) => itemHistoryResource.slice(state.itemHistory, { id_item: idItem }),
-		itemHistoryCountByItem: (state) => (idItem: string) => state.itemHistoryTotalCount[itemHistoryResource.toScopeKey({ id_item: idItem })] ?? 0,
+		// the records of a item, indexed by the rest of the key
+		itemHistoryByItem: (state) => (id: string) => itemHistoryResource.slice(state.itemHistory, { id_item: id }),
+		itemHistoryCountByItem: (state) => (id: string) => state.itemHistoryTotalCount[itemHistoryResource.toScopeKey({ id_item: id })] ?? 0,
 	},
 	actions: {
 		getItemHistoryByInterval: itemHistoryResource.getByInterval,

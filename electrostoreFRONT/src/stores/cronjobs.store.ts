@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, createMainResource } from "@/helpers";
+import { fetchWrapper, createResource } from "@/helpers";
 import { isNewId } from "@/utils";
 
 import type { Edition } from "@/types/resource";
@@ -12,9 +12,11 @@ type ReadCronJobStatusDto = components["schemas"]["ReadCronJobStatusDto"];
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-const cronJobResource = createMainResource<{ readExtended: ReadCronJobDto, create: CreateCronJobDto, update: UpdateCronJobDto }>({
-	path: () => "/cronjob",
-	idField: "id_cronjob",
+const cronJobResource = createResource<{ readExtended: ReadCronJobDto, create: CreateCronJobDto, update: UpdateCronJobDto }>({
+	compositeKey: ["id_cronjob"],
+	generatedField: "id_cronjob",
+	path: [{ keys: [], url: () => "/cronjob" }],
+	entityPath: [{ keys: ["id_cronjob"], url: ({ id_cronjob }) => `/cronjob/${id_cronjob}` }],
 	stateKey: "cronJobs",
 	countKey: "cronJobsTotalCount",
 	loadingKey: "cronJobsLoading",
@@ -29,12 +31,12 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		cronJobEdition: {} as Record<string, Edition<{ create: CreateCronJobDto, update: UpdateCronJobDto }>>,
 	}),
 	actions: {
-		getCronJobByInterval: cronJobResource.getByInterval,
-		getCronJobById: cronJobResource.getById,
-		createCronJob: cronJobResource.create,
-		getAvailableNewCronJobId: cronJobResource.getAvailableNewId,
-		updateCronJob: cronJobResource.update,
-		deleteCronJob: cronJobResource.remove,
+		getCronJobByInterval: cronJobResource.single.getByInterval,
+		getCronJobById: cronJobResource.single.getById,
+		createCronJob: cronJobResource.single.create,
+		getAvailableNewCronJobId: cronJobResource.single.getAvailableNewId,
+		updateCronJob: cronJobResource.single.update,
+		deleteCronJob: cronJobResource.single.remove,
 		loadToEdition(id: string, preset: string | null = null) {
 			if (!isNewId(id) && this.cronJobs[id]) {
 				this.cronJobEdition[id] = {
@@ -50,7 +52,7 @@ export const useCronJobsStore = defineStore("cronJobs", {
 					loading: false,
 					is_enabled: true,
 				};
-				cronJobResource.loadEditionPreset.call(this, id, preset);
+				cronJobResource.single.loadEditionPreset.call(this, id, preset);
 			}
 		},
 		setLoadingEdition(id: string, loading: boolean) {

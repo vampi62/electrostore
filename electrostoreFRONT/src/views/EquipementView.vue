@@ -9,7 +9,7 @@ import type { useNotification } from "@/composables";
 import type FormContainer from "@/components/FormContainer.vue";
 import { downloadFile, viewFile, isNewId } from "@/utils";
 import { EquipementStatus, EquipementMaintenanceType } from "@/enums";
-import { useConfigsStore, useEquipementsStore, useTagsStore, useStoresStore, useUsersStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useEquipementsStore, useEquipementsTagsStore, useEquipementsBoxsStore, useEquipementsDocumentsStore, useEquipementsMaintenancesStore, useEquipementsCommentsStore, useEquipementsStatusStore, useTagsStore, useStoresStore, useUsersStore, useAuthStore } from "@/stores";
 
 import type { FilterLabel } from "@/types/filter";
 import type { TableauLabel, TableauRowData } from "@/types/tableau";
@@ -22,6 +22,12 @@ const router = useRouter();
 
 const configsStore = useConfigsStore();
 const equipementsStore = useEquipementsStore();
+const equipementTagsStore = useEquipementsTagsStore();
+const equipementBoxsStore = useEquipementsBoxsStore();
+const equipementDocumentsStore = useEquipementsDocumentsStore();
+const equipementMaintenancesStore = useEquipementsMaintenancesStore();
+const equipementCommentsStore = useEquipementsCommentsStore();
+const equipementStatusStore = useEquipementsStatusStore();
 const tagsStore = useTagsStore();
 const storesStore = useStoresStore();
 const usersStore = useUsersStore();
@@ -177,14 +183,14 @@ const filterTag = ref<FilterLabel[]>([
 function tagSave(id_tag: number) {
 	try {
 		// re-adding a tag that is only pending deletion locally just cancels that pending deletion
-		if (equipementsStore.equipementTagReady[equipementId.value]?.[id_tag]?.status === "deleted") {
-			delete equipementsStore.equipementTagReady[equipementId.value][id_tag];
+		if (equipementTagsStore.equipementTagReadyByEquipement(equipementId.value)?.[id_tag]?.status === "deleted") {
+			delete equipementTagsStore.equipementTagReadyByEquipement(equipementId.value)[id_tag];
 			addNotification({ message: t("equipement.TagRestored"), type: "success" });
 			return;
 		}
-		equipementsStore.equipementTagEdition[equipementId.value][id_tag] = { id_tag };
-		equipementsStore.valideEquipementTagEditionById(equipementId.value, String(id_tag), "created");
-		delete equipementsStore.equipementTagEdition[equipementId.value][id_tag];
+		equipementTagsStore.equipementTagEditionByEquipement(equipementId.value)[id_tag] = { id_tag };
+		equipementTagsStore.valideEquipementTagEditionByKey({ id_equipement: equipementId.value, id_tag: String(id_tag) }, "created");
+		delete equipementTagsStore.equipementTagEditionByEquipement(equipementId.value)[id_tag];
 		addNotification({ message: t("equipement.TagAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -193,10 +199,10 @@ function tagSave(id_tag: number) {
 function tagDelete(id_tag: string) {
 	try {
 		// a tag that was only staged as a pending creation is simply dropped, nothing to push
-		if (equipementsStore.equipementTagReady[equipementId.value]?.[id_tag]?.status === "created") {
-			delete equipementsStore.equipementTagReady[equipementId.value][id_tag];
+		if (equipementTagsStore.equipementTagReadyByEquipement(equipementId.value)?.[id_tag]?.status === "created") {
+			delete equipementTagsStore.equipementTagReadyByEquipement(equipementId.value)[id_tag];
 		} else {
-			equipementsStore.valideEquipementTagEditionById(equipementId.value, id_tag, "deleted");
+			equipementTagsStore.valideEquipementTagEditionByKey({ id_equipement: equipementId.value, id_tag: id_tag }, "deleted");
 		}
 		addNotification({ message: t("equipement.TagDeleted"), type: "success" });
 	} catch (e) {
@@ -205,7 +211,7 @@ function tagDelete(id_tag: string) {
 }
 function tagRestore(id_tag: string) {
 	try {
-		delete equipementsStore.equipementTagReady[equipementId.value][id_tag];
+		delete equipementTagsStore.equipementTagReadyByEquipement(equipementId.value)[id_tag];
 		addNotification({ message: t("equipement.TagRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -215,7 +221,7 @@ function tagRestore(id_tag: string) {
 // box
 const boxDelete = (row: TableauRowData) => {
 	try {
-		equipementsStore.valideEquipementBoxEditionById(equipementId.value, row.id_box, "deleted");
+		equipementBoxsStore.valideEquipementBoxEditionByKey({ id_equipement: equipementId.value, id_box: row.id_box }, "deleted");
 		addNotification({ message: t("equipement.BoxUnlinked"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -223,7 +229,7 @@ const boxDelete = (row: TableauRowData) => {
 };
 const boxRestore = (row: TableauRowData) => {
 	try {
-		delete equipementsStore.equipementBoxReady[equipementId.value][row.id_box];
+		delete equipementBoxsStore.equipementBoxReadyByEquipement(equipementId.value)[row.id_box];
 		addNotification({ message: t("equipement.BoxRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -235,12 +241,12 @@ const documentAddModalShow = ref(false);
 const documentAdd = async(files: { name: string; document: File }[]) => {
 	for (const file of files) {
 		const documentModalData = { name_equipement_document: file.name, document: file.document, type_equipement_document: file.document.type, created_at: new Date() };
-		const newId = equipementsStore.getAvailableNewEquipementDocumentId(equipementId.value);
-		equipementsStore.equipementDocumentEdition[equipementId.value][newId] = documentModalData;
+		const newId = equipementDocumentsStore.getAvailableNewEquipementDocumentId({ id_equipement: equipementId.value });
+		equipementDocumentsStore.equipementDocumentEditionByEquipement(equipementId.value)[newId] = documentModalData;
 		try {
 			schemaAddDocument.validateSync(documentModalData, { abortEarly: false });
-			equipementsStore.valideEquipementDocumentEditionById(equipementId.value, newId, "created", true);
-			delete equipementsStore.equipementDocumentEdition[equipementId.value][newId];
+			equipementDocumentsStore.valideEquipementDocumentEditionByKey({ id_equipement: equipementId.value, id_equipement_document: newId }, "created", true);
+			delete equipementDocumentsStore.equipementDocumentEditionByEquipement(equipementId.value)[newId];
 			addNotification({ message: t("equipement.DocumentAdded"), type: "success" });
 		} catch (e) {
 			addNotification({ message: e, type: "error" });
@@ -251,9 +257,9 @@ const documentAdd = async(files: { name: string; document: File }[]) => {
 const documentEdit = (row: TableauRowData) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
-		equipementsStore.valideEquipementDocumentEditionById(equipementId.value, row.id_equipement_document,
-			equipementsStore.equipementDocumentReady[equipementId.value]?.[row.id_equipement_document]?.status === "created" ? "created" : "modified");
-		delete equipementsStore.equipementDocumentEdition[equipementId.value][row.id_equipement_document];
+		equipementDocumentsStore.valideEquipementDocumentEditionByKey({ id_equipement: equipementId.value, id_equipement_document: row.id_equipement_document },
+			equipementDocumentsStore.equipementDocumentReadyByEquipement(equipementId.value)?.[row.id_equipement_document]?.status === "created" ? "created" : "modified");
+		delete equipementDocumentsStore.equipementDocumentEditionByEquipement(equipementId.value)[row.id_equipement_document];
 		addNotification({ message: t("equipement.DocumentUpdated"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -262,7 +268,7 @@ const documentEdit = (row: TableauRowData) => {
 };
 const documentRestore = (row: TableauRowData) => {
 	try {
-		delete equipementsStore.equipementDocumentReady[equipementId.value][row.id_equipement_document];
+		delete equipementDocumentsStore.equipementDocumentReadyByEquipement(equipementId.value)[row.id_equipement_document];
 		addNotification({ message: t("equipement.DocumentRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -270,18 +276,18 @@ const documentRestore = (row: TableauRowData) => {
 };
 const documentDelete = (row: TableauRowData) => {
 	try {
-		equipementsStore.valideEquipementDocumentEditionById(equipementId.value, row.id_equipement_document, "deleted");
+		equipementDocumentsStore.valideEquipementDocumentEditionByKey({ id_equipement: equipementId.value, id_equipement_document: row.id_equipement_document }, "deleted");
 		addNotification({ message: t("equipement.DocumentDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
 };
 const documentDownload = async(fileContent: TableauRowData) => {
-	const file = await equipementsStore.downloadEquipementDocument(equipementId.value, fileContent.id_equipement_document);
+	const file = await equipementDocumentsStore.downloadEquipementDocument(equipementId.value, fileContent.id_equipement_document);
 	downloadFile(file, { keyName: fileContent.name_equipement_document, keyType: fileContent.type_equipement_document });
 };
 const documentView = async(fileContent: TableauRowData) => {
-	const file = await equipementsStore.downloadEquipementDocument(equipementId.value, fileContent.id_equipement_document);
+	const file = await equipementDocumentsStore.downloadEquipementDocument(equipementId.value, fileContent.id_equipement_document);
 	if (viewFile(file, { keyName: fileContent.name_equipement_document, keyType: fileContent.type_equipement_document })) {
 		addNotification({ message: t("equipement.DocumentOpenInNewTab"), type: "success" });
 	} else {
@@ -303,14 +309,14 @@ const schemaMaintenance = Yup.object().shape({
 const maintenanceAdd = () => {
 	try {
 		schemaMaintenance.validateSync(maintenanceForm.value, { abortEarly: false });
-		const newId = equipementsStore.getAvailableNewEquipementMaintenanceId(equipementId.value);
-		equipementsStore.equipementMaintenanceEdition[equipementId.value][newId] = {
+		const newId = equipementMaintenancesStore.getAvailableNewEquipementMaintenanceId({ id_equipement: equipementId.value });
+		equipementMaintenancesStore.equipementMaintenanceEditionByEquipement(equipementId.value)[newId] = {
 			type_equipement_maintenance: Number(maintenanceForm.value.type_equipement_maintenance) as (typeof EquipementMaintenanceType)[keyof typeof EquipementMaintenanceType],
 			date_planned_equipement_maintenance: new Date(maintenanceForm.value.date_planned_equipement_maintenance).toISOString(),
 			description_equipement_maintenance: maintenanceForm.value.description_equipement_maintenance || null,
 		};
-		equipementsStore.valideEquipementMaintenanceEditionById(equipementId.value, newId, "created");
-		delete equipementsStore.equipementMaintenanceEdition[equipementId.value][newId];
+		equipementMaintenancesStore.valideEquipementMaintenanceEditionByKey({ id_equipement: equipementId.value, id_equipement_maintenance: newId }, "created");
+		delete equipementMaintenancesStore.equipementMaintenanceEditionByEquipement(equipementId.value)[newId];
 		addNotification({ message: t("equipement.MaintenanceAdded"), type: "success" });
 		maintenanceForm.value = { type_equipement_maintenance: EquipementMaintenanceType.Preventive, date_planned_equipement_maintenance: "", description_equipement_maintenance: "" };
 	} catch (e) {
@@ -319,9 +325,9 @@ const maintenanceAdd = () => {
 };
 const maintenanceMarkDone = (row: TableauRowData) => {
 	try {
-		equipementsStore.equipementMaintenanceEdition[equipementId.value][row.id_equipement_maintenance] = { ...row, date_done_equipement_maintenance: new Date().toISOString() };
-		equipementsStore.valideEquipementMaintenanceEditionById(equipementId.value, row.id_equipement_maintenance, "modified");
-		delete equipementsStore.equipementMaintenanceEdition[equipementId.value][row.id_equipement_maintenance];
+		equipementMaintenancesStore.equipementMaintenanceEditionByEquipement(equipementId.value)[row.id_equipement_maintenance] = { ...row, date_done_equipement_maintenance: new Date().toISOString() };
+		equipementMaintenancesStore.valideEquipementMaintenanceEditionByKey({ id_equipement: equipementId.value, id_equipement_maintenance: row.id_equipement_maintenance }, "modified");
+		delete equipementMaintenancesStore.equipementMaintenanceEditionByEquipement(equipementId.value)[row.id_equipement_maintenance];
 		addNotification({ message: t("equipement.MaintenanceDone"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -329,7 +335,7 @@ const maintenanceMarkDone = (row: TableauRowData) => {
 };
 const maintenanceRestore = (row: TableauRowData) => {
 	try {
-		delete equipementsStore.equipementMaintenanceReady[equipementId.value][row.id_equipement_maintenance];
+		delete equipementMaintenancesStore.equipementMaintenanceReadyByEquipement(equipementId.value)[row.id_equipement_maintenance];
 		addNotification({ message: t("equipement.MaintenanceRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -337,7 +343,7 @@ const maintenanceRestore = (row: TableauRowData) => {
 };
 const maintenanceDelete = (row: TableauRowData) => {
 	try {
-		equipementsStore.valideEquipementMaintenanceEditionById(equipementId.value, row.id_equipement_maintenance, "deleted");
+		equipementMaintenancesStore.valideEquipementMaintenanceEditionByKey({ id_equipement: equipementId.value, id_equipement_maintenance: row.id_equipement_maintenance }, "deleted");
 		addNotification({ message: t("equipement.MaintenanceDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -429,7 +435,7 @@ const labelTableauDocument = ref<TableauLabel[]>([
 			icon: "fa-solid fa-edit",
 			showCondition: "!edition?.id_equipement_document && ready?.status !== 'deleted'",
 			action: (row: TableauRowData) => {
-				equipementsStore.equipementDocumentEdition[equipementId.value][row.id_equipement_document] = { ...row };
+				equipementDocumentsStore.equipementDocumentEditionByEquipement(equipementId.value)[row.id_equipement_document] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -438,7 +444,7 @@ const labelTableauDocument = ref<TableauLabel[]>([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_equipement_document",
 			action: (row: TableauRowData) => {
-				delete equipementsStore.equipementDocumentEdition[equipementId.value][row.id_equipement_document];
+				delete equipementDocumentsStore.equipementDocumentEditionByEquipement(equipementId.value)[row.id_equipement_document];
 			},
 			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
 		},
@@ -446,7 +452,7 @@ const labelTableauDocument = ref<TableauLabel[]>([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_equipement_document",
-			action: (row: TableauRowData) => documentEdit(equipementsStore.equipementDocumentEdition[equipementId.value][row.id_equipement_document]),
+			action: (row: TableauRowData) => documentEdit(equipementDocumentsStore.equipementDocumentEditionByEquipement(equipementId.value)[row.id_equipement_document]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -515,7 +521,12 @@ const labelTableauStatusHistory = ref<TableauLabel[]>([
 	{ label: "equipement.HistoryStatus", sortable: true, key: "status_equipement", valueKey: "status_equipement", type: "enum", options: equipementStatusOptions },
 ]);
 useViewScroll(true);
-useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "equipements");
+useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "equipements", [
+	{ key: "equipementTagReady", get: (id) => equipementTagsStore.equipementTagReadyByEquipement(id), set: (id, entries) => equipementTagsStore.setEquipementTagStagedSlice("ready", { id_equipement: id }, entries) },
+	{ key: "equipementBoxReady", get: (id) => equipementBoxsStore.equipementBoxReadyByEquipement(id), set: (id, entries) => equipementBoxsStore.setEquipementBoxStagedSlice("ready", { id_equipement: id }, entries) },
+	{ key: "equipementDocumentReady", get: (id) => equipementDocumentsStore.equipementDocumentReadyByEquipement(id), set: (id, entries) => equipementDocumentsStore.setEquipementDocumentStagedSlice("ready", { id_equipement: id }, entries) },
+	{ key: "equipementMaintenanceReady", get: (id) => equipementMaintenancesStore.equipementMaintenanceReadyByEquipement(id), set: (id, entries) => equipementMaintenancesStore.setEquipementMaintenanceStagedSlice("ready", { id_equipement: id }, entries) },
+]);
 </script>
 
 <template>
@@ -558,7 +569,7 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 					</div>
 				</template>
 			</FormContainer>
-			<Tags :current-tags="equipementsStore.equipementTags[equipementId] || {}" :ready-store="equipementsStore.equipementTagReady[equipementId] || {}" :tags-store="tagsStore.tags" :can-edit="authStore.hasPermission([1, 2])"
+			<Tags :current-tags="equipementTagsStore.equipementTagsByEquipement(equipementId)" :ready-store="equipementTagsStore.equipementTagReadyByEquipement(equipementId)" :tags-store="tagsStore.tags" :can-edit="authStore.hasPermission([1, 2])"
 				:delete-function="(value: string) => tagDelete(value)"
 				:restore-function="(value: string) => tagRestore(value)"
 				:filter-modal="filterTag"
@@ -569,39 +580,39 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 				/>
 		</div>
 		<CollapsibleSection title="equipement.Boxs"
-			:total-count="Number(equipementsStore.equipementBoxsTotalCount[equipementId] || 0)">
+			:total-count="equipementBoxsStore.equipementBoxsCountByEquipement(equipementId)">
 			<template #append-row>
 				<p class="text-sm text-gray-600 mb-2">{{ $t('equipement.BoxHint') }}</p>
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box' }"
-					:store-data="[equipementsStore.equipementBoxs[equipementId], storesStore.stores]"
-					:store-ready="equipementsStore.equipementBoxReady[equipementId]"
-					:loading="equipementsStore.equipementBoxsLoading"
-					:total-count="Number(equipementsStore.equipementBoxsTotalCount[equipementId])"
+					:store-data="[equipementBoxsStore.equipementBoxsByEquipement(equipementId), storesStore.stores]"
+					:store-ready="equipementBoxsStore.equipementBoxReadyByEquipement(equipementId)"
+					:loading="equipementBoxsStore.equipementBoxsLoading"
+					:total-count="equipementBoxsStore.equipementBoxsCountByEquipement(equipementId)"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="equipement.Documents"
-			:total-count="Number(equipementsStore.equipementDocumentsTotalCount[equipementId] || 0)">
+			:total-count="equipementDocumentsStore.equipementDocumentsCountByEquipement(equipementId)">
 			<template #append-row>
 				<button type="button" @click="documentAddModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('equipement.AddDocument') }}
 				</button>
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_equipement_document' }"
-					:store-data="[equipementsStore.equipementDocuments[equipementId]]"
-					:store-edition="equipementsStore.equipementDocumentEdition[equipementId]"
-					:store-ready="equipementsStore.equipementDocumentReady[equipementId]"
+					:store-data="[equipementDocumentsStore.equipementDocumentsByEquipement(equipementId)]"
+					:store-edition="equipementDocumentsStore.equipementDocumentEditionByEquipement(equipementId)"
+					:store-ready="equipementDocumentsStore.equipementDocumentReadyByEquipement(equipementId)"
 					:schema="schemaEditDocument"
-					:loading="equipementsStore.equipementDocumentsLoading"
-					:total-count="Number(equipementsStore.equipementDocumentsTotalCount[equipementId])"
-					:fetch-function="!isNewId(equipementId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementDocumentByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
+					:loading="equipementDocumentsStore.equipementDocumentsLoading"
+					:total-count="equipementDocumentsStore.equipementDocumentsCountByEquipement(equipementId)"
+					:fetch-function="!isNewId(equipementId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementDocumentsStore.getEquipementDocumentByInterval({ id_equipement: equipementId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="equipement.Maintenances"
-			:total-count="Number(equipementsStore.equipementMaintenancesTotalCount[equipementId] || 0)">
+			:total-count="equipementMaintenancesStore.equipementMaintenancesCountByEquipement(equipementId)">
 			<template #append-row>
 				<div class="flex flex-wrap items-end gap-2 mb-4">
 					<div class="flex flex-col">
@@ -623,42 +634,42 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 					</button>
 				</div>
 				<Tableau :labels="labelTableauMaintenance" :meta="{ key: 'id_equipement_maintenance' }"
-					:store-data="[equipementsStore.equipementMaintenances[equipementId]]"
-					:store-ready="equipementsStore.equipementMaintenanceReady[equipementId]"
-					:loading="equipementsStore.equipementMaintenancesLoading"
-					:total-count="Number(equipementsStore.equipementMaintenancesTotalCount[equipementId])"
-					:fetch-function="!isNewId(equipementId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementMaintenanceByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
+					:store-data="[equipementMaintenancesStore.equipementMaintenancesByEquipement(equipementId)]"
+					:store-ready="equipementMaintenancesStore.equipementMaintenanceReadyByEquipement(equipementId)"
+					:loading="equipementMaintenancesStore.equipementMaintenancesLoading"
+					:total-count="equipementMaintenancesStore.equipementMaintenancesCountByEquipement(equipementId)"
+					:fetch-function="!isNewId(equipementId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementMaintenancesStore.getEquipementMaintenanceByInterval({ id_equipement: equipementId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="equipement.Comments"
-			:total-count="Number(equipementsStore.equipementCommentsTotalCount[equipementId] || 0)" :permission="!isNewId(equipementId)">
+			:total-count="equipementCommentsStore.equipementCommentsCountByEquipement(equipementId)" :permission="!isNewId(equipementId)">
 			<template #append-row>
 				<Comment :meta="{ key: 'id_equipement_comment', contenu: 'content_equipement_comment', canEdit: true, roleRequired: authStore.hasPermission([2]), expand: ['user'] }"
-					:store-data="[equipementsStore.equipementComments[equipementId], usersStore.users]"
+					:store-data="[equipementCommentsStore.equipementCommentsByEquipement(equipementId), usersStore.users]"
 					:store-user="authStore.user" :store-config="configsStore"
-					:store-edition="equipementsStore.equipementCommentEdition[equipementId]"
+					:store-edition="equipementCommentsStore.equipementCommentEditionByEquipement(equipementId)"
 					:store-function="{
-						create: (data: Record<string, string>) => equipementsStore.createEquipementComment(equipementId, { content_equipement_comment: data.content_equipement_comment }),
-						update: (id: string, data: Record<string, string>) => equipementsStore.updateEquipementComment(equipementId, id, { content_equipement_comment: data.content_equipement_comment }),
-						delete: (id: string) => equipementsStore.deleteEquipementComment(equipementId, id),
+						create: (data: Record<string, string>) => equipementCommentsStore.createEquipementComment({ id_equipement: equipementId }, { content_equipement_comment: data.content_equipement_comment }),
+						update: (id: string, data: Record<string, string>) => equipementCommentsStore.updateEquipementComment({ id_equipement: equipementId, id_equipement_comment: id }, { content_equipement_comment: data.content_equipement_comment }),
+						delete: (id: string) => equipementCommentsStore.deleteEquipementComment({ id_equipement: equipementId, id_equipement_comment: id }),
 					}"
-					:loading="equipementsStore.equipementCommentsLoading"
-					:total-count="Number(equipementsStore.equipementCommentsTotalCount[equipementId]) || 0"
-					:fetch-function="!isNewId(equipementId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementCommentByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
+					:loading="equipementCommentsStore.equipementCommentsLoading"
+					:total-count="equipementCommentsStore.equipementCommentsCountByEquipement(equipementId)"
+					:fetch-function="!isNewId(equipementId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementCommentsStore.getEquipementCommentByInterval({ id_equipement: equipementId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:texte-modal-delete="{ textTitle: 'equipement.CommentDeleteTitle', textP: 'equipement.CommentDeleteText' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="equipement.StatusHistory"
-			:total-count="Number(equipementsStore.equipementStatusHistoryTotalCount[equipementId] || 0)">
+			:total-count="equipementStatusStore.equipementStatusCountByEquipement(equipementId)">
 			<template #append-row>
 				<Tableau :labels="labelTableauStatusHistory" :meta="{ key: 'id_equipement_status' }"
-					:store-data="[equipementsStore.equipementStatusHistory[equipementId]]"
-					:loading="equipementsStore.equipementStatusHistoryLoading"
-					:total-count="Number(equipementsStore.equipementStatusHistoryTotalCount[equipementId])"
-					:fetch-function="!isNewId(equipementId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementStatusHistoryByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
+					:store-data="[equipementStatusStore.equipementStatusByEquipement(equipementId)]"
+					:loading="equipementStatusStore.equipementStatusLoading"
+					:total-count="equipementStatusStore.equipementStatusCountByEquipement(equipementId)"
+					:fetch-function="!isNewId(equipementId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementStatusStore.getEquipementStatusByInterval({ id_equipement: equipementId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>

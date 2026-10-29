@@ -10,7 +10,7 @@ import type FormContainer from "@/components/FormContainer.vue";
 import type Store from "@/components/Store.vue";
 import { isNewId } from "@/utils";
 import { StorePositionMode } from "@/enums";
-import { useConfigsStore, useStoresStore, useTagsStore, useItemsStore, useZonesStore, useEquipementsStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useStoresStore, useStoresTagsStore, useStoresBoxsStore, useStoresLedsStore, useItemsBoxsStore, useEquipementsBoxsStore, useTagsStore, useItemsStore, useZonesStore, useEquipementsStore, useAuthStore } from "@/stores";
 
 import type { FilterLabel } from "@/types/filter";
 import type { FormLabel } from "@/types/form";
@@ -34,6 +34,11 @@ const router = useRouter();
 
 const configsStore = useConfigsStore();
 const storesStore = useStoresStore();
+const storesTagsStore = useStoresTagsStore();
+const storesBoxsStore = useStoresBoxsStore();
+const storesLedsStore = useStoresLedsStore();
+const itemBoxsStore = useItemsBoxsStore();
+const equipementBoxsStore = useEquipementsBoxsStore();
 const tagsStore = useTagsStore();
 const itemsStore = useItemsStore();
 const zonesStore = useZonesStore();
@@ -78,7 +83,7 @@ async function fetchAllData() {
 			router.push("/stores");
 			return;
 		}
-		storesStore.getTagStoreByInterval(storeId.value, 100, 0, ["tag"]);
+		storesTagsStore.getStoreTagByInterval({ id_store: storeId.value }, 100, 0, ["tag"]);
 		storesStore.loadToEdition(storeId.value);
 	}
 }
@@ -130,11 +135,11 @@ const storeSave = async() => {
 		if (isNewId(storeId.value)) {
 			const newId = await storesStore.createStoreComplete({
 				store: buildStorePayload() as CreateStoreDto,
-				leds: Object.values(storesStore.ledEdition[storeId.value]) as CreateLedByStoreDto[],
-				boxs: Object.values(storesStore.boxEdition[storeId.value]) as CreateBoxByStoreDto[],
+				leds: Object.values(storesLedsStore.ledEditionByStore(storeId.value)) as CreateLedByStoreDto[],
+				boxs: Object.values(storesBoxsStore.boxEditionByStore(storeId.value)) as CreateBoxByStoreDto[],
 			});
-			storesStore.copyTagStoreAllId(storeId.value, newId);
-			await storesStore.pushTagStoreChange(newId);
+			storesTagsStore.copyStoreTagByKeyPart("id_store", storeId.value, newId);
+			await storesTagsStore.pushStoreTagChange({ id_store: newId });
 			storesStore.loadToEdition(newId);
 			addNotification({ message: t("store.Created"), type: "success" });
 			const tempId = storeId.value;
@@ -143,21 +148,17 @@ const storeSave = async() => {
 			router.push("/stores/" + storeId.value);
 			// reload the store data
 			await storesStore.getStoreById(storeId.value, ["boxs", "leds"]);
-			storesStore.ledEdition[storeId.value] = { ...storesStore.leds[storeId.value] };
-			storesStore.boxEdition[storeId.value] = { ...storesStore.boxs[storeId.value] };
 			storesStore.loadToEdition(storeId.value);
 		} else {
 			await storesStore.updateStoreComplete(storeId.value, {
 				store: buildStorePayload() as UpdateStoreDto,
-				leds: Object.values(storesStore.ledEdition[storeId.value]) as UpdateBulkLedByStoreDto[],
-				boxs: Object.values(storesStore.boxEdition[storeId.value]) as UpdateBulkBoxByStoreDto[],
+				leds: Object.values(storesLedsStore.ledEditionByStore(storeId.value)) as UpdateBulkLedByStoreDto[],
+				boxs: Object.values(storesBoxsStore.boxEditionByStore(storeId.value)) as UpdateBulkBoxByStoreDto[],
 			});
-			await storesStore.pushTagStoreChange(storeId.value);
+			await storesTagsStore.pushStoreTagChange({ id_store: storeId.value });
 			addNotification({ message: t("store.Updated"), type: "success" });
 			await storesStore.getStoreById(storeId.value, ["boxs", "leds"]);
 			storesStore.loadToEdition(storeId.value);
-			storesStore.ledEdition[storeId.value] = { ...storesStore.leds[storeId.value] };
-			storesStore.boxEdition[storeId.value] = { ...storesStore.boxs[storeId.value] };
 		}
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -228,14 +229,13 @@ const storeEquipementAddModalShow = ref(false);
 const boxId = ref("");
 const showBoxContent = async(idBox: string) => {
 	boxId.value = idBox;
-	storesStore.boxItemEdition[boxId.value] = storesStore.boxItemEdition[boxId.value] || {};
 	try {
 		let offset = 0;
 		const limit = 100;
 		do {
-			await storesStore.getBoxItemByInterval(storeId.value, idBox, limit, offset, ["item"]);
+			await itemBoxsStore.getItemBoxByInterval({ id_store: storeId.value, id_box: idBox }, limit, offset, ["item"]);
 			offset += limit;
-		} while (offset < storesStore.boxItemsTotalCount[idBox]);
+		} while (offset < itemBoxsStore.itemBoxsCountByBox(idBox));
 		for (const item of Object.values(itemsStore.items)) {
 			if (item.url_thumbnail_item) {
 				await itemsStore.showThumbnailById(String(item.id_item));
@@ -243,9 +243,9 @@ const showBoxContent = async(idBox: string) => {
 		}
 		offset = 0;
 		do {
-			await storesStore.getBoxEquipementByInterval(storeId.value, idBox, limit, offset, ["equipement"]);
+			await equipementBoxsStore.getEquipementBoxByInterval({ id_store: storeId.value, id_box: idBox }, limit, offset, ["equipement"]);
 			offset += limit;
-		} while (offset < storesStore.boxEquipementsTotalCount[idBox]);
+		} while (offset < equipementBoxsStore.equipementBoxsCountByBox(idBox));
 		for (const equipement of Object.values(equipementsStore.equipements)) {
 			if (equipement.url_thumbnail_equipement) {
 				await equipementsStore.showThumbnailById(String(equipement.id_equipement));
@@ -258,7 +258,7 @@ const showBoxContent = async(idBox: string) => {
 };
 const equipementSave = async(equipement: TableauRowData) => {
 	try {
-		await storesStore.createBoxEquipement(storeId.value, boxId.value, { id_equipement: equipement.id_equipement });
+		await equipementBoxsStore.createEquipementBox({ id_store: storeId.value, id_box: boxId.value }, { id_equipement: equipement.id_equipement });
 		addNotification({ message: t("store.EquipementAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -266,7 +266,7 @@ const equipementSave = async(equipement: TableauRowData) => {
 };
 const equipementDelete = async(equipement: TableauRowData) => {
 	try {
-		await storesStore.deleteBoxEquipement(storeId.value, boxId.value, equipement.id_equipement);
+		await equipementBoxsStore.deleteEquipementBox({ id_equipement: equipement.id_equipement, id_box: boxId.value });
 		addNotification({ message: t("store.EquipementDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -276,22 +276,22 @@ const filterEquipement = ref<FilterLabel[]>([
 	{ key: "reference_name_equipement", value: "", type: "text", label: "", placeholder: t("store.EquipementFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 const itemSave = async(item: TableauRowData) => {
-	if (storesStore.boxItems[boxId.value][item.id_item]) {
+	if (itemBoxsStore.itemBoxsByBox(boxId.value)[item.id_item]) {
 		try {
-			schemaItem.validateSync(storesStore.boxItemEdition[boxId.value][item.id_item], { abortEarly: false });
-			await storesStore.updateBoxItem(storeId.value, boxId.value, item.id_item, storesStore.boxItemEdition[boxId.value][item.id_item]);
+			schemaItem.validateSync(itemBoxsStore.itemBoxEditionByBox(boxId.value)[item.id_item], { abortEarly: false });
+			await itemBoxsStore.updateItemBox({ id_item: item.id_item, id_box: boxId.value }, itemBoxsStore.itemBoxEditionByBox(boxId.value)[item.id_item]);
 			addNotification({ message: t("store.ItemUpdated"), type: "success" });
-			delete storesStore.boxItemEdition[boxId.value][item.id_item];
+			delete itemBoxsStore.itemBoxEditionByBox(boxId.value)[item.id_item];
 		} catch (e) {
 			addNotification({ message: e, type: "error" });
 			return;
 		}
 	} else {
 		try {
-			schemaItem.validateSync(storesStore.boxItemEdition[boxId.value][item.id_item], { abortEarly: false });
-			await storesStore.createBoxItem(storeId.value, boxId.value, storesStore.boxItemEdition[boxId.value][item.id_item] as CreateItemBoxByBoxDto);
+			schemaItem.validateSync(itemBoxsStore.itemBoxEditionByBox(boxId.value)[item.id_item], { abortEarly: false });
+			await itemBoxsStore.createItemBox({ id_store: storeId.value, id_box: boxId.value }, itemBoxsStore.itemBoxEditionByBox(boxId.value)[item.id_item] as CreateItemBoxByBoxDto);
 			addNotification({ message: t("store.ItemAdded"), type: "success" });
-			delete storesStore.boxItemEdition[boxId.value][item.id_item];
+			delete itemBoxsStore.itemBoxEditionByBox(boxId.value)[item.id_item];
 		} catch (e) {
 			addNotification({ message: e, type: "error" });
 			return;
@@ -300,7 +300,7 @@ const itemSave = async(item: TableauRowData) => {
 };
 const itemDelete = async(item: TableauRowData) => {
 	try {
-		await storesStore.deleteBoxItem(storeId.value, boxId.value, item.id_item);
+		await itemBoxsStore.deleteItemBox({ id_item: item.id_item, id_box: boxId.value });
 		addNotification({ message: t("store.ItemDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -318,14 +318,14 @@ const filterTag = ref<FilterLabel[]>([
 function tagSave(id_tag: number) {
 	try {
 		// re-adding a tag that is only pending deletion locally just cancels that pending deletion
-		if (storesStore.storeTagReady[storeId.value]?.[id_tag]?.status === "deleted") {
-			delete storesStore.storeTagReady[storeId.value][id_tag];
+		if (storesTagsStore.storeTagReadyByStore(storeId.value)?.[id_tag]?.status === "deleted") {
+			delete storesTagsStore.storeTagReadyByStore(storeId.value)[id_tag];
 			addNotification({ message: t("store.TagRestored"), type: "success" });
 			return;
 		}
-		storesStore.storeTagEdition[storeId.value][id_tag] = { id_tag };
-		storesStore.valideTagStoreEditionById(storeId.value, String(id_tag), "created");
-		delete storesStore.storeTagEdition[storeId.value][id_tag];
+		storesTagsStore.storeTagEditionByStore(storeId.value)[id_tag] = { id_tag };
+		storesTagsStore.valideStoreTagEditionByKey({ id_store: storeId.value, id_tag: String(id_tag) }, "created");
+		delete storesTagsStore.storeTagEditionByStore(storeId.value)[id_tag];
 		addNotification({ message: t("store.TagAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -334,10 +334,10 @@ function tagSave(id_tag: number) {
 function tagDelete(id_tag: string) {
 	try {
 		// a tag that was only staged as a pending creation is simply dropped, nothing to push
-		if (storesStore.storeTagReady[storeId.value]?.[id_tag]?.status === "created") {
-			delete storesStore.storeTagReady[storeId.value][id_tag];
+		if (storesTagsStore.storeTagReadyByStore(storeId.value)?.[id_tag]?.status === "created") {
+			delete storesTagsStore.storeTagReadyByStore(storeId.value)[id_tag];
 		} else {
-			storesStore.valideTagStoreEditionById(storeId.value, id_tag, "deleted");
+			storesTagsStore.valideStoreTagEditionByKey({ id_store: storeId.value, id_tag: id_tag }, "deleted");
 		}
 		addNotification({ message: t("store.TagDeleted"), type: "success" });
 	} catch (e) {
@@ -346,7 +346,7 @@ function tagDelete(id_tag: string) {
 }
 function tagRestore(id_tag: string) {
 	try {
-		delete storesStore.storeTagReady[storeId.value][id_tag];
+		delete storesTagsStore.storeTagReadyByStore(storeId.value)[id_tag];
 		addNotification({ message: t("store.TagRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -381,7 +381,7 @@ const labelTableauModalItem = ref<TableauLabel[]>([
 			icon: "fa-solid fa-plus",
 			showCondition: "store[1]?.[rowData.id_item] === undefined && !edition?.id_item",
 			action: (row: TableauRowData) => {
-				storesStore.boxItemEdition[boxId.value][row.id_item] = { quantity_item_box: 0, threshold_max_item_item_box: 1, id_item: row.id_item };
+				itemBoxsStore.itemBoxEditionByBox(boxId.value)[row.id_item] = { quantity_item_box: 0, threshold_max_item_item_box: 1, id_item: row.id_item };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -390,7 +390,7 @@ const labelTableauModalItem = ref<TableauLabel[]>([
 			icon: "fa-solid fa-edit",
 			showCondition: "store[1]?.[rowData.id_item] && !edition?.id_item",
 			action: (row: TableauRowData) => {
-				storesStore.boxItemEdition[boxId.value][row.id_item] = { ...storesStore.boxItems[boxId.value][row.id_item] };
+				itemBoxsStore.itemBoxEditionByBox(boxId.value)[row.id_item] = { ...itemBoxsStore.itemBoxsByBox(boxId.value)[row.id_item] };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -407,7 +407,7 @@ const labelTableauModalItem = ref<TableauLabel[]>([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_item",
 			action: (row: TableauRowData) => {
-				delete storesStore.boxItemEdition[boxId.value][row.id_item];
+				delete itemBoxsStore.itemBoxEditionByBox(boxId.value)[row.id_item];
 			},
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
 		},
@@ -509,7 +509,9 @@ const labelTableauModalTag = ref<TableauLabel[]>([
 	] },
 ]);
 useViewScroll(true);
-useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores");
+useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores", [
+	{ key: "storeTagReady", get: (id) => storesTagsStore.storeTagReadyByStore(id), set: (id, entries) => storesTagsStore.setStoreTagStagedSlice("ready", { id_store: id }, entries) },
+]);
 </script>
 <template>
 	<div class="flex items-center justify-between mb-4">
@@ -526,7 +528,7 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores");
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-edition="storesStore.storeEdition[storeId] || {}" :store-data="storesStore.stores[storeId]" :store-user="authStore.user"
 				:store-function="{ hasPermission: (validPerm: number[]) => authStore.hasPermission(validPerm) }"/>
-			<Tags :current-tags="storesStore.storeTags[storeId] || {}" :ready-store="storesStore.storeTagReady[storeId] || {}" :tags-store="tagsStore.tags" :can-edit="authStore.hasPermission([1, 2])"
+			<Tags :current-tags="storesTagsStore.storeTagsByStore(storeId)" :ready-store="storesTagsStore.storeTagReadyByStore(storeId)" :tags-store="tagsStore.tags" :can-edit="authStore.hasPermission([1, 2])"
 				:delete-function="(value: string) => tagDelete(value)"
 				:restore-function="(value: string) => tagRestore(value)"
 				:filter-modal="filterTag"
@@ -540,8 +542,8 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores");
 			<div class="flex-1">
 				<Store ref="storeGrid"
 					:store-data="storesStore.storeEdition[storeId] || {}"
-					:led-edition="storesStore.ledEdition[storeId] || {}"
-					:box-edition="storesStore.boxEdition[storeId] || {}"
+					:led-edition="storesLedsStore.ledEditionByStore(storeId)"
+					:box-edition="storesBoxsStore.boxEditionByStore(storeId)"
 					:can-edit="authStore.hasPermission([2])"
 					:store-func="{ showLedById: (id: string, data: ShowParams) => storesStore.showLedById(storeId, id, data), showBoxById: (id: string, data: ShowParams) => storesStore.showBoxById(storeId, id, data) }"
 					@open-box-content="(id: string) => showBoxContent(id)"
@@ -555,10 +557,10 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores");
 				</div>
 				<div v-if="boxId != ''">
 					<Tableau :labels="labelTableauBoxItem" :meta="metaTableauBoxItem"
-						:store-data="[storesStore.boxItems[boxId],itemsStore.items,itemsStore.thumbnailsURL]"
-						:loading="storesStore.boxItemsLoading"
-						:total-count="Number(storesStore.boxItemsTotalCount[boxId] || 0)"
-						:fetch-function="!isNewId(storeId) && boxId != null ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => storesStore.getBoxItemByInterval(storeId, boxId, limit, offset, expand, filter, sort, clear) : undefined"
+						:store-data="[itemBoxsStore.itemBoxsByBox(boxId),itemsStore.items,itemsStore.thumbnailsURL]"
+						:loading="itemBoxsStore.itemBoxsLoading"
+						:total-count="itemBoxsStore.itemBoxsCountByBox(boxId)"
+						:fetch-function="!isNewId(storeId) && boxId != null ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemBoxsStore.getItemBoxByInterval({ id_store: storeId, id_box: boxId }, limit, offset, expand, filter, sort, clear) : undefined"
 						:tableau-css="{ component: 'max-h-80', tr: 'transition duration-150 ease-in-out cursor-pointer hover:bg-gray-300 even:bg-gray-100' }"
 					>
 						<template #append-row>
@@ -571,10 +573,10 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores");
 						</template>
 					</Tableau>
 					<Tableau :labels="labelTableauBoxEquipement" :meta="metaTableauBoxEquipement"
-						:store-data="[storesStore.boxEquipements[boxId],equipementsStore.equipements, equipementsStore.thumbnailsURL]"
-						:loading="storesStore.boxEquipementsLoading"
-						:total-count="Number(storesStore.boxEquipementsTotalCount[boxId] || 0)"
-						:fetch-function="!isNewId(storeId) && boxId != null ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => storesStore.getBoxEquipementByInterval(storeId, boxId, limit, offset, expand, filter, sort, clear) : undefined"
+						:store-data="[equipementBoxsStore.equipementBoxsByBox(boxId),equipementsStore.equipements, equipementsStore.thumbnailsURL]"
+						:loading="equipementBoxsStore.equipementBoxsLoading"
+						:total-count="equipementBoxsStore.equipementBoxsCountByBox(boxId)"
+						:fetch-function="!isNewId(storeId) && boxId != null ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementBoxsStore.getEquipementBoxByInterval({ id_store: storeId, id_box: boxId }, limit, offset, expand, filter, sort, clear) : undefined"
 						:tableau-css="{ component: 'max-h-80', tr: 'transition duration-150 ease-in-out cursor-pointer hover:bg-gray-300 even:bg-gray-100' }"
 					>
 						<template #append-row>
@@ -610,8 +612,8 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores");
 			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" />
 
 			<Tableau id="storeItemTable" :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
-				:store-data="[itemsStore.items, storesStore.boxItems[boxId], itemsStore.thumbnailsURL]"
-				:store-edition="storesStore.boxItemEdition[boxId]"
+				:store-data="[itemsStore.items, itemBoxsStore.itemBoxsByBox(boxId), itemsStore.thumbnailsURL]"
+				:store-edition="itemBoxsStore.itemBoxEditionByBox(boxId)"
 				:filters="filterItem"
 				:loading="itemsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
@@ -633,7 +635,7 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores");
 			<FilterContainer class="my-4 flex gap-4" :filters="filterEquipement" :store-data="equipementsStore.equipements" />
 
 			<Tableau :labels="labelTableauModalEquipement" :meta="{ key: 'id_equipement' }"
-				:store-data="[equipementsStore.equipements, storesStore.boxEquipements[boxId], equipementsStore.thumbnailsURL]"
+				:store-data="[equipementsStore.equipements, equipementBoxsStore.equipementBoxsByBox(boxId), equipementsStore.thumbnailsURL]"
 				:filters="filterEquipement"
 				:loading="equipementsStore.equipementsLoading"
 				:total-count="Number(equipementsStore.equipementsTotalCount || 0)"

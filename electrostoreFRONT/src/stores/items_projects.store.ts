@@ -2,20 +2,27 @@ import { defineStore } from "pinia";
 
 import { createResource } from "@/helpers";
 
-import { useProjectsStore } from "@/stores";
+import { useProjectsStore, useItemsStore } from "@/stores";
 
-import type { Ready, Edition } from "@/types/resource";
+import type { Edition, Ready } from "@/types/resource";
 import type { components } from "@/types/api";
 
 type ReadProjectItemDto = components["schemas"]["ReadProjectItemDto"];
 type ReadExtendedProjectItemDto = components["schemas"]["ReadExtendedProjectItemDto"];
 type CreateProjectItemByItemDto = components["schemas"]["CreateProjectItemByItemDto"];
+type CreateProjectItemByProjectDto = components["schemas"]["CreateProjectItemByProjectDto"];
 type UpdateProjectItemDto = components["schemas"]["UpdateProjectItemDto"];
+type CreateItemProject = CreateProjectItemByItemDto | CreateProjectItemByProjectDto;
 
-const itemProjectResource = createResource<{ readExtended: ReadExtendedProjectItemDto, readBasic: ReadProjectItemDto, create: CreateProjectItemByItemDto, update: UpdateProjectItemDto, createBulk: CreateProjectItemByItemDto[] }>({
+const itemProjectResource = createResource<{ readExtended: ReadExtendedProjectItemDto, readBasic: ReadProjectItemDto, create: CreateItemProject, update: UpdateProjectItemDto, createBulk: CreateItemProject[] }>({
 	compositeKey: ["id_item", "id_project"],
-	path: [{ keys: ["id_item"], url: ({ id_item }) => `/item/${id_item}/project` }],
-	entityPath: [{ keys: ["id_item", "id_project"], url: ({ id_item, id_project }) => `/item/${id_item}/project/${id_project}` }],
+	path: [
+		{ keys: ["id_item"], url: ({ id_item }) => `/item/${id_item}/project` },
+		{ keys: ["id_project"], url: ({ id_project }) => `/project/${id_project}/item` },
+	],
+	entityPath: [
+		{ keys: ["id_item", "id_project"], url: ({ id_item, id_project }) => `/item/${id_item}/project/${id_project}` },
+	],
 	stateKey: "itemProjects",
 	countKey: "itemProjectsTotalCount",
 	loadingKey: "itemProjectsLoading",
@@ -23,8 +30,10 @@ const itemProjectResource = createResource<{ readExtended: ReadExtendedProjectIt
 	readyKey: "itemProjectReady",
 	onHydrate: (store, entity: ReadExtendedProjectItemDto, expand) => {
 		if (expand.includes("project") && entity.project && entity.id_project) {
-			const projectsStore = useProjectsStore();
-			projectsStore.projects[entity.id_project] = entity.project;
+			useProjectsStore().projects[entity.id_project] = entity.project;
+		}
+		if (expand.includes("item") && entity.item && entity.id_item) {
+			useItemsStore().items[entity.id_item] = entity.item;
 		}
 	},
 });
@@ -36,15 +45,22 @@ export const useItemsProjectsStore = defineStore("itemsProjects", {
 		// indexed by scope: "id_item=3"
 		itemProjectsTotalCount: {} as Record<string, number>,
 		itemProjects: {} as Record<string, ReadProjectItemDto>,
-		itemProjectEdition: {} as Record<string, Edition<{ create: CreateProjectItemByItemDto, update: UpdateProjectItemDto }>>,
-		itemProjectReady: {} as Record<string, Ready<{ create: CreateProjectItemByItemDto, update: UpdateProjectItemDto }>>,
+		itemProjectEdition: {} as Record<string, Edition<{ create: CreateItemProject, update: UpdateProjectItemDto }>>,
+		itemProjectReady: {} as Record<string, Ready<{ create: CreateItemProject, update: UpdateProjectItemDto }>>,
 	}),
 	getters: {
-		// the records of an item, indexed by id_project
-		itemProjectsByItem: (state) => (idItem: string) => itemProjectResource.slice(state.itemProjects, { id_item: idItem }),
-		itemProjectEditionByItem: (state) => (idItem: string) => itemProjectResource.slice(state.itemProjectEdition, { id_item: idItem }),
-		itemProjectReadyByItem: (state) => (idItem: string) => itemProjectResource.slice(state.itemProjectReady, { id_item: idItem }),
-		itemProjectsCountByItem: (state) => (idItem: string) => state.itemProjectsTotalCount[itemProjectResource.toScopeKey({ id_item: idItem })] ?? 0,
+		// the records of a item, indexed by the rest of the key
+		itemProjectsByItem: (state) => (id: string) => itemProjectResource.slice(state.itemProjects, { id_item: id }),
+		itemProjectsCountByItem: (state) => (id: string) => state.itemProjectsTotalCount[itemProjectResource.toScopeKey({ id_item: id })] ?? 0,
+		itemProjectsGroupedByItem: (state) => itemProjectResource.group(state.itemProjects, "id_item"),
+		itemProjectEditionByItem: (state) => (id: string) => itemProjectResource.live(state.itemProjectEdition, { id_item: id }),
+		itemProjectReadyByItem: (state) => (id: string) => itemProjectResource.live(state.itemProjectReady, { id_item: id }),
+		// the records of a project, indexed by the rest of the key
+		itemProjectsByProject: (state) => (id: string) => itemProjectResource.slice(state.itemProjects, { id_project: id }),
+		itemProjectsCountByProject: (state) => (id: string) => state.itemProjectsTotalCount[itemProjectResource.toScopeKey({ id_project: id })] ?? 0,
+		itemProjectsGroupedByProject: (state) => itemProjectResource.group(state.itemProjects, "id_project"),
+		itemProjectEditionByProject: (state) => (id: string) => itemProjectResource.live(state.itemProjectEdition, { id_project: id }),
+		itemProjectReadyByProject: (state) => (id: string) => itemProjectResource.live(state.itemProjectReady, { id_project: id }),
 	},
 	actions: {
 		getItemProjectByInterval: itemProjectResource.getByInterval,

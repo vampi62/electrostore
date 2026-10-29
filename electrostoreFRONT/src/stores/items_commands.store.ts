@@ -2,20 +2,27 @@ import { defineStore } from "pinia";
 
 import { createResource } from "@/helpers";
 
-import { useCommandsStore } from "@/stores";
+import { useCommandsStore, useItemsStore } from "@/stores";
 
-import type { Ready, Edition } from "@/types/resource";
+import type { Edition, Ready } from "@/types/resource";
 import type { components } from "@/types/api";
 
 type ReadCommandItemDto = components["schemas"]["ReadCommandItemDto"];
 type ReadExtendedCommandItemDto = components["schemas"]["ReadExtendedCommandItemDto"];
 type CreateCommandItemByItemDto = components["schemas"]["CreateCommandItemByItemDto"];
+type CreateCommandItemByCommandDto = components["schemas"]["CreateCommandItemByCommandDto"];
 type UpdateCommandItemDto = components["schemas"]["UpdateCommandItemDto"];
+type CreateItemCommand = CreateCommandItemByItemDto | CreateCommandItemByCommandDto;
 
-const itemCommandResource = createResource<{ readExtended: ReadExtendedCommandItemDto, readBasic: ReadCommandItemDto, create: CreateCommandItemByItemDto, update: UpdateCommandItemDto, createBulk: CreateCommandItemByItemDto[] }>({
+const itemCommandResource = createResource<{ readExtended: ReadExtendedCommandItemDto, readBasic: ReadCommandItemDto, create: CreateItemCommand, update: UpdateCommandItemDto, createBulk: CreateItemCommand[] }>({
 	compositeKey: ["id_item", "id_command"],
-	path: [{ keys: ["id_item"], url: ({ id_item }) => `/item/${id_item}/command` }],
-	entityPath: [{ keys: ["id_item", "id_command"], url: ({ id_item, id_command }) => `/item/${id_item}/command/${id_command}` }],
+	path: [
+		{ keys: ["id_item"], url: ({ id_item }) => `/item/${id_item}/command` },
+		{ keys: ["id_command"], url: ({ id_command }) => `/command/${id_command}/item` },
+	],
+	entityPath: [
+		{ keys: ["id_item", "id_command"], url: ({ id_item, id_command }) => `/item/${id_item}/command/${id_command}` },
+	],
 	stateKey: "itemCommands",
 	countKey: "itemCommandsTotalCount",
 	loadingKey: "itemCommandsLoading",
@@ -23,8 +30,10 @@ const itemCommandResource = createResource<{ readExtended: ReadExtendedCommandIt
 	readyKey: "itemCommandReady",
 	onHydrate: (store, entity: ReadExtendedCommandItemDto, expand) => {
 		if (expand.includes("command") && entity.command && entity.id_command) {
-			const commandsStore = useCommandsStore();
-			commandsStore.commands[entity.id_command] = entity.command;
+			useCommandsStore().commands[entity.id_command] = entity.command;
+		}
+		if (expand.includes("item") && entity.item && entity.id_item) {
+			useItemsStore().items[entity.id_item] = entity.item;
 		}
 	},
 });
@@ -36,15 +45,22 @@ export const useItemsCommandsStore = defineStore("itemsCommands", {
 		// indexed by scope: "id_item=3"
 		itemCommandsTotalCount: {} as Record<string, number>,
 		itemCommands: {} as Record<string, ReadCommandItemDto>,
-		itemCommandEdition: {} as Record<string, Edition<{ create: CreateCommandItemByItemDto, update: UpdateCommandItemDto }>>,
-		itemCommandReady: {} as Record<string, Ready<{ create: CreateCommandItemByItemDto, update: UpdateCommandItemDto }>>,
+		itemCommandEdition: {} as Record<string, Edition<{ create: CreateItemCommand, update: UpdateCommandItemDto }>>,
+		itemCommandReady: {} as Record<string, Ready<{ create: CreateItemCommand, update: UpdateCommandItemDto }>>,
 	}),
 	getters: {
-		// the records of an item, indexed by id_command
-		itemCommandsByItem: (state) => (idItem: string) => itemCommandResource.slice(state.itemCommands, { id_item: idItem }),
-		itemCommandEditionByItem: (state) => (idItem: string) => itemCommandResource.slice(state.itemCommandEdition, { id_item: idItem }),
-		itemCommandReadyByItem: (state) => (idItem: string) => itemCommandResource.slice(state.itemCommandReady, { id_item: idItem }),
-		itemCommandsCountByItem: (state) => (idItem: string) => state.itemCommandsTotalCount[itemCommandResource.toScopeKey({ id_item: idItem })] ?? 0,
+		// the records of a item, indexed by the rest of the key
+		itemCommandsByItem: (state) => (id: string) => itemCommandResource.slice(state.itemCommands, { id_item: id }),
+		itemCommandsCountByItem: (state) => (id: string) => state.itemCommandsTotalCount[itemCommandResource.toScopeKey({ id_item: id })] ?? 0,
+		itemCommandsGroupedByItem: (state) => itemCommandResource.group(state.itemCommands, "id_item"),
+		itemCommandEditionByItem: (state) => (id: string) => itemCommandResource.live(state.itemCommandEdition, { id_item: id }),
+		itemCommandReadyByItem: (state) => (id: string) => itemCommandResource.live(state.itemCommandReady, { id_item: id }),
+		// the records of a command, indexed by the rest of the key
+		itemCommandsByCommand: (state) => (id: string) => itemCommandResource.slice(state.itemCommands, { id_command: id }),
+		itemCommandsCountByCommand: (state) => (id: string) => state.itemCommandsTotalCount[itemCommandResource.toScopeKey({ id_command: id })] ?? 0,
+		itemCommandsGroupedByCommand: (state) => itemCommandResource.group(state.itemCommands, "id_command"),
+		itemCommandEditionByCommand: (state) => (id: string) => itemCommandResource.live(state.itemCommandEdition, { id_command: id }),
+		itemCommandReadyByCommand: (state) => (id: string) => itemCommandResource.live(state.itemCommandReady, { id_command: id }),
 	},
 	actions: {
 		getItemCommandByInterval: itemCommandResource.getByInterval,

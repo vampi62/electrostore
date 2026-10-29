@@ -2,9 +2,9 @@ import { defineStore } from "pinia";
 
 import { createResource } from "@/helpers";
 
-import { useTagsStore } from "@/stores";
+import { useTagsStore, useItemsStore } from "@/stores";
 
-import type { Ready, Edition } from "@/types/resource";
+import type { Edition, Ready } from "@/types/resource";
 import type { components } from "@/types/api";
 
 type ReadItemTagDto = components["schemas"]["ReadItemTagDto"];
@@ -15,12 +15,10 @@ type CreateItemTag = CreateItemTagByItemDto | CreateItemTagByTagDto;
 
 const itemTagResource = createResource<{ readExtended: ReadExtendedItemTagDto, readBasic: ReadItemTagDto, create: CreateItemTag, createBulk: CreateItemTag[], deleteBulk: number[] }>({
 	compositeKey: ["id_item", "id_tag"],
-	// the first route whose keys are given is used: { id_item } => /item/{id_item}/tag, { id_tag } => /tag/{id_tag}/item
 	path: [
 		{ keys: ["id_item"], url: ({ id_item }) => `/item/${id_item}/tag` },
 		{ keys: ["id_tag"], url: ({ id_tag }) => `/tag/${id_tag}/item` },
 	],
-	// a record is always addressed by its complete key, so the first route always wins: /tag/{id_tag}/item/{id_item} would never be reached
 	entityPath: [
 		{ keys: ["id_item", "id_tag"], url: ({ id_item, id_tag }) => `/item/${id_item}/tag/${id_tag}` },
 	],
@@ -31,8 +29,10 @@ const itemTagResource = createResource<{ readExtended: ReadExtendedItemTagDto, r
 	readyKey: "itemTagReady",
 	onHydrate: (store, entity: ReadExtendedItemTagDto, expand) => {
 		if (expand.includes("tag") && entity.tag && entity.id_tag) {
-			const tagsStore = useTagsStore();
-			tagsStore.tags[entity.id_tag] = entity.tag;
+			useTagsStore().tags[entity.id_tag] = entity.tag;
+		}
+		if (expand.includes("item") && entity.item && entity.id_item) {
+			useItemsStore().items[entity.id_item] = entity.item;
 		}
 	},
 });
@@ -48,17 +48,18 @@ export const useItemsTagsStore = defineStore("itemsTags", {
 		itemTagReady: {} as Record<string, Ready<{ create: CreateItemTag }>>,
 	}),
 	getters: {
-		// part of the key => the matching records with their composite key, e.g. itemTagsBy({ id_item: 3 })
-		itemTagsBy: (state) => (part: { id_item?: string, id_tag?: string }) => itemTagResource.pick(state.itemTags, part),
-		// the records of an item, indexed by id_tag
-		itemTagsByItem: (state) => (idItem: string) => itemTagResource.slice(state.itemTags, { id_item: idItem }),
-		itemTagEditionByItem: (state) => (idItem: string) => itemTagResource.slice(state.itemTagEdition, { id_item: idItem }),
-		itemTagReadyByItem: (state) => (idItem: string) => itemTagResource.slice(state.itemTagReady, { id_item: idItem }),
-		itemTagsCountByItem: (state) => (idItem: string) => state.itemTagsTotalCount[itemTagResource.toScopeKey({ id_item: idItem })] ?? 0,
-		// the records of a tag, indexed by id_item
-		itemTagsByTag: (state) => (idTag: string) => itemTagResource.slice(state.itemTags, { id_tag: idTag }),
-		// every item with its tags: { [id_item]: { [id_tag]: record } }
+		// the records of a item, indexed by the rest of the key
+		itemTagsByItem: (state) => (id: string) => itemTagResource.slice(state.itemTags, { id_item: id }),
+		itemTagsCountByItem: (state) => (id: string) => state.itemTagsTotalCount[itemTagResource.toScopeKey({ id_item: id })] ?? 0,
 		itemTagsGroupedByItem: (state) => itemTagResource.group(state.itemTags, "id_item"),
+		itemTagEditionByItem: (state) => (id: string) => itemTagResource.live(state.itemTagEdition, { id_item: id }),
+		itemTagReadyByItem: (state) => (id: string) => itemTagResource.live(state.itemTagReady, { id_item: id }),
+		// the records of a tag, indexed by the rest of the key
+		itemTagsByTag: (state) => (id: string) => itemTagResource.slice(state.itemTags, { id_tag: id }),
+		itemTagsCountByTag: (state) => (id: string) => state.itemTagsTotalCount[itemTagResource.toScopeKey({ id_tag: id })] ?? 0,
+		itemTagsGroupedByTag: (state) => itemTagResource.group(state.itemTags, "id_tag"),
+		itemTagEditionByTag: (state) => (id: string) => itemTagResource.live(state.itemTagEdition, { id_tag: id }),
+		itemTagReadyByTag: (state) => (id: string) => itemTagResource.live(state.itemTagReady, { id_tag: id }),
 	},
 	actions: {
 		getItemTagByInterval: itemTagResource.getByInterval,

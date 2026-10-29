@@ -26,12 +26,13 @@ export interface MainResourceOptions<T extends EntityTypes> {
 }
 
 // Values of some fields of a composite key. Complete, it identifies one record; partial, it selects a slice of them.
-export type KeyParts<T extends EntityTypes> = Partial<Record<IdKey<T>, string>>;
+// Any field can be given to reach a route (e.g. id_store for a box), the ones of the DTO are suggested.
+export type KeyParts<T extends EntityTypes> = Partial<Record<IdKey<T> | (string & {}), string>>;
 
 // One way to reach a resource. Several routes can serve the same one (/item/{id_item}/tag and /tag/{id_tag}/item):
 // the first whose key fields are all given is used.
 export interface ResourceRoute<T extends EntityTypes> {
-	keys: Array<IdKey<T>>;
+	keys: Array<IdKey<T> | (string & {})>;
 	url: (parts: KeyParts<T>) => string;
 }
 
@@ -39,6 +40,8 @@ export interface ResourceRoute<T extends EntityTypes> {
 // countKey is indexed by scope ("id_item=3"), the others (stateKey, editionKey, readyKey) by composite key.
 export interface ResourceOptions<T extends EntityTypes> {
 	compositeKey: Array<IdKey<T>>;
+	// Fields only the urls need (e.g. id_store to reach a box): they are not part of the scope of the records and of their count
+	routeOnlyFields?: string[];
 	// Key field the api assigns when the record is created: it is a temporary "new-x" id until then
 	generatedField?: IdKey<T>;
 	path: Array<ResourceRoute<T>>;

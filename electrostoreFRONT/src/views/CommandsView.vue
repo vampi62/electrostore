@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 
 import { useViewScroll } from "@/composables";
 import CommandStatus from "@/enums/CommandStatus";
-import { useCommandsStore, useItemsStore } from "@/stores";
+import { useCommandsStore, useItemsCommandsStore, useItemsStore } from "@/stores";
 
 import type { FilterLabel } from "@/types/filter";
 import type { TableauLabel, TableauMeta } from "@/types/tableau";
@@ -12,12 +12,13 @@ import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 
 const { t } = useI18n();
 const commandsStore = useCommandsStore();
+const itemCommandsStore = useItemsCommandsStore();
 const itemsStore = useItemsStore();
 
 async function fetchItemData(minOffset: number, maxOffset: number) {
 	let itemsNotFound: string[] = [];
 	for (let id = minOffset; id < maxOffset; id++) {
-		for (const item in commandsStore.items[id]) {
+		for (const item in itemCommandsStore.itemCommandsGroupedByCommand[id]) {
 			if (!itemsStore.items[item]) {
 				itemsNotFound.push(item);
 			}
@@ -88,7 +89,7 @@ useViewScroll(false);
 		<FilterContainer :filters="filter" :store-data="commandsStore.commands" @ready="filterReady = true" :save-state="true" state-key="commandsFilterState" />
 	</div>
 	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
-		:store-data="[commandsStore.commands,commandsStore.items,itemsStore.items]"
+		:store-data="[commandsStore.commands,itemCommandsStore.itemCommandsGroupedByCommand,itemsStore.items]"
 		:filters="filter"
 		:loading="commandsStore.commandsLoading"
 		:total-count="Number(commandsStore.commandsTotalCount) || 0"

@@ -7,8 +7,6 @@ import { useItemsDocumentsStore, useItemsBoxsStore, useItemsTagsStore, useItemsC
 
 import type { StoreGeneric } from "pinia";
 import type { Edition, WithFile } from "@/types/resource";
-import type { RSQLFilter, RSQLSort } from "@/types/rsql";
-import type { FetchPage } from "@/types/fetch";
 import type { components, paths } from "@/types/api";
 type ReadItemDto = components["schemas"]["ReadItemDto"];
 type ReadExtendedItemDto = components["schemas"]["ReadExtendedItemDto"];
@@ -80,24 +78,12 @@ export const useItemsStore = defineStore("items", {
 		thumbnailsURL: {} as Record<string, string>,
 	}),
 	actions: {
-		getItemByInterval(limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false): Promise<FetchPage> {
-			return itemResource.getByInterval.call(this, {}, limit, offset, expand, filter, sort, clear);
-		},
-		getItemById(id: string, expand: string[] = []): Promise<void> {
-			return itemResource.getById.call(this, { id_item: id }, expand);
-		},
-		createItem(params: CreateItemDto, isFormData = false): Promise<string> {
-			return itemResource.create.call(this, {}, params, isFormData);
-		},
-		getAvailableNewItemId(): string {
-			return itemResource.getAvailableNewId.call(this);
-		},
-		updateItem(id: string, params: UpdateItemDto, isFormData = false): Promise<void> {
-			return itemResource.update.call(this, { id_item: id }, params, isFormData);
-		},
-		deleteItem(id: string): Promise<void> {
-			return itemResource.remove.call(this, { id_item: id });
-		},
+		getItemByInterval: itemResource.single.getByInterval,
+		getItemById: itemResource.single.getById,
+		createItem: itemResource.single.create,
+		getAvailableNewItemId: itemResource.single.getAvailableNewId,
+		updateItem: itemResource.single.update,
+		deleteItem: itemResource.single.remove,
 		loadToEdition(id: string, preset: string | null = null) {
 			if (!isNewId(id) && this.items[id]) {
 				this.itemEdition[id] = {
@@ -111,7 +97,7 @@ export const useItemsStore = defineStore("items", {
 				this.itemEdition[id] = {
 					loading: false,
 				};
-				itemResource.loadEditionPreset.call(this, { id_item: id }, preset);
+				itemResource.single.loadEditionPreset.call(this, id, preset);
 			}
 			clearNestedEdition(id);
 		},

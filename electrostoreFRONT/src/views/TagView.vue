@@ -8,7 +8,7 @@ import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
 import type FormContainer from "@/components/FormContainer.vue";
 import { isNewId } from "@/utils";
-import { useConfigsStore, useTagsStore, useStoresStore, useItemsStore, useEquipementsStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useTagsStore, useItemsTagsStore, useStoresTagsStore, useStoresBoxsStore, useBoxsTagsStore, useEquipementsTagsStore, useStoresStore, useItemsStore, useEquipementsStore, useAuthStore } from "@/stores";
 
 import type { FilterLabel } from "@/types/filter";
 import type { TableauLabel, TableauRowData } from "@/types/tableau";
@@ -21,6 +21,11 @@ const router = useRouter();
 
 const configsStore = useConfigsStore();
 const tagsStore = useTagsStore();
+const itemsTagsStore = useItemsTagsStore();
+const storesTagsStore = useStoresTagsStore();
+const boxsTagsStore = useBoxsTagsStore();
+const storesBoxsStore = useStoresBoxsStore();
+const equipementsTagsStore = useEquipementsTagsStore();
 const storesStore = useStoresStore();
 const itemsStore = useItemsStore();
 const equipementsStore = useEquipementsStore();
@@ -123,14 +128,14 @@ async function fetchAllItems() {
 }
 function itemSave(row: TableauRowData) {
 	try {
-		if (tagsStore.tagItemReady[tagId.value]?.[row.id_item]?.status === "deleted") {
-			delete tagsStore.tagItemReady[tagId.value][row.id_item];
+		if (itemsTagsStore.itemTagReadyByTag(tagId.value)?.[row.id_item]?.status === "deleted") {
+			delete itemsTagsStore.itemTagReadyByTag(tagId.value)[row.id_item];
 			addNotification({ message: t("tag.ItemRestored"), type: "success" });
 			return;
 		}
-		tagsStore.tagItemEdition[tagId.value][row.id_item] = { id_item: row.id_item };
-		tagsStore.valideTagItemEditionById(tagId.value, row.id_item, "created");
-		delete tagsStore.tagItemEdition[tagId.value][row.id_item];
+		itemsTagsStore.itemTagEditionByTag(tagId.value)[row.id_item] = { id_item: row.id_item };
+		itemsTagsStore.valideItemTagEditionByKey({ id_tag: tagId.value, id_item: row.id_item }, "created");
+		delete itemsTagsStore.itemTagEditionByTag(tagId.value)[row.id_item];
 		addNotification({ message: t("tag.ItemAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -138,10 +143,10 @@ function itemSave(row: TableauRowData) {
 }
 function itemDelete(item: TableauRowData) {
 	try {
-		if (tagsStore.tagItemReady[tagId.value]?.[item.id_item]?.status === "created") {
-			delete tagsStore.tagItemReady[tagId.value][item.id_item];
+		if (itemsTagsStore.itemTagReadyByTag(tagId.value)?.[item.id_item]?.status === "created") {
+			delete itemsTagsStore.itemTagReadyByTag(tagId.value)[item.id_item];
 		} else {
-			tagsStore.valideTagItemEditionById(tagId.value, item.id_item, "deleted");
+			itemsTagsStore.valideItemTagEditionByKey({ id_tag: tagId.value, id_item: item.id_item }, "deleted");
 		}
 		addNotification({ message: t("tag.ItemDeleted"), type: "success" });
 	} catch (e) {
@@ -150,7 +155,7 @@ function itemDelete(item: TableauRowData) {
 }
 function itemRestore(item: TableauRowData) {
 	try {
-		delete tagsStore.tagItemReady[tagId.value][item.id_item];
+		delete itemsTagsStore.itemTagReadyByTag(tagId.value)[item.id_item];
 		addNotification({ message: t("tag.ItemRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -181,14 +186,14 @@ async function fetchAllStores() {
 }
 function storeSave(row: TableauRowData) {
 	try {
-		if (tagsStore.tagStoreReady[tagId.value]?.[row.id_store]?.status === "deleted") {
-			delete tagsStore.tagStoreReady[tagId.value][row.id_store];
+		if (storesTagsStore.storeTagReadyByTag(tagId.value)?.[row.id_store]?.status === "deleted") {
+			delete storesTagsStore.storeTagReadyByTag(tagId.value)[row.id_store];
 			addNotification({ message: t("tag.StoreRestored"), type: "success" });
 			return;
 		}
-		tagsStore.tagStoreEdition[tagId.value][row.id_store] = { id_store: row.id_store };
-		tagsStore.valideTagStoreEditionById(tagId.value, row.id_store, "created");
-		delete tagsStore.tagStoreEdition[tagId.value][row.id_store];
+		storesTagsStore.storeTagEditionByTag(tagId.value)[row.id_store] = { id_store: row.id_store };
+		storesTagsStore.valideStoreTagEditionByKey({ id_tag: tagId.value, id_store: row.id_store }, "created");
+		delete storesTagsStore.storeTagEditionByTag(tagId.value)[row.id_store];
 		addNotification({ message: t("tag.StoreAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -196,10 +201,10 @@ function storeSave(row: TableauRowData) {
 }
 function storeDelete(store: TableauRowData) {
 	try {
-		if (tagsStore.tagStoreReady[tagId.value]?.[store.id_store]?.status === "created") {
-			delete tagsStore.tagStoreReady[tagId.value][store.id_store];
+		if (storesTagsStore.storeTagReadyByTag(tagId.value)?.[store.id_store]?.status === "created") {
+			delete storesTagsStore.storeTagReadyByTag(tagId.value)[store.id_store];
 		} else {
-			tagsStore.valideTagStoreEditionById(tagId.value, store.id_store, "deleted");
+			storesTagsStore.valideStoreTagEditionByKey({ id_tag: tagId.value, id_store: store.id_store }, "deleted");
 		}
 		addNotification({ message: t("tag.StoreDeleted"), type: "success" });
 	} catch (e) {
@@ -208,7 +213,7 @@ function storeDelete(store: TableauRowData) {
 }
 function storeRestore(store: TableauRowData) {
 	try {
-		delete tagsStore.tagStoreReady[tagId.value][store.id_store];
+		delete storesTagsStore.storeTagReadyByTag(tagId.value)[store.id_store];
 		addNotification({ message: t("tag.StoreRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -223,7 +228,7 @@ const filterStore = ref<FilterLabel[]>([
 const boxModalShow = ref(false);
 const boxSave = async(box: TableauRowData) => {
 	try {
-		await tagsStore.createTagBox(tagId.value, { id_box: box.id_box });
+		await boxsTagsStore.createBoxTag({ id_tag: tagId.value }, { id_box: box.id_box });
 		addNotification({ message: t("tag.BoxAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -232,7 +237,7 @@ const boxSave = async(box: TableauRowData) => {
 };
 const boxDelete = (box: TableauRowData) => {
 	try {
-		tagsStore.valideTagBoxEditionById(tagId.value, box.id_box, "deleted");
+		boxsTagsStore.valideBoxTagEditionByKey({ id_tag: tagId.value, id_box: box.id_box }, "deleted");
 		addNotification({ message: t("tag.BoxDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -240,7 +245,7 @@ const boxDelete = (box: TableauRowData) => {
 };
 const boxRestore = (box: TableauRowData) => {
 	try {
-		delete tagsStore.tagBoxReady[tagId.value][box.id_box];
+		delete boxsTagsStore.boxTagReadyByTag(tagId.value)[box.id_box];
 		addNotification({ message: t("tag.BoxRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -267,14 +272,14 @@ async function fetchAllEquipements() {
 }
 function equipementSave(row: TableauRowData) {
 	try {
-		if (tagsStore.tagEquipementReady[tagId.value]?.[row.id_equipement]?.status === "deleted") {
-			delete tagsStore.tagEquipementReady[tagId.value][row.id_equipement];
+		if (equipementsTagsStore.equipementTagReadyByTag(tagId.value)?.[row.id_equipement]?.status === "deleted") {
+			delete equipementsTagsStore.equipementTagReadyByTag(tagId.value)[row.id_equipement];
 			addNotification({ message: t("tag.EquipementRestored"), type: "success" });
 			return;
 		}
-		tagsStore.tagEquipementEdition[tagId.value][row.id_equipement] = { id_equipement: row.id_equipement };
-		tagsStore.valideTagEquipementEditionById(tagId.value, row.id_equipement, "created");
-		delete tagsStore.tagEquipementEdition[tagId.value][row.id_equipement];
+		equipementsTagsStore.equipementTagEditionByTag(tagId.value)[row.id_equipement] = { id_equipement: row.id_equipement };
+		equipementsTagsStore.valideEquipementTagEditionByKey({ id_tag: tagId.value, id_equipement: row.id_equipement }, "created");
+		delete equipementsTagsStore.equipementTagEditionByTag(tagId.value)[row.id_equipement];
 		addNotification({ message: t("tag.EquipementAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -282,10 +287,10 @@ function equipementSave(row: TableauRowData) {
 }
 function equipementDelete(equipement: TableauRowData) {
 	try {
-		if (tagsStore.tagEquipementReady[tagId.value]?.[equipement.id_equipement]?.status === "created") {
-			delete tagsStore.tagEquipementReady[tagId.value][equipement.id_equipement];
+		if (equipementsTagsStore.equipementTagReadyByTag(tagId.value)?.[equipement.id_equipement]?.status === "created") {
+			delete equipementsTagsStore.equipementTagReadyByTag(tagId.value)[equipement.id_equipement];
 		} else {
-			tagsStore.valideTagEquipementEditionById(tagId.value, equipement.id_equipement, "deleted");
+			equipementsTagsStore.valideEquipementTagEditionByKey({ id_tag: tagId.value, id_equipement: equipement.id_equipement }, "deleted");
 		}
 		addNotification({ message: t("tag.EquipementDeleted"), type: "success" });
 	} catch (e) {
@@ -294,7 +299,7 @@ function equipementDelete(equipement: TableauRowData) {
 }
 function equipementRestore(equipement: TableauRowData) {
 	try {
-		delete tagsStore.tagEquipementReady[tagId.value][equipement.id_equipement];
+		delete equipementsTagsStore.equipementTagReadyByTag(tagId.value)[equipement.id_equipement];
 		addNotification({ message: t("tag.EquipementRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -502,7 +507,12 @@ const labelTableauModalStore = ref<TableauLabel[]>([
 	] },
 ]);
 useViewScroll(true);
-useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags");
+useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags", [
+	{ key: "tagItemReady", get: (id) => itemsTagsStore.itemTagReadyByTag(id), set: (id, entries) => itemsTagsStore.setItemTagStagedSlice("ready", { id_tag: id }, entries) },
+	{ key: "tagStoreReady", get: (id) => storesTagsStore.storeTagReadyByTag(id), set: (id, entries) => storesTagsStore.setStoreTagStagedSlice("ready", { id_tag: id }, entries) },
+	{ key: "tagBoxReady", get: (id) => boxsTagsStore.boxTagReadyByTag(id), set: (id, entries) => boxsTagsStore.setBoxTagStagedSlice("ready", { id_tag: id }, entries) },
+	{ key: "tagEquipementReady", get: (id) => equipementsTagsStore.equipementTagReadyByTag(id), set: (id, entries) => equipementsTagsStore.setEquipementTagStagedSlice("ready", { id_tag: id }, entries) },
+]);
 </script>
 
 <template>
@@ -521,65 +531,65 @@ useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags");
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-edition="tagsStore.tagEdition[tagId]" :store-data="tagsStore.tags[tagId]"/>
 		</div>
 		<CollapsibleSection title="tag.Items"
-			:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)">
+			:total-count="itemsTagsStore.itemTagsCountByTag(tagId)">
 			<template #append-row>
 				<button type="button" @click="itemOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('tag.AddItem') }}
 				</button>
 				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
-					:store-data="[tagsStore.tagsItem[tagId],itemsStore.items]"
-					:store-ready="tagsStore.tagItemReady[tagId]"
-					:loading="tagsStore.tagsItemLoading"
-					:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)"
-					:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagItemByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
+					:store-data="[itemsTagsStore.itemTagsByTag(tagId),itemsStore.items]"
+					:store-ready="itemsTagsStore.itemTagReadyByTag(tagId)"
+					:loading="itemsTagsStore.itemTagsLoading"
+					:total-count="itemsTagsStore.itemTagsCountByTag(tagId)"
+					:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsTagsStore.getItemTagByInterval({ id_tag: tagId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="tag.Stores"
-			:total-count="Number(tagsStore.tagsStoreTotalCount[tagId] || 0)">
+			:total-count="storesTagsStore.storeTagsCountByTag(tagId)">
 			<template #append-row>
 				<button type="button" @click="storeOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('tag.AddStore') }}
 				</button>
 				<Tableau :labels="labelTableauStore" :meta="{ key: 'id_store', expand: ['store'] }"
-					:store-data="[tagsStore.tagsStore[tagId],storesStore.stores]"
-					:store-ready="tagsStore.tagStoreReady[tagId]"
-					:loading="tagsStore.tagsStoreLoading"
-					:total-count="Number(tagsStore.tagsStoreTotalCount[tagId] || 0)"
-					:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagStoreByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
+					:store-data="[storesTagsStore.storeTagsByTag(tagId),storesStore.stores]"
+					:store-ready="storesTagsStore.storeTagReadyByTag(tagId)"
+					:loading="storesTagsStore.storeTagsLoading"
+					:total-count="storesTagsStore.storeTagsCountByTag(tagId)"
+					:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => storesTagsStore.getStoreTagByInterval({ id_tag: tagId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="tag.Boxs"
-			:total-count="Number(tagsStore.tagsBoxTotalCount[tagId] || 0)">
+			:total-count="boxsTagsStore.boxTagsCountByTag(tagId)">
 			<template #append-row>
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box', expand: ['box'] }"
-					:store-data="[tagsStore.tagsBox[tagId],storesStore.boxs]"
-					:store-ready="tagsStore.tagBoxReady[tagId]"
-					:loading="tagsStore.tagsBoxLoading"
-					:total-count="Number(tagsStore.tagsBoxTotalCount[tagId] || 0)"
-					:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagBoxByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
+					:store-data="[boxsTagsStore.boxTagsByTag(tagId),storesBoxsStore.boxsById]"
+					:store-ready="boxsTagsStore.boxTagReadyByTag(tagId)"
+					:loading="boxsTagsStore.boxTagsLoading"
+					:total-count="boxsTagsStore.boxTagsCountByTag(tagId)"
+					:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => boxsTagsStore.getBoxTagByInterval({ id_tag: tagId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="tag.Equipements"
-			:total-count="Number(tagsStore.tagsEquipementTotalCount[tagId] || 0)">
+			:total-count="equipementsTagsStore.equipementTagsCountByTag(tagId)">
 			<template #append-row>
 				<button type="button" @click="equipementOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('tag.AddEquipement') }}
 				</button>
 				<Tableau :labels="labelTableauEquipement" :meta="{ key: 'id_equipement', expand: ['equipement'] }"
-					:store-data="[tagsStore.tagsEquipement[tagId],equipementsStore.equipements]"
-					:store-ready="tagsStore.tagEquipementReady[tagId]"
-					:loading="tagsStore.tagsEquipementLoading"
-					:total-count="Number(tagsStore.tagsEquipementTotalCount[tagId] || 0)"
-					:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagEquipementByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
+					:store-data="[equipementsTagsStore.equipementTagsByTag(tagId),equipementsStore.equipements]"
+					:store-ready="equipementsTagsStore.equipementTagReadyByTag(tagId)"
+					:loading="equipementsTagsStore.equipementTagsLoading"
+					:total-count="equipementsTagsStore.equipementTagsCountByTag(tagId)"
+					:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsTagsStore.getEquipementTagByInterval({ id_tag: tagId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -606,10 +616,10 @@ useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags");
 
 			<!-- Tableau Items -->
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item', preventClear: true }"
-				:store-data="[itemsStore.items, tagsStore.tagsItem[tagId]]"
-				:store-ready="tagsStore.tagItemReady[tagId]"
+				:store-data="[itemsStore.items, itemsTagsStore.itemTagsByTag(tagId)]"
+				:store-ready="itemsTagsStore.itemTagReadyByTag(tagId)"
 				:filters="filterItem"
-				:loading="tagsStore.tagsItemLoading"
+				:loading="itemsTagsStore.itemTagsLoading"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
 				:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
@@ -631,10 +641,10 @@ useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags");
 
 			<!-- Tableau Stores -->
 			<Tableau :labels="labelTableauModalStore" :meta="{ key: 'id_store', preventClear: true }"
-				:store-data="[storesStore.stores, tagsStore.tagsStore[tagId]]"
-				:store-ready="tagsStore.tagStoreReady[tagId]"
+				:store-data="[storesStore.stores, storesTagsStore.storeTagsByTag(tagId)]"
+				:store-ready="storesTagsStore.storeTagReadyByTag(tagId)"
 				:filters="filterStore"
-				:loading="tagsStore.tagsStoreLoading"
+				:loading="storesTagsStore.storeTagsLoading"
 				:total-count="Number(storesStore.storesTotalCount || 0)"
 				:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => storesStore.getStoreByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
@@ -656,10 +666,10 @@ useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags");
 
 			<!-- Tableau Equipements -->
 			<Tableau :labels="labelTableauModalEquipement" :meta="{ key: 'id_equipement', preventClear: true }"
-				:store-data="[equipementsStore.equipements, tagsStore.tagsEquipement[tagId]]"
-				:store-ready="tagsStore.tagEquipementReady[tagId]"
+				:store-data="[equipementsStore.equipements, equipementsTagsStore.equipementTagsByTag(tagId)]"
+				:store-ready="equipementsTagsStore.equipementTagReadyByTag(tagId)"
 				:filters="filterEquipement"
-				:loading="tagsStore.tagsEquipementLoading"
+				:loading="equipementsTagsStore.equipementTagsLoading"
 				:total-count="Number(equipementsStore.equipementsTotalCount || 0)"
 				:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"

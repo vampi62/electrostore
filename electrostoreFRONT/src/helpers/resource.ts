@@ -13,7 +13,7 @@ function isSaved(parts: Record<string, string | number>): boolean {
 	return !Object.values(parts).some((value) => String(value).startsWith(NEW_ID_PREFIX));
 }
 
-export function createResource<T extends EntityTypes>({ compositeKey, generatedField, path, entityPath, countKey, stateKey, loadingKey, editionKey, readyKey, onHydrate }: ResourceOptions<T>) {
+export function createResource<T extends EntityTypes>({ compositeKey, generatedField, routeOnlyFields = [], path, entityPath, countKey, stateKey, loadingKey, editionKey, readyKey, onHydrate }: ResourceOptions<T>) {
 	type ReadExtended = "readExtended" extends keyof T ? T["readExtended"] : T["readBasic"];
 	type Read = "readBasic" extends keyof T ? T["readBasic"] : T["readExtended"];
 	type Parts = KeyParts<T>;
@@ -35,7 +35,8 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 	}
 
 	function toScopeKey(scope: Parts): string {
-		return compositeKey
+		const fields = [...compositeKey, ...(Object.keys(scope) as Array<IdKey<T>>).filter((field) => !compositeKey.includes(field) && !routeOnlyFields.includes(field))];
+		return fields
 			.filter((field) => scope[field] !== undefined && scope[field] !== null)
 			.map((field) => `${field}=${scope[field]}`)
 			.join("&");
@@ -49,6 +50,48 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 	// Keeps the records whose key matches every given part
 	function pick<R>(records: Record<string, R> | undefined, part: Parts): Record<string, R> {
 		return Object.fromEntries(Object.entries(records ?? {}).filter(([key]) => matches(key, part)));
+	}
+
+	// Keys of the records in a scope: the fields of the key are read in the key, the others (e.g. id_user) in the record
+	function inScope(records: Record<string, unknown> | undefined, scope: Parts): string[] {
+		return Object.entries(records ?? {}).filter(([key, record]) => {
+			const parts = toParts(key);
+			return (Object.entries(scope) as Array<[string, string | undefined]>).every(([field, value]) => {
+				if (value === undefined || value === null || routeOnlyFields.includes(field)) {
+					return true;
+				}
+				const current = compositeKey.includes(field as IdKey<T>) ? parts[field] : (record as Record<string, unknown> | undefined)?.[field];
+				// a field the record does not carry (e.g. id_store of a box link) cannot exclude it
+				return current === undefined || String(current) === String(value);
+			});
+		}).map(([key]) => key);
+	}
+
+	// Same as slice, but reads and writes go to the records: what is set or deleted on the result is set or deleted in them
+	function live<R>(records: Record<string, R>, part: Parts): Record<string, R> {
+		const rest = compositeKey.filter((field) => part[field] === undefined || part[field] === null);
+		const toFull = (restKey: string) => {
+			const values = restKey.split(KEY_SEPARATOR);
+			return toKey({ ...part, ...Object.fromEntries(rest.map((field, index) => [field, values[index]])) } as Parts);
+		};
+		return new Proxy({} as Record<string, R>, {
+			get: (_, name) => (typeof name === "string" ? records[toFull(name)] : undefined),
+			set: (_, name, value: R) => {
+				if (typeof name === "string") {
+					records[toFull(name)] = value;
+				}
+				return true;
+			},
+			deleteProperty: (_, name) => {
+				if (typeof name === "string") {
+					delete records[toFull(name)];
+				}
+				return true;
+			},
+			has: (_, name) => typeof name === "string" && toFull(name) in records,
+			ownKeys: () => Object.keys(slice(records, part)),
+			getOwnPropertyDescriptor: (_, name) => (typeof name === "string" && toFull(name) in records ? { enumerable: true, configurable: true, value: records[toFull(name)] } : undefined),
+		});
 	}
 
 	// Same as pick, the keys keep only the fields the part does not give: { id_item: 3 } turns "3:12" into "12"
@@ -150,11 +193,12 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 		toScopeKey,
 		pick,
 		slice,
+		live,
 		group,
 		async getByInterval(this: StoreGeneric, scope: Parts, limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false): Promise<FetchPage> {
 			this[stateKey] ??= {};
 			if (clear) {
-				for (const key of Object.keys(pick(this[stateKey], scope))) {
+				for (const key of inScope(this[stateKey], scope)) {
 					delete this[stateKey][key];
 				}
 			}
@@ -204,8 +248,9 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 		},
 		async remove(this: StoreGeneric, key: Parts) {
 			await fetchWrapper.delete({ url: `${baseUrl}${entityUrl(key)}`, useToken: "access" });
+			const record = this[stateKey]?.[toKey(key)];
 			delete this[stateKey]?.[toKey(key)];
-			bumpCounts(this, key, -1);
+			bumpCounts(this, { ...record, ...key }, -1);
 		},
 		async createBulk(this: StoreGeneric, scope: Parts, params: Body<T, "createBulk">): Promise<ReadBulkDto<Read>> {
 			this[stateKey] ??= {};
@@ -238,7 +283,7 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 		hydrate(this: StoreGeneric, scope: Parts, entities: unknown[] | null | undefined, total?: number) {
 			this[stateKey] ??= {};
 			if (entities) {
-				for (const key of Object.keys(pick(this[stateKey], scope))) {
+				for (const key of inScope(this[stateKey], scope)) {
 					delete this[stateKey][key];
 				}
 				for (const entity of entities) {
@@ -249,6 +294,15 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 			}
 			if (total !== undefined) {
 				setCount(this, scope, total);
+			}
+		},
+		// Sets records without touching the others, e.g. the box brought along by a link
+		upsert(this: StoreGeneric, entities: unknown[]) {
+			this[stateKey] ??= {};
+			for (const entity of entities) {
+				if (compositeKey.every((field) => (entity as Parts)[field] !== undefined && (entity as Parts)[field] !== null)) {
+					this[stateKey][toKey(entity as Parts)] = entity;
+				}
 			}
 		},
 		getAvailableNewId(this: StoreGeneric, scope: Parts = {}): string {
@@ -385,5 +439,34 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 			await pendingChanges;
 		},
 	};
-	return resource;
+
+	// Actions of a resource identified by one field (e.g. /item), they keep the signatures of the stores: an id instead of a key, no scope
+	const idField = compositeKey[0];
+	const single = {
+		getByInterval(this: StoreGeneric, limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false): Promise<FetchPage> {
+			return resource.getByInterval.call(this, {}, limit, offset, expand, filter, sort, clear);
+		},
+		getById(this: StoreGeneric, id: string, expand: string[] = []): Promise<void> {
+			return resource.getById.call(this, { [idField]: id } as Parts, expand);
+		},
+		create(this: StoreGeneric, params: Body<T, "create">, isFormData = false): Promise<string> {
+			return resource.create.call(this, {}, params, isFormData);
+		},
+		update(this: StoreGeneric, id: string, params: Body<T, "update">, isFormData = false): Promise<void> {
+			return resource.update.call(this, { [idField]: id } as Parts, params, isFormData);
+		},
+		remove(this: StoreGeneric, id: string): Promise<void> {
+			return resource.remove.call(this, { [idField]: id } as Parts);
+		},
+		createBulk(this: StoreGeneric, params: Body<T, "createBulk">): Promise<ReadBulkDto<Read>> {
+			return resource.createBulk.call(this, {}, params);
+		},
+		getAvailableNewId(this: StoreGeneric): string {
+			return resource.getAvailableNewId.call(this);
+		},
+		loadEditionPreset(this: StoreGeneric, id: string, preset: string | null = null) {
+			resource.loadEditionPreset.call(this, { [idField]: id } as Parts, preset);
+		},
+	};
+	return { ...resource, single };
 }

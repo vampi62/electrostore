@@ -2,30 +2,39 @@ import { defineStore } from "pinia";
 
 import { createResource } from "@/helpers";
 
-import { useStoresStore } from "@/stores";
+import { useItemsStore, useStoresBoxsStore } from "@/stores";
 
-import type { Ready, Edition } from "@/types/resource";
+import type { Edition, Ready } from "@/types/resource";
 import type { components } from "@/types/api";
 
 type ReadItemBoxDto = components["schemas"]["ReadItemBoxDto"];
 type ReadExtendedItemBoxDto = components["schemas"]["ReadExtendedItemBoxDto"];
 type CreateItemBoxByItemDto = components["schemas"]["CreateItemBoxByItemDto"];
+type CreateItemBoxByBoxDto = components["schemas"]["CreateItemBoxByBoxDto"];
 type UpdateItemBoxDto = components["schemas"]["UpdateItemBoxDto"];
+type CreateItemBox = CreateItemBoxByItemDto | CreateItemBoxByBoxDto;
 
-const itemBoxResource = createResource<{ readExtended: ReadExtendedItemBoxDto, readBasic: ReadItemBoxDto, create: CreateItemBoxByItemDto, update: UpdateItemBoxDto }>({
+const itemBoxResource = createResource<{ readExtended: ReadExtendedItemBoxDto, readBasic: ReadItemBoxDto, create: CreateItemBox, update: UpdateItemBoxDto }>({
 	compositeKey: ["id_item", "id_box"],
-	path: [{ keys: ["id_item"], url: ({ id_item }) => `/item/${id_item}/box` }],
-	entityPath: [{ keys: ["id_item", "id_box"], url: ({ id_item, id_box }) => `/item/${id_item}/box/${id_box}` }],
+	routeOnlyFields: ["id_store"],
+	path: [
+		{ keys: ["id_item"], url: ({ id_item }) => `/item/${id_item}/box` },
+		{ keys: ["id_store", "id_box"], url: ({ id_store, id_box }) => `/store/${id_store}/box/${id_box}/item` },
+	],
+	entityPath: [
+		{ keys: ["id_item", "id_box"], url: ({ id_item, id_box }) => `/item/${id_item}/box/${id_box}` },
+	],
 	stateKey: "itemBoxs",
 	countKey: "itemBoxsTotalCount",
 	loadingKey: "itemBoxsLoading",
 	editionKey: "itemBoxEdition",
 	readyKey: "itemBoxReady",
 	onHydrate: (store, entity: ReadExtendedItemBoxDto, expand) => {
-		if (expand.includes("box") && entity.box && entity.id_box && entity.box.id_store) {
-			const storesStore = useStoresStore();
-			storesStore.boxs[entity.box.id_store] ??= {};
-			storesStore.boxs[entity.box.id_store][entity.id_box] = entity.box;
+		if (expand.includes("box") && entity.box) {
+			useStoresBoxsStore().upsertBoxs([entity.box]);
+		}
+		if (expand.includes("item") && entity.item && entity.id_item) {
+			useItemsStore().items[entity.id_item] = entity.item;
 		}
 	},
 });
@@ -37,15 +46,20 @@ export const useItemsBoxsStore = defineStore("itemsBoxs", {
 		// indexed by scope: "id_item=3"
 		itemBoxsTotalCount: {} as Record<string, number>,
 		itemBoxs: {} as Record<string, ReadExtendedItemBoxDto>,
-		itemBoxEdition: {} as Record<string, Edition<{ create: CreateItemBoxByItemDto, update: UpdateItemBoxDto }>>,
-		itemBoxReady: {} as Record<string, Ready<{ create: CreateItemBoxByItemDto, update: UpdateItemBoxDto }>>,
+		itemBoxEdition: {} as Record<string, Edition<{ create: CreateItemBox, update: UpdateItemBoxDto }>>,
+		itemBoxReady: {} as Record<string, Ready<{ create: CreateItemBox, update: UpdateItemBoxDto }>>,
 	}),
 	getters: {
-		// the records of an item, indexed by id_box
-		itemBoxsByItem: (state) => (idItem: string) => itemBoxResource.slice(state.itemBoxs, { id_item: idItem }),
-		itemBoxEditionByItem: (state) => (idItem: string) => itemBoxResource.slice(state.itemBoxEdition, { id_item: idItem }),
-		itemBoxReadyByItem: (state) => (idItem: string) => itemBoxResource.slice(state.itemBoxReady, { id_item: idItem }),
-		itemBoxsCountByItem: (state) => (idItem: string) => state.itemBoxsTotalCount[itemBoxResource.toScopeKey({ id_item: idItem })] ?? 0,
+		// the records of a item, indexed by the rest of the key
+		itemBoxsByItem: (state) => (id: string) => itemBoxResource.slice(state.itemBoxs, { id_item: id }),
+		itemBoxsCountByItem: (state) => (id: string) => state.itemBoxsTotalCount[itemBoxResource.toScopeKey({ id_item: id })] ?? 0,
+		itemBoxEditionByItem: (state) => (id: string) => itemBoxResource.live(state.itemBoxEdition, { id_item: id }),
+		itemBoxReadyByItem: (state) => (id: string) => itemBoxResource.live(state.itemBoxReady, { id_item: id }),
+		// the records of a box, indexed by the rest of the key
+		itemBoxsByBox: (state) => (id: string) => itemBoxResource.slice(state.itemBoxs, { id_box: id }),
+		itemBoxsCountByBox: (state) => (id: string) => state.itemBoxsTotalCount[itemBoxResource.toScopeKey({ id_box: id })] ?? 0,
+		itemBoxEditionByBox: (state) => (id: string) => itemBoxResource.live(state.itemBoxEdition, { id_box: id }),
+		itemBoxReadyByBox: (state) => (id: string) => itemBoxResource.live(state.itemBoxReady, { id_box: id }),
 	},
 	actions: {
 		getItemBoxByInterval: itemBoxResource.getByInterval,
@@ -54,6 +68,7 @@ export const useItemsBoxsStore = defineStore("itemsBoxs", {
 		updateItemBox: itemBoxResource.update,
 		deleteItemBox: itemBoxResource.remove,
 		hydrateItemBoxs: itemBoxResource.hydrate,
+		upsertItemBoxs: itemBoxResource.upsert,
 		setItemBoxEdition: itemBoxResource.setEdition,
 		removeItemBoxEdition: itemBoxResource.removeEdition,
 		removeItemBoxReady: itemBoxResource.removeReady,

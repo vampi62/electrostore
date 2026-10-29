@@ -234,7 +234,7 @@ useTabGuard(zonesStore, () => zoneId.value, "zoneEdition", "zones");
 			:total-count="Number(zonesStore.zoneStoresTotalCount[zoneId] || 0)">
 			<template #append-row>
 				<Tableau :labels="labelTableauStore" :meta="{ key: 'id_store', path: '/stores/' }"
-					:store-data="[zonesStore.zoneStores[zoneId]]"
+					:store-data="[zonesStore.zoneStoresByZone(zoneId)]"
 					:total-count="Number(zonesStore.zoneStoresTotalCount[zoneId] || 0)"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
