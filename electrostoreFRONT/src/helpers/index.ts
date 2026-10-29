@@ -6,3 +6,4 @@ export * from "./filterValue";
 export * from "./mainResource";
 export * from "./nestedResource";
 export * from "./editionDraft";
+export * from "./resource";

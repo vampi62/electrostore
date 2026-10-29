@@ -17,11 +17,35 @@ export type IdKey<T extends EntityTypes> = Extract<keyof T["readExtended"], stri
 
 export interface MainResourceOptions<T extends EntityTypes> {
 	path: () => string;
-	idField: IdKey<T>
+	idField: IdKey<T>;
 	countKey: string;
 	stateKey: string;
 	loadingKey: string;
 	editionKey?: string;
+	onHydrate?: (store: StoreGeneric, entity: T["readExtended"], expand: string[]) => void;
+}
+
+// Values of some fields of a composite key. Complete, it identifies one record; partial, it selects a slice of them.
+export type KeyParts<T extends EntityTypes> = Partial<Record<IdKey<T>, string>>;
+
+// One way to reach a resource. Several routes can serve the same one (/item/{id_item}/tag and /tag/{id_tag}/item):
+// the first whose key fields are all given is used.
+export interface ResourceRoute<T extends EntityTypes> {
+	keys: Array<IdKey<T>>;
+	url: (parts: KeyParts<T>) => string;
+}
+
+// Resource identified by several fields (junction table): records are stored under the joined key, e.g. "3:12" for { id_item: 3, id_tag: 12 }.
+// countKey is indexed by scope ("id_item=3"), the others (stateKey, editionKey, readyKey) by composite key.
+export interface ResourceOptions<T extends EntityTypes> {
+	compositeKey: Array<IdKey<T>>;
+	path: Array<ResourceRoute<T>>;
+	entityPath: Array<ResourceRoute<T>>;
+	countKey: string;
+	stateKey: string;
+	loadingKey: string;
+	editionKey?: string;
+	readyKey?: string;
 	onHydrate?: (store: StoreGeneric, entity: T["readExtended"], expand: string[]) => void;
 }
 
