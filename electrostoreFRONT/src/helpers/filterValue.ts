@@ -7,10 +7,25 @@ export function isFilled(value: RSQLValue): boolean {
 	return value !== "" && value !== null && value !== undefined;
 }
 
+// the inputs only give strings, so "true" disables a filter whose disableValue is true
+function isDisabledValue(filter: Pick<RSQLFilter, "disableValue">, value: RSQLValue): boolean {
+	return filter.disableValue !== undefined && String(value) === String(filter.disableValue);
+}
+
 // values of a filter that are applied, a filter that is not multiple has at most one
-export function filledValues(filter: Pick<RSQLFilter, "value">): RSQLValue[] {
+export function filledValues(filter: Pick<RSQLFilter, "value" | "disableValue">): RSQLValue[] {
 	const values = Array.isArray(filter.value) ? filter.value : [filter.value];
-	return values.filter(isFilled);
+	return values.filter((value) => isFilled(value) && !isDisabledValue(filter, value));
+}
+
+// keys of the api that a filter checks, the first one is its key
+export function filterKeys(filter: Pick<RSQLFilter, "key" | "orKeys">): string[] {
+	return [filter.key, ...(filter.orKeys ?? [])];
+}
+
+// texts of a filter that are applied, a text that only has spaces is not
+export function filledPartialValues(filter: Pick<RSQLFilter, "partialValues">): string[] {
+	return (filter.partialValues ?? []).filter((text) => text.trim() !== "");
 }
 
 function toNumber(text: string, parse: (text: string) => number): number | "" {
@@ -64,7 +79,7 @@ function matchValue(compareMethod: string, rowValue: unknown, value: NonNullable
 	}
 	switch (compareMethod) {
 	case "==":
-	case "=any=":
+	case "=in=":
 		// "1" must match 1 and "true" must match true, the inputs only give strings
 		return normalize(rowValue) === normalize(value);
 	case "=like=":
@@ -79,14 +94,22 @@ function matchValue(compareMethod: string, rowValue: unknown, value: NonNullable
 	}
 }
 
-// does a row satisfy a filter, with several values the row must match all of them, or at least one for "=any="
-// the value of the row is only read if the filter is applied
-export function matchFilter(filter: RSQLFilter & Pick<FilterLabel, "disableLocalFilter">, getRowValue: () => unknown): boolean {
+// does a row satisfy a filter, with several values the row must match all of them,
+// or at least one of the values and of the partial values for "=in="
+// a value of the row can be the one of any key of the filter (key and orKeys)
+// the values of the row are only read if the filter is applied
+export function matchFilter(filter: RSQLFilter & Pick<FilterLabel, "disableLocalFilter">, getRowValue: (key: string) => unknown): boolean {
 	const values = filledValues(filter);
-	if (values.length === 0 || filter.disableLocalFilter) {
+	const isIn = filter.compareMethod === "=in=";
+	const partialValues = isIn ? filledPartialValues(filter) : [];
+	if ((values.length === 0 && partialValues.length === 0) || filter.disableLocalFilter) {
 		return true;
 	}
-	const rowValue = getRowValue();
-	const matches = (value: RSQLValue) => matchValue(filter.compareMethod, rowValue, value as NonNullable<RSQLValue>);
-	return filter.compareMethod === "=any=" ? values.some(matches) : values.every(matches);
+	const rowValues = filterKeys(filter).map((key) => getRowValue(key));
+	const matches = (rowValue: unknown, value: RSQLValue) => matchValue(filter.compareMethod, rowValue, value as NonNullable<RSQLValue>);
+	if (isIn) {
+		return rowValues.some((rowValue) => values.some((value) => matches(rowValue, value))
+			|| partialValues.some((text) => matchValue("=like=", rowValue, text)));
+	}
+	return values.every((value) => rowValues.some((rowValue) => matches(rowValue, value)));
 }

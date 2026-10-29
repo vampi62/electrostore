@@ -183,13 +183,10 @@ public static class RsqlParserExtensions
         Expression? combined = null;
         foreach (var condition in rsql)
         {
-            var binaryExpression = condition.search_type == "any"
-                ? BuildAnyExpression(param, condition.field, condition.value)
-                : BuildConditionExpression(param, condition.field, condition.search_type, condition.value);
-
-            if (binaryExpression != null)
+            var expression = BuildFilterExpression(param, condition);
+            if (expression != null)
             {
-                combined = combined == null ? binaryExpression : Expression.AndAlso(combined, binaryExpression);
+                combined = combined == null ? expression : Expression.AndAlso(combined, expression);
             }
         }
         if (combined == null)
@@ -200,18 +197,28 @@ public static class RsqlParserExtensions
     }
 
     /// <summary>
-    /// field=any=a,b,c : the field is equal to at least one of the comma separated values.
-    /// A value that can't be converted to the type of the field is ignored.
+    /// A condition, or a group that satisfies all its conditions ("and") or at least one ("or").
+    /// A condition that is not valid is ignored, as a group made of invalid conditions only.
     /// </summary>
-    private static Expression? BuildAnyExpression(ParameterExpression param, string field, string? value)
+    private static Expression? BuildFilterExpression(ParameterExpression param, FilterDto filter)
     {
-        Expression? combined = null;
-        foreach (var singleValue in (value ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries))
+        Func<Expression, Expression, Expression>? combine = filter.search_type switch
         {
-            var expression = BuildConditionExpression(param, field, "eq", singleValue);
+            "and" => Expression.AndAlso,
+            "or" => Expression.OrElse,
+            _ => null,
+        };
+        if (combine == null)
+        {
+            return BuildConditionExpression(param, filter.field, filter.search_type, filter.value);
+        }
+        Expression? combined = null;
+        foreach (var child in filter.children ?? [])
+        {
+            var expression = BuildFilterExpression(param, child);
             if (expression != null)
             {
-                combined = combined == null ? expression : Expression.OrElse(combined, expression);
+                combined = combined == null ? expression : combine(combined, expression);
             }
         }
         return combined;

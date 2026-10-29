@@ -72,6 +72,58 @@ namespace ElectrostoreAPI.Tests.Extensions
         }
 
         [Fact]
+        public void ToFilterExpression_ShouldMatchAnyCondition_OfAnOrGroup()
+        {
+            var matches = Compile<Projects>(FilterDto.Or([
+                new FilterDto { field = "id_project", search_type = "eq", value = "3" },
+                new FilterDto { field = "name_project", search_type = "like", value = "tor" },
+            ]));
+
+            Assert.True(matches(new Projects { id_project = 3, name_project = "cable" }));
+            Assert.True(matches(new Projects { id_project = 4, name_project = "monitor" }));
+            Assert.False(matches(new Projects { id_project = 4, name_project = "cable" }));
+        }
+
+        [Fact]
+        public void ToFilterExpression_ShouldMatchAllConditions_OfAnAndGroupInsideAnOrGroup()
+        {
+            var matches = Compile<Projects>(FilterDto.Or([
+                new FilterDto { field = "id_project", search_type = "eq", value = "3" },
+                FilterDto.And([
+                    new FilterDto { field = "name_project", search_type = "like", value = "tor" },
+                    new FilterDto { field = "id_project", search_type = "gt", value = "10" },
+                ]),
+            ]));
+
+            Assert.True(matches(new Projects { id_project = 3, name_project = "cable" }));
+            Assert.True(matches(new Projects { id_project = 11, name_project = "monitor" }));
+            Assert.False(matches(new Projects { id_project = 5, name_project = "monitor" }));
+        }
+
+        [Fact]
+        public void ToFilterExpression_ShouldIgnoreInvalidConditions_OfAnOrGroup()
+        {
+            var matches = Compile<Projects>(FilterDto.Or([
+                new FilterDto { field = "id_project", search_type = "eq", value = "not-a-number" },
+                new FilterDto { field = "id_project", search_type = "eq", value = "3" },
+            ]));
+
+            Assert.True(matches(new Projects { id_project = 3, name_project = "p" }));
+            Assert.False(matches(new Projects { id_project = 4, name_project = "p" }));
+        }
+
+        [Fact]
+        public void ToFilterExpression_ShouldMatchParsedFilter_WithInAndLike()
+        {
+            var filters = ParserExtensions.ParseFilter("(id_project=in=(1,2),name_project=like=tor)").ToArray();
+            var matches = Compile<Projects>(filters);
+
+            Assert.True(matches(new Projects { id_project = 2, name_project = "cable" }));
+            Assert.True(matches(new Projects { id_project = 9, name_project = "monitor" }));
+            Assert.False(matches(new Projects { id_project = 9, name_project = "cable" }));
+        }
+
+        [Fact]
         public void ToFilterExpression_ShouldReturnAlwaysTrue_WhenNoFilterProvided()
         {
             var (expression, remaining) = RsqlParserExtensions.ToFilterExpression<Projects>(null);

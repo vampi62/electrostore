@@ -14,7 +14,10 @@
 			:store-data="filter.storeData"
 			:store-key="filter.storeKey"
 			:multiple="filter.multiple"
+			:mode="filter.mode"
+			:partial-values="filter.partialValues"
 			@update="(value) => updateFilter(filter, value)"
+			@update-partial="(values) => updatePartialValues(filter, values)"
 		/>
 	</div>
 </template>
@@ -88,6 +91,13 @@ export default {
 				this.persistFilters();
 			}
 		},
+		// the texts typed by the user in permissive mode are not converted, the api finds what contains them
+		updatePartialValues(filter: FilterLabel, values: string[]) {
+			filter.partialValues = values;
+			if (this.saveState) {
+				this.persistFilters();
+			}
+		},
 		_filterStateKey() {
 			return `filter_state_${this.$route?.path || ""}_${this.stateKey || "default"}`;
 		},
@@ -98,7 +108,7 @@ export default {
 		persistFilters() {
 			const state: Record<string, FilterState> = {};
 			for (const filter of this.filters) {
-				state[this._filterId(filter)] = { value: filter.value };
+				state[this._filterId(filter)] = { value: filter.value, partialValues: filter.partialValues };
 			}
 			sessionStorage.setItem(this._filterStateKey(), JSON.stringify(state));
 		},
@@ -114,6 +124,10 @@ export default {
 				// prevent malformed saved values from breaking the component
 				if (Array.isArray(value) ? filter.multiple : (value !== undefined && typeof value !== "object")) {
 					filter.value = value ?? "";
+				}
+				const partialValues = state[this._filterId(filter)]?.partialValues;
+				if (filter.mode === "permissive" && Array.isArray(partialValues) && partialValues.every((text) => typeof text === "string")) {
+					filter.partialValues = partialValues;
 				}
 			}
 		},
