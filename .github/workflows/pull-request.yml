@@ -59,6 +59,22 @@ jobs:
       pull-requests: read
     secrets: inherit
 
+  # Only fails on vulnerable dependencies introduced by this PR (manifest diff).
+  # The full audit of existing dependencies runs in audit.yml (main/tags + schedule).
+  dependency-review:
+    name: dependency review
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Dependency review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          fail-on-scopes: runtime
+
   tests:
     name: tests
     needs: detect-changes

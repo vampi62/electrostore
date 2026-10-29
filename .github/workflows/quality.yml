@@ -74,7 +74,6 @@ jobs:
     outputs:
       front: ${{ steps.matrices.outputs.front }}
       lint_backend: ${{ steps.matrices.outputs.lint_backend }}
-      audit: ${{ steps.matrices.outputs.audit }}
     steps:
     - name: Build matrices from selected services
       id: matrices
@@ -86,7 +85,7 @@ jobs:
         NOTIF: ${{ inputs.notif }}
         WORKER: ${{ inputs.worker }}
       run: |
-        audit=$(jq -nc \
+        services=$(jq -nc \
           --argjson api "$API" --argjson notif "$NOTIF" --argjson cron "$CRON" \
           --argjson worker "$WORKER" --argjson front "$FRONT" '
           [
@@ -98,8 +97,7 @@ jobs:
           ] | map(select(.enabled) | del(.enabled))')
         {
           echo "front=$FRONT"
-          echo "audit=$audit"
-          echo "lint_backend=$(jq -c '[.[] | select(.type == "dotnet") | {service_name: .name, source_dir}]' <<< "$audit")"
+          echo "lint_backend=$(jq -c '[.[] | select(.type == "dotnet") | {service_name: .name, source_dir}]' <<< "$services")"
         } >> "$GITHUB_OUTPUT"
 
   lint-frontend:
@@ -159,48 +157,6 @@ jobs:
     - name: Check formatting
       continue-on-error: true
       run: dotnet format --verify-no-changes --no-restore
-
-  audit-dependencies:
-    name: audit - ${{ matrix.name }}
-    needs: plan
-    if: needs.plan.outputs.audit != '[]'
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJSON(needs.plan.outputs.audit) }}
-    defaults:
-      run:
-        shell: bash
-        working-directory: ./${{ matrix.source_dir }}
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v7
-      with:
-        ref: ${{ inputs.branch }}
-    - name: Set up C#
-      if: matrix.type == 'dotnet'
-      uses: actions/setup-dotnet@v5
-      with:
-        dotnet-version: '10.0.x'
-    - name: Audit NuGet packages
-      if: matrix.type == 'dotnet'
-      run: |
-        dotnet restore
-        # `dotnet list package` always exits 0, so fail on its report instead.
-        dotnet list package --vulnerable --include-transitive 2>&1 | tee audit.txt
-        if grep -q "has the following vulnerable packages" audit.txt; then
-          echo "::error::Vulnerable NuGet packages found in ${{ matrix.name }}"
-          exit 1
-        fi
-    - name: Set up Node.js
-      if: matrix.type == 'npm'
-      uses: actions/setup-node@v6
-      with:
-        node-version: '24'
-    - name: Audit npm packages (runtime dependencies)
-      if: matrix.type == 'npm'
-      run: npm audit --omit=dev --audit-level=high
 
   scan-secrets:
     name: scan - secrets
