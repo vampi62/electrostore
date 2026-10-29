@@ -184,8 +184,8 @@ namespace ElectrostoreAPI.Tests
         public void SwaggerFilter_ShouldNotAddHeader_WhenMissingLimitOrOffset()
         {
             // Arrange
-            var operation = new Microsoft.OpenApi.Models.OpenApiOperation();
-            operation.Responses["200"] = new Microsoft.OpenApi.Models.OpenApiResponse();
+            var operation = new Microsoft.OpenApi.OpenApiOperation();
+            operation.Responses["200"] = new Microsoft.OpenApi.OpenApiResponse();
 
             var apiDescription = new Microsoft.AspNetCore.Mvc.ApiExplorer.ApiDescription();
             // Only 'limit' present, 'offset' missing
@@ -203,6 +203,7 @@ namespace ElectrostoreAPI.Tests
                 apiDescription,
                 schemaGenerator,
                 schemaRepository,
+                new Microsoft.OpenApi.OpenApiDocument(),
                 methodInfo
             );
 
@@ -212,7 +213,7 @@ namespace ElectrostoreAPI.Tests
             filter.Apply(operation, context);
 
             // Assert
-            Assert.True(operation.Responses.TryGetValue("200", out var resp) && !resp.Headers.ContainsKey("X-Total-Count"));
+            Assert.True(operation.Responses.TryGetValue("200", out var resp) && (resp.Headers is null || !resp.Headers.ContainsKey("X-Total-Count")));
         }
 
         // Program.Main() itself requires a real "config/appsettings.json" file and live infrastructure

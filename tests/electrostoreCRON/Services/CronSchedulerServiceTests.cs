@@ -65,8 +65,8 @@ public class CronSchedulerServiceTests
         IJobDetail? scheduledJobDetail = null;
         ITrigger? scheduledTrigger = null;
         scheduler
-            .Setup(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<CancellationToken>()))
-            .Callback<IJobDetail, ITrigger, CancellationToken>((jd, t, _) => { scheduledJobDetail = jd; scheduledTrigger = t; })
+            .Setup(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<ScheduleJobOptions>(), It.IsAny<CancellationToken>()))
+            .Callback<IJobDetail, ITrigger, ScheduleJobOptions, CancellationToken>((jd, t, _, _) => { scheduledJobDetail = jd; scheduledTrigger = t; })
             .ReturnsAsync(DateTimeOffset.UtcNow);
 
         var reply = new GetEnabledCronJobsReply();
@@ -89,7 +89,7 @@ public class CronSchedulerServiceTests
         await LoadAndScheduleJobsAsync(service, scheduler.Object);
 
         // Assert
-        scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<CancellationToken>()), Times.Once);
+        scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<ScheduleJobOptions>(), It.IsAny<CancellationToken>()), Times.Once);
         Assert.NotNull(scheduledJobDetail);
         Assert.Equal("job-1", scheduledJobDetail!.Key.Name);
         Assert.Equal("electrostore", scheduledJobDetail.Key.Group);
@@ -120,7 +120,7 @@ public class CronSchedulerServiceTests
         await LoadAndScheduleJobsAsync(service, scheduler.Object);
 
         // Assert
-        scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<CancellationToken>()), Times.Never);
+        scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<ScheduleJobOptions>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -130,7 +130,7 @@ public class CronSchedulerServiceTests
         var service = CreateService();
         var scheduler = new Mock<IScheduler>();
         scheduler
-            .Setup(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<ScheduleJobOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(DateTimeOffset.UtcNow);
 
         var reply = new GetEnabledCronJobsReply();
@@ -156,7 +156,7 @@ public class CronSchedulerServiceTests
         await LoadAndScheduleJobsAsync(service, scheduler.Object);
 
         // Assert
-        scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<CancellationToken>()), Times.Once);
+        scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<ScheduleJobOptions>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -174,7 +174,7 @@ public class CronSchedulerServiceTests
 
         // Assert
         Assert.Null(exception);
-        scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<CancellationToken>()), Times.Never);
+        scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<ScheduleJobOptions>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

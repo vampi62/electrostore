@@ -60,7 +60,7 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.JsonWebTokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Minio;
 using MQTTnet;
 using System.Text;
@@ -191,19 +191,9 @@ public partial class Program
                 In = ParameterLocation.Header,
                 Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\""
             });
-            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
             {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer"
-                        }
-                    },
-                    Array.Empty<string>()
-                }
+                [new OpenApiSecuritySchemeReference("Bearer", document)] = []
             });
             c.SwaggerDoc("v1", new OpenApiInfo { Title = "ElectroStore API", Version = "v1" });
             c.OperationFilter<AddTotalCountHeaderFilter>();

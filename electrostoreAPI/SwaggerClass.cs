@@ -1,4 +1,4 @@
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -14,7 +14,7 @@ public class AddTotalCountHeaderFilter : IOperationFilter
     
     private static void AddDescriptionsToQueryParameters(OpenApiOperation operation, IList<Microsoft.AspNetCore.Mvc.ApiExplorer.ApiParameterDescription> parameters)
     {
-        foreach (var parameter in operation.Parameters)
+        foreach (var parameter in operation.Parameters?.OfType<OpenApiParameter>() ?? [])
         {
             if (parameter.In == ParameterLocation.Query)
             {

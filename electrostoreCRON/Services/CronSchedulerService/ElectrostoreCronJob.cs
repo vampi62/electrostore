@@ -38,10 +38,11 @@ public class ElectrostoreCronJob : IJob
         _logger             = logger;
     }
 
-    public async Task Execute(IJobExecutionContext context)
+    public async ValueTask Execute(IJobExecutionContext context, CancellationToken cancellationToken = default)
     {
         var map    = context.JobDetail.JobDataMap;
-        var action = Enum.TryParse<CronJobAction>(map.Get(KeyAction)?.ToString(), out var actionValue) ? (int)actionValue : -1;
+        map.TryGetValue(KeyAction, out var rawAction);
+        var action = Enum.TryParse<CronJobAction>(rawAction?.ToString(), out var actionValue) ? (int)actionValue : -1;
         var id     = map.GetInt(KeyId);
         var jobParams = map.GetString(KeyParams);
         var lastRunAt = ParseLastRunAt(map.GetString(KeyLastRunAt));
@@ -102,7 +103,7 @@ public class ElectrostoreCronJob : IJob
         }
         var triggers = await context.Scheduler.GetTriggersOfJob(context.JobDetail.Key, context.CancellationToken);
         return triggers
-            .Select(t => t.GetNextFireTimeUtc())
+            .Select(t => t.NextFireTimeUtc)
             .Where(t => t.HasValue)
             .OrderBy(t => t!.Value)
             .FirstOrDefault();
