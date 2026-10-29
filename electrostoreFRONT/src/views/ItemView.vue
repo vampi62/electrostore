@@ -9,7 +9,7 @@ import type { useNotification } from "@/composables";
 import type FormContainer from "@/components/FormContainer.vue";
 import { downloadFile, viewFile, isNewId, loadLedPreferences, toShowQuery } from "@/utils";
 import { ItemHistoryType } from "@/enums";
-import { useConfigsStore, useItemsStore, useTagsStore, useStoresStore, useCommandsStore, useProjectsStore, useAuthStore, useUsersStore } from "@/stores";
+import { useConfigsStore, useItemsStore, useItemsDocumentsStore, useItemsBoxsStore, useItemsTagsStore, useItemsCommandsStore, useItemsProjectsStore, useItemsHistoryStore, useTagsStore, useStoresStore, useCommandsStore, useProjectsStore, useAuthStore, useUsersStore } from "@/stores";
 
 import type { FilterLabel } from "@/types/filter";
 import type { TableauLabel, TableauRowData } from "@/types/tableau";
@@ -22,6 +22,12 @@ const router = useRouter();
 
 const configsStore = useConfigsStore();
 const itemsStore = useItemsStore();
+const itemDocumentsStore = useItemsDocumentsStore();
+const itemBoxsStore = useItemsBoxsStore();
+const itemTagsStore = useItemsTagsStore();
+const itemCommandsStore = useItemsCommandsStore();
+const itemProjectsStore = useItemsProjectsStore();
+const itemHistoryStore = useItemsHistoryStore();
 const tagsStore = useTagsStore();
 const storesStore = useStoresStore();
 const commandsStore = useCommandsStore();
@@ -39,6 +45,11 @@ if (isNewId(itemId.value)) {
 
 const formContainer = ref<InstanceType<typeof FormContainer> | null>(null);
 
+// composite keys of the nested records of the item
+const documentKey = (idDocument: string | number) => ({ id_item: itemId.value, id_item_document: String(idDocument) });
+const boxKey = (idBox: string | number) => ({ id_item: itemId.value, id_box: String(idBox) });
+const tagKey = (idTag: string | number) => ({ id_item: itemId.value, id_tag: String(idTag) });
+
 async function fetchAllData() {
 	if (isNewId(itemId.value)) {
 		itemsStore.loadToEdition(itemId.value, preset.value);
@@ -52,7 +63,7 @@ async function fetchAllData() {
 			router.push("/inventory");
 			return;
 		}
-		itemsStore.getItemTagByInterval(itemId.value, 100, 0, ["tag"]);
+		itemTagsStore.getItemTagByInterval({ id_item: itemId.value }, 100, 0, ["tag"]);
 		itemsStore.loadToEdition(itemId.value);
 	}
 }
@@ -65,7 +76,7 @@ onBeforeUnmount(() => {
 });
 
 const toggleBoxLed = async(boxId: string) => {
-	const itemBox: TableauRowData = itemsStore.itemBoxs[itemId.value][boxId];
+	const itemBox: TableauRowData = itemBoxsStore.itemBoxsByItem(itemId.value)[boxId];
 	const storeId = itemBox.box.id_store;
 	try {
 		await storesStore.showBoxById(storeId, boxId, toShowQuery(loadLedPreferences(authStore.user?.id_user).remove));
@@ -128,15 +139,15 @@ const getTotalQuantity = computed(() => {
 	if (isNewId(itemId.value)) {
 		return 0;
 	}
-	return itemsStore.itemBoxs[itemId.value] ? Object.values(itemsStore.itemBoxs[itemId.value]).reduce((acc, box) => acc + (box.quantity_item_box ?? 0), 0) : 0;
+	return Object.values(itemBoxsStore.itemBoxsByItem(itemId.value)).reduce((acc, box) => acc + (box.quantity_item_box ?? 0), 0);
 });
 
 // box
 const boxEdit = (box: TableauRowData) => {
 	try {
 		schemaBox.validateSync(box, { abortEarly: false });
-		itemsStore.valideItemBoxEditionById(itemId.value, box.id_box, "modified");
-		delete itemsStore.itemBoxEdition[itemId.value][box.id_box];
+		itemBoxsStore.valideItemBoxEditionByKey(boxKey(box.id_box), "modified");
+		itemBoxsStore.removeItemBoxEdition(boxKey(box.id_box));
 		addNotification({ message: t("item.BoxUpdated"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -145,7 +156,7 @@ const boxEdit = (box: TableauRowData) => {
 };
 const boxRestore = (row: TableauRowData) => {
 	try {
-		delete itemsStore.itemBoxReady[itemId.value][row.id_box];
+		itemBoxsStore.removeItemBoxReady(boxKey(row.id_box));
 		addNotification({ message: t("item.BoxRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -153,8 +164,8 @@ const boxRestore = (row: TableauRowData) => {
 };
 const boxDelete = (row: TableauRowData) => {
 	try {
-		itemsStore.valideItemBoxEditionById(itemId.value, row.id_box, "deleted");
-		delete itemsStore.itemBoxEdition[itemId.value][row.id_box];
+		itemBoxsStore.valideItemBoxEditionByKey(boxKey(row.id_box), "deleted");
+		itemBoxsStore.removeItemBoxEdition(boxKey(row.id_box));
 		addNotification({ message: t("item.BoxDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -166,12 +177,12 @@ const documentAddModalShow = ref(false);
 const documentAdd = async(files: { name: string; document: File }[]) => {
 	for (const file of files) {
 		const documentModalData = { name_item_document: file.name, document: file.document, type_item_document: file.document.type, created_at: new Date() };
-		const newId = itemsStore.getAvailableNewDocumentId(itemId.value);
-		itemsStore.documentEdition[itemId.value][newId] = documentModalData;
+		const newId = itemDocumentsStore.getAvailableNewItemDocumentId({ id_item: itemId.value });
+		itemDocumentsStore.setItemDocumentEdition(documentKey(newId), documentModalData);
 		try {
 			schemaAddDocument.validateSync(documentModalData, { abortEarly: false });
-			itemsStore.valideDocumentEditionById(itemId.value, newId, "created", true);
-			delete itemsStore.documentEdition[itemId.value][newId];
+			itemDocumentsStore.valideItemDocumentEditionByKey(documentKey(newId), "created", true);
+			itemDocumentsStore.removeItemDocumentEdition(documentKey(newId));
 			addNotification({ message: t("item.DocumentAdded"), type: "success" });
 		} catch (e) {
 			addNotification({ message: e, type: "error" });
@@ -182,9 +193,9 @@ const documentAdd = async(files: { name: string; document: File }[]) => {
 const documentEdit = (row: TableauRowData) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
-		itemsStore.valideDocumentEditionById(itemId.value, row.id_item_document, 
-			itemsStore.documentReady[itemId.value]?.[row.id_item_document]?.status === "created" ? "created" : "modified");
-		delete itemsStore.documentEdition[itemId.value][row.id_item_document];
+		itemDocumentsStore.valideItemDocumentEditionByKey(documentKey(row.id_item_document),
+			itemDocumentsStore.itemDocumentReadyByItem(itemId.value)[row.id_item_document]?.status === "created" ? "created" : "modified");
+		itemDocumentsStore.removeItemDocumentEdition(documentKey(row.id_item_document));
 		addNotification({ message: t("item.DocumentUpdated"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -193,7 +204,7 @@ const documentEdit = (row: TableauRowData) => {
 };
 const documentRestore = (row: TableauRowData) => {
 	try {
-		delete itemsStore.documentReady[itemId.value][row.id_item_document];
+		itemDocumentsStore.removeItemDocumentReady(documentKey(row.id_item_document));
 		addNotification({ message: t("item.DocumentRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -201,8 +212,8 @@ const documentRestore = (row: TableauRowData) => {
 };
 const documentDelete = (row: TableauRowData) => {
 	try {
-		itemsStore.valideDocumentEditionById(itemId.value, row.id_item_document, "deleted");
-		delete itemsStore.documentEdition[itemId.value][row.id_item_document];
+		itemDocumentsStore.valideItemDocumentEditionByKey(documentKey(row.id_item_document), "deleted");
+		itemDocumentsStore.removeItemDocumentEdition(documentKey(row.id_item_document));
 		addNotification({ message: t("item.DocumentDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -210,11 +221,11 @@ const documentDelete = (row: TableauRowData) => {
 };
 
 const documentDownload = async(fileContent: TableauRowData) => {
-	const file = await itemsStore.downloadDocument(itemId.value, fileContent.id_item_document);
+	const file = await itemDocumentsStore.downloadItemDocument(itemId.value, fileContent.id_item_document);
 	downloadFile(file, { keyName: fileContent.name_item_document, keyType: fileContent.type_item_document });
 };
 const documentView = async(fileContent: TableauRowData) => {
-	const file = await itemsStore.downloadDocument(itemId.value, fileContent.id_item_document);
+	const file = await itemDocumentsStore.downloadItemDocument(itemId.value, fileContent.id_item_document);
 	if (viewFile(file, { keyName: fileContent.name_item_document, keyType: fileContent.type_item_document })) {
 		addNotification({ message: t("item.DocumentOpenInNewTab"), type: "success" });
 	} else {
@@ -267,14 +278,14 @@ const filterTag = ref<FilterLabel[]>([
 function tagSave(id_tag: number) {
 	try {
 		// re-adding a tag that is only pending deletion locally just cancels that pending deletion
-		if (itemsStore.itemTagReady[itemId.value]?.[id_tag]?.status === "deleted") {
-			delete itemsStore.itemTagReady[itemId.value][id_tag];
+		if (itemTagsStore.itemTagReadyByItem(itemId.value)[id_tag]?.status === "deleted") {
+			itemTagsStore.removeItemTagReady(tagKey(id_tag));
 			addNotification({ message: t("item.TagRestored"), type: "success" });
 			return;
 		}
-		itemsStore.itemTagEdition[itemId.value][id_tag] = { id_tag };
-		itemsStore.valideItemTagEditionById(itemId.value, String(id_tag), "created");
-		delete itemsStore.itemTagEdition[itemId.value][id_tag];
+		itemTagsStore.setItemTagEdition(tagKey(id_tag), { id_tag });
+		itemTagsStore.valideItemTagEditionByKey(tagKey(id_tag), "created");
+		itemTagsStore.removeItemTagEdition(tagKey(id_tag));
 		addNotification({ message: t("item.TagAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -283,10 +294,10 @@ function tagSave(id_tag: number) {
 function tagDelete(id_tag: string) {
 	try {
 		// a tag that was only staged as a pending creation is simply dropped, nothing to push
-		if (itemsStore.itemTagReady[itemId.value]?.[id_tag]?.status === "created") {
-			delete itemsStore.itemTagReady[itemId.value][id_tag];
+		if (itemTagsStore.itemTagReadyByItem(itemId.value)[id_tag]?.status === "created") {
+			itemTagsStore.removeItemTagReady(tagKey(id_tag));
 		} else {
-			itemsStore.valideItemTagEditionById(itemId.value, id_tag, "deleted");
+			itemTagsStore.valideItemTagEditionByKey(tagKey(id_tag), "deleted");
 		}
 		addNotification({ message: t("item.TagDeleted"), type: "success" });
 	} catch (e) {
@@ -295,7 +306,7 @@ function tagDelete(id_tag: string) {
 }
 function tagRestore(id_tag: string) {
 	try {
-		delete itemsStore.itemTagReady[itemId.value][id_tag];
+		itemTagsStore.removeItemTagReady(tagKey(id_tag));
 		addNotification({ message: t("item.TagRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -402,7 +413,7 @@ const labelTableauDocument = ref<TableauLabel[]>([
 			icon: "fa-solid fa-edit",
 			showCondition: "!edition?.id_item_document && ready?.status !== 'deleted'",
 			action: (row: TableauRowData) => {
-				itemsStore.documentEdition[itemId.value][row.id_item_document] = { ...row };
+				itemDocumentsStore.setItemDocumentEdition(documentKey(row.id_item_document), { ...row });
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -411,7 +422,7 @@ const labelTableauDocument = ref<TableauLabel[]>([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_item_document",
 			action: (row: TableauRowData) => {
-				delete itemsStore.documentEdition[itemId.value][row.id_item_document];
+				itemDocumentsStore.removeItemDocumentEdition(documentKey(row.id_item_document));
 			},
 			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
 		},
@@ -419,7 +430,7 @@ const labelTableauDocument = ref<TableauLabel[]>([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_item_document",
-			action: (row: TableauRowData) => documentEdit(itemsStore.documentEdition[itemId.value][row.id_item_document]),
+			action: (row: TableauRowData) => documentEdit(itemDocumentsStore.itemDocumentEditionByItem(itemId.value)[row.id_item_document]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -473,7 +484,7 @@ const labelTableauBox = ref<TableauLabel[]>([
 			icon: "fa-solid fa-edit",
 			showCondition: "!edition?.id_box && ready?.status !== 'deleted'",
 			action: (row: TableauRowData) => {
-				itemsStore.itemBoxEdition[itemId.value][row.id_box] = { ...row };
+				itemBoxsStore.setItemBoxEdition(boxKey(row.id_box), { ...row });
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -482,7 +493,7 @@ const labelTableauBox = ref<TableauLabel[]>([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_box",
 			action: (row: TableauRowData) => {
-				delete itemsStore.itemBoxEdition[itemId.value][row.id_box];
+				itemBoxsStore.removeItemBoxEdition(boxKey(row.id_box));
 			},
 			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
 		},
@@ -490,7 +501,7 @@ const labelTableauBox = ref<TableauLabel[]>([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_box",
-			action: (row: TableauRowData) => boxEdit(itemsStore.itemBoxEdition[itemId.value][row.id_box]),
+			action: (row: TableauRowData) => boxEdit(itemBoxsStore.itemBoxEditionByItem(itemId.value)[row.id_box]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -539,7 +550,13 @@ const labelTableauProject = ref<TableauLabel[]>([
 	{ label: "item.ProjectQuantity", sortable: true, key: "quantity_project_item", valueKey: "quantity_project_item", type: "number" },
 ]);
 useViewScroll(true);
-useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items");
+useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items", [
+	{ key: "documentReady", get: (id) => itemDocumentsStore.itemDocumentReadyByItem(id), set: (id, entries) => itemDocumentsStore.setItemDocumentStagedSlice("ready", { id_item: id }, entries) },
+	{ key: "itemBoxReady", get: (id) => itemBoxsStore.itemBoxReadyByItem(id), set: (id, entries) => itemBoxsStore.setItemBoxStagedSlice("ready", { id_item: id }, entries) },
+	{ key: "itemTagReady", get: (id) => itemTagsStore.itemTagReadyByItem(id), set: (id, entries) => itemTagsStore.setItemTagStagedSlice("ready", { id_item: id }, entries) },
+	{ key: "itemCommandReady", get: (id) => itemCommandsStore.itemCommandReadyByItem(id), set: (id, entries) => itemCommandsStore.setItemCommandStagedSlice("ready", { id_item: id }, entries) },
+	{ key: "itemProjectReady", get: (id) => itemProjectsStore.itemProjectReadyByItem(id), set: (id, entries) => itemProjectsStore.setItemProjectStagedSlice("ready", { id_item: id }, entries) },
+]);
 </script>
 
 <template>
@@ -586,7 +603,7 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items");
 					</div>
 				</template>
 			</FormContainer>
-			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :ready-store="itemsStore.itemTagReady[itemId] || {}" :tags-store="tagsStore.tags" :can-edit="authStore.hasPermission([1, 2])"
+			<Tags :current-tags="itemTagsStore.itemTagsByItem(itemId)" :ready-store="itemTagsStore.itemTagReadyByItem(itemId)" :tags-store="tagsStore.tags" :can-edit="authStore.hasPermission([1, 2])"
 				:delete-function="(value: string) => tagDelete(value)"
 				:restore-function="(value: string) => tagRestore(value)"
 				:filter-modal="filterTag"
@@ -597,71 +614,71 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items");
 				/>
 		</div>
 		<CollapsibleSection title="item.Boxs"
-			:total-count="Number(itemsStore.itemBoxsTotalCount[itemId] || 0)">
+			:total-count="itemBoxsStore.itemBoxsCountByItem(itemId)">
 			<template #append-row>
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box', expand: ['box'] }"
-					:store-data="[itemsStore.itemBoxs[itemId]]"
-					:store-edition="itemsStore.itemBoxEdition[itemId]"
-					:store-ready="itemsStore.itemBoxReady[itemId]"
-					:loading="itemsStore.itemBoxsLoading"
+					:store-data="[itemBoxsStore.itemBoxsByItem(itemId)]"
+					:store-edition="itemBoxsStore.itemBoxEditionByItem(itemId)"
+					:store-ready="itemBoxsStore.itemBoxReadyByItem(itemId)"
+					:loading="itemBoxsStore.itemBoxsLoading"
 					:schema="schemaBox"
-					:total-count="Number(itemsStore.itemBoxsTotalCount[itemId])"
-					:fetch-function="!isNewId(itemId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemBoxByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
+					:total-count="itemBoxsStore.itemBoxsCountByItem(itemId)"
+					:fetch-function="!isNewId(itemId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemBoxsStore.getItemBoxByInterval({ id_item: itemId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.Documents"
-			:total-count="Number(itemsStore.documentsTotalCount[itemId] || 0)">
+			:total-count="itemDocumentsStore.itemDocumentsCountByItem(itemId)">
 			<template #append-row>
 				<button type="button" @click="documentAddModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('item.AddDocument') }}
 				</button>
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_item_document' }"
-					:store-data="[itemsStore.documents[itemId]]"
-					:store-edition="itemsStore.documentEdition[itemId]"
-					:store-ready="itemsStore.documentReady[itemId]"
+					:store-data="[itemDocumentsStore.itemDocumentsByItem(itemId)]"
+					:store-edition="itemDocumentsStore.itemDocumentEditionByItem(itemId)"
+					:store-ready="itemDocumentsStore.itemDocumentReadyByItem(itemId)"
 					:schema="schemaEditDocument"
-					:loading="itemsStore.documentsLoading"
-					:total-count="Number(itemsStore.documentsTotalCount[itemId])"
-					:fetch-function="!isNewId(itemId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getDocumentByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
+					:loading="itemDocumentsStore.itemDocumentsLoading"
+					:total-count="itemDocumentsStore.itemDocumentsCountByItem(itemId)"
+					:fetch-function="!isNewId(itemId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemDocumentsStore.getItemDocumentByInterval({ id_item: itemId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.Commands"
-			:total-count="Number(itemsStore.itemCommandsTotalCount[itemId] || 0)">
+			:total-count="itemCommandsStore.itemCommandsCountByItem(itemId)">
 			<template #append-row>
 				<Tableau :labels="labelTableauCommand" :meta="{ key: 'id_item', path: '/commands/', expand: ['command'] }"
-					:store-data="[itemsStore.itemCommands[itemId],commandsStore.commands]"
-					:loading="itemsStore.itemCommandsLoading"
-					:total-count="Number(itemsStore.itemCommandsTotalCount[itemId])"
-					:fetch-function="!isNewId(itemId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemCommandByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
+					:store-data="[itemCommandsStore.itemCommandsByItem(itemId),commandsStore.commands]"
+					:loading="itemCommandsStore.itemCommandsLoading"
+					:total-count="itemCommandsStore.itemCommandsCountByItem(itemId)"
+					:fetch-function="!isNewId(itemId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemCommandsStore.getItemCommandByInterval({ id_item: itemId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.Projects"
-			:total-count="Number(itemsStore.itemProjectsTotalCount[itemId] || 0)">
+			:total-count="itemProjectsStore.itemProjectsCountByItem(itemId)">
 			<template #append-row>
 				<Tableau :labels="labelTableauProject" :meta="{ key: 'id_project', path: '/projects/', expand: ['project'] }"
-					:store-data="[itemsStore.itemProjects[itemId],projectsStore.projects]"
-					:loading="itemsStore.itemProjectsLoading"
-					:total-count="Number(itemsStore.itemProjectsTotalCount[itemId])"
-					:fetch-function="!isNewId(itemId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemProjectByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
+					:store-data="[itemProjectsStore.itemProjectsByItem(itemId),projectsStore.projects]"
+					:loading="itemProjectsStore.itemProjectsLoading"
+					:total-count="itemProjectsStore.itemProjectsCountByItem(itemId)"
+					:fetch-function="!isNewId(itemId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemProjectsStore.getItemProjectByInterval({ id_item: itemId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.History"
-			:total-count="Number(itemsStore.itemHistoryTotalCount[itemId] || 0)">
+			:total-count="itemHistoryStore.itemHistoryCountByItem(itemId)">
 			<template #append-row>
 				<Tableau :labels="labelTableauHistory" :meta="{ key: 'id_item_history', expand: ['user'], sort: 'created_at', sortOrder: 'desc' }"
-					:store-data="[itemsStore.itemHistory[itemId], usersStore.users]"
-					:loading="itemsStore.itemHistoryLoading"
-					:total-count="Number(itemsStore.itemHistoryTotalCount[itemId])"
-					:fetch-function="!isNewId(itemId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemHistoryByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
+					:store-data="[itemHistoryStore.itemHistoryByItem(itemId), usersStore.users]"
+					:loading="itemHistoryStore.itemHistoryLoading"
+					:total-count="itemHistoryStore.itemHistoryCountByItem(itemId)"
+					:fetch-function="!isNewId(itemId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemHistoryStore.getItemHistoryByInterval({ id_item: itemId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>

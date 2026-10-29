@@ -2,18 +2,19 @@
 import { useViewScroll } from "@/composables";
 import { ref } from "vue";
 
-import { useItemsStore, useTagsStore } from "@/stores";
+import { useItemsStore, useItemsTagsStore, useTagsStore } from "@/stores";
 
 import type { FilterLabel } from "@/types/filter";
 import type { TableauLabel, TableauMeta } from "@/types/tableau";
 import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 const itemsStore = useItemsStore();
+const itemTagsStore = useItemsTagsStore();
 const tagsStore = useTagsStore();
 
 async function fetchTagData(minOffset: number, maxOffset: number) {
 	let tagsNotFound: string[] = [];
 	for (let id = minOffset; id < maxOffset; id++) {
-		for (const tag in itemsStore.itemTags[id]) {
+		for (const tag in itemTagsStore.itemTagsGroupedByItem[id]) {
 			if (!tagsStore.tags[tag]) {
 				tagsNotFound.push(tag);
 			}
@@ -75,7 +76,7 @@ useViewScroll(false);
 		<FilterContainer :filters="filter" :store-data="itemsStore.items" @ready="filterReady = true" :save-state="true" state-key="inventoryFilterState" />
 	</div>
 	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
-		:store-data="[itemsStore.items,itemsStore.itemTags,tagsStore.tags,itemsStore.thumbnailsURL]"
+		:store-data="[itemsStore.items,itemTagsStore.itemTagsGroupedByItem,tagsStore.tags,itemsStore.thumbnailsURL]"
 		:filters="filter"
 		:loading="itemsStore.itemsLoading"
 		:total-count="Number(itemsStore.itemsTotalCount) || 0"

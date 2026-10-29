@@ -39,6 +39,8 @@ export interface ResourceRoute<T extends EntityTypes> {
 // countKey is indexed by scope ("id_item=3"), the others (stateKey, editionKey, readyKey) by composite key.
 export interface ResourceOptions<T extends EntityTypes> {
 	compositeKey: Array<IdKey<T>>;
+	// Key field the api assigns when the record is created: it is a temporary "new-x" id until then
+	generatedField?: IdKey<T>;
 	path: Array<ResourceRoute<T>>;
 	entityPath: Array<ResourceRoute<T>>;
 	countKey: string;

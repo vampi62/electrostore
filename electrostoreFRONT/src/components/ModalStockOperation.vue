@@ -59,7 +59,7 @@ import { useI18n } from "vue-i18n";
 import type { useNotification } from "@/composables";
 import { loadLedPreferences, toShowQuery } from "@/utils";
 import type { LedOperation } from "@/utils";
-import { useItemsStore, useStoresStore, useAuthStore } from "@/stores";
+import { useItemsBoxsStore, useStoresStore, useAuthStore } from "@/stores";
 type PlanStep = { idBox: number; idStore: number; current: number; change: number; max: number };
 export default {
 	name: "ModalStockOperation",
@@ -86,13 +86,13 @@ export default {
 	setup() {
 		const { addNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 		const { t } = useI18n();
-		const itemsStore = useItemsStore();
+		const itemBoxsStore = useItemsBoxsStore();
 		const storesStore = useStoresStore();
 		const authStore = useAuthStore();
 		return { 
 			addNotification,
 			t,
-			itemsStore,
+			itemBoxsStore,
 			storesStore,
 			authStore,
 		};
@@ -116,7 +116,7 @@ export default {
 	},
 	methods: {
 		buildPlan() {
-			const boxs = (Object.values(this.itemsStore.itemBoxs[this.itemId] || {}) as any[]).map((ib) => ({
+			const boxs = (Object.values(this.itemBoxsStore.itemBoxsByItem(this.itemId)) as any[]).map((ib) => ({
 				idBox: ib.id_box,
 				idStore: ib.box?.id_store ?? ib.id_store,
 				current: ib.quantity_item_box,
@@ -154,7 +154,7 @@ export default {
 			}
 			this.loading = true;
 			try {
-				await this.itemsStore.getItemBoxByInterval(this.itemId, 100, 0, ["box"], [], {}, true);
+				await this.itemBoxsStore.getItemBoxByInterval({ id_item: this.itemId }, 100, 0, ["box"], [], {}, true);
 				const steps = this.buildPlan();
 				if (!steps) {
 					this.addNotification({ message: this.t(this.operation === "remove" ? "item.StockNotEnough" : "item.StockNoRoom"), type: "error" });
@@ -177,7 +177,7 @@ export default {
 			this.loading = true;
 			try {
 				const newQuantity = step.current + (this.operation === "remove" ? -step.change : step.change);
-				await this.itemsStore.updateItemBox(this.itemId, String(step.idBox), { quantity_item_box: newQuantity, threshold_max_item_item_box: step.max });
+				await this.itemBoxsStore.updateItemBox({ id_item: this.itemId, id_box: String(step.idBox) }, { quantity_item_box: newQuantity, threshold_max_item_item_box: step.max });
 				this.stepIndex++;
 				if (this.stepIndex < this.plan.length) {
 					await this.showStep(this.plan[this.stepIndex]);

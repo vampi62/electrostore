@@ -13,7 +13,7 @@ function isSaved(parts: Record<string, string | number>): boolean {
 	return !Object.values(parts).some((value) => String(value).startsWith(NEW_ID_PREFIX));
 }
 
-export function createResource<T extends EntityTypes>({ compositeKey, path, entityPath, countKey, stateKey, loadingKey, editionKey, readyKey, onHydrate }: ResourceOptions<T>) {
+export function createResource<T extends EntityTypes>({ compositeKey, generatedField, path, entityPath, countKey, stateKey, loadingKey, editionKey, readyKey, onHydrate }: ResourceOptions<T>) {
 	type ReadExtended = "readExtended" extends keyof T ? T["readExtended"] : T["readBasic"];
 	type Read = "readBasic" extends keyof T ? T["readBasic"] : T["readExtended"];
 	type Parts = KeyParts<T>;
@@ -51,6 +51,27 @@ export function createResource<T extends EntityTypes>({ compositeKey, path, enti
 		return Object.fromEntries(Object.entries(records ?? {}).filter(([key]) => matches(key, part)));
 	}
 
+	// Same as pick, the keys keep only the fields the part does not give: { id_item: 3 } turns "3:12" into "12"
+	function slice<R>(records: Record<string, R> | undefined, part: Parts): Record<string, R> {
+		const rest = compositeKey.filter((field) => part[field] === undefined || part[field] === null);
+		return Object.fromEntries(Object.entries(pick(records, part)).map(([key, value]) => {
+			const parts = toParts(key);
+			return [rest.map((field) => parts[field]).join(KEY_SEPARATOR), value];
+		}));
+	}
+
+	// { "3:12": a, "3:13": b, "4:12": c } by id_item => { "3": { "12": a, "13": b }, "4": { "12": c } }
+	function group<R>(records: Record<string, R> | undefined, field: IdKey<T>): Record<string, Record<string, R>> {
+		const rest = compositeKey.filter((candidate) => candidate !== field);
+		const grouped: Record<string, Record<string, R>> = {};
+		for (const [key, value] of Object.entries(records ?? {})) {
+			const parts = toParts(key);
+			grouped[parts[field]] ??= {};
+			grouped[parts[field]][rest.map((candidate) => parts[candidate]).join(KEY_SEPARATOR)] = value;
+		}
+		return grouped;
+	}
+
 	function keyFields(parts: Parts): Parts {
 		return Object.fromEntries(compositeKey.map((field) => [field, parts[field]])) as Parts;
 	}
@@ -79,7 +100,38 @@ export function createResource<T extends EntityTypes>({ compositeKey, path, enti
 	const collectionUrl = (scope: Parts) => resolveUrl(path, scope);
 	const entityUrl = (key: Parts) => resolveUrl(entityPath, key);
 
+	// The generated field of a record about to be created is a temporary id until the api answers
+	function isKeySaved(parts: Record<string, string | number>, status?: string): boolean {
+		const checked = status === "created" && generatedField ? Object.fromEntries(Object.entries(parts).filter(([field]) => field !== generatedField)) : parts;
+		return isSaved(checked);
+	}
+
+	// A resource without scope (e.g. /item) keeps its count as a number, the others one per scope
+	function setCount(store: StoreGeneric, scope: Parts, total: number) {
+		const scopeKey = toScopeKey(scope);
+		if (scopeKey === "") {
+			store[countKey] = total;
+			return;
+		}
+		store[countKey] ??= {};
+		store[countKey][scopeKey] = total;
+	}
+
+	function ensureCount(store: StoreGeneric, scope: Parts) {
+		const scopeKey = toScopeKey(scope);
+		if (scopeKey === "") {
+			store[countKey] ??= 0;
+			return;
+		}
+		store[countKey] ??= {};
+		store[countKey][scopeKey] ??= 0;
+	}
+
 	function bumpCounts(store: StoreGeneric, parts: Parts, delta: number) {
+		if (typeof store[countKey] === "number") {
+			store[countKey] = Math.max(store[countKey] + delta, 0);
+			return;
+		}
 		for (const scope of Object.keys(store[countKey] ?? {})) {
 			const inScope = scope.split("&").every((pair) => {
 				const [field, value] = pair.split("=");
@@ -97,9 +149,10 @@ export function createResource<T extends EntityTypes>({ compositeKey, path, enti
 		toParts,
 		toScopeKey,
 		pick,
+		slice,
+		group,
 		async getByInterval(this: StoreGeneric, scope: Parts, limit = 100, offset = 0, expand: string[] = [], filter: RSQLFilter[] = [], sort: RSQLSort = {}, clear = false): Promise<FetchPage> {
 			this[stateKey] ??= {};
-			this[countKey] ??= {};
 			if (clear) {
 				for (const key of Object.keys(pick(this[stateKey], scope))) {
 					delete this[stateKey][key];
@@ -113,7 +166,7 @@ export function createResource<T extends EntityTypes>({ compositeKey, path, enti
 					this[stateKey][toKey(entity as Parts)] = entity;
 					onHydrate?.(this, entity, expand);
 				}
-				this[countKey][toScopeKey(scope)] = res.pagination?.total ?? 0;
+				setCount(this, scope, res.pagination?.total ?? 0);
 				return [res.pagination?.next_offset ?? 0, res.pagination?.has_more ?? false];
 			} finally {
 				this[loadingKey] = false;
@@ -135,13 +188,12 @@ export function createResource<T extends EntityTypes>({ compositeKey, path, enti
 		},
 		async create(this: StoreGeneric, scope: Parts, params: Body<T, "create">, isFormData = false): Promise<string> {
 			this[stateKey] ??= {};
-			this[countKey] ??= {};
 			// if isFormData, params is converted to FormData and sent as multipart/form-data
 			const body = isFormData ? buildFormData(params as Record<string, string | Blob>) : params;
 			const data = await fetchWrapper.post<Read>({ url: `${baseUrl}${collectionUrl(scope)}`, useToken: "access", body, contentFile: isFormData });
 			const key = toKey(data as Parts);
 			this[stateKey][key] = data;
-			this[countKey][toScopeKey(scope)] ??= 0;
+			ensureCount(this, scope);
 			bumpCounts(this, data as Parts, 1);
 			return key;
 		},
@@ -157,9 +209,8 @@ export function createResource<T extends EntityTypes>({ compositeKey, path, enti
 		},
 		async createBulk(this: StoreGeneric, scope: Parts, params: Body<T, "createBulk">): Promise<ReadBulkDto<Read>> {
 			this[stateKey] ??= {};
-			this[countKey] ??= {};
 			const res = await fetchWrapper.post<ReadBulkDto<Read>>({ url: `${baseUrl}${collectionUrl(scope)}/bulk`, useToken: "access", body: params });
-			this[countKey][toScopeKey(scope)] ??= 0;
+			ensureCount(this, scope);
 			for (const entity of res.valide) {
 				this[stateKey][toKey(entity as Parts)] = entity;
 				bumpCounts(this, entity as Parts, 1);
@@ -181,6 +232,85 @@ export function createResource<T extends EntityTypes>({ compositeKey, path, enti
 				const key = { ...scope, [field]: id } as Parts;
 				delete this[stateKey]?.[toKey(key)];
 				bumpCounts(this, key, -1);
+			}
+		},
+		// Replaces the records of a scope with the ones an expanded parent brought along; entities left undefined only update the total
+		hydrate(this: StoreGeneric, scope: Parts, entities: unknown[] | null | undefined, total?: number) {
+			this[stateKey] ??= {};
+			if (entities) {
+				for (const key of Object.keys(pick(this[stateKey], scope))) {
+					delete this[stateKey][key];
+				}
+				for (const entity of entities) {
+					if (compositeKey.every((field) => (entity as Parts)[field] !== undefined && (entity as Parts)[field] !== null)) {
+						this[stateKey][toKey(entity as Parts)] = entity;
+					}
+				}
+			}
+			if (total !== undefined) {
+				setCount(this, scope, total);
+			}
+		},
+		getAvailableNewId(this: StoreGeneric, scope: Parts = {}): string {
+			if (!editionKey || !generatedField) {
+				throw new Error("Edition key and generated field are required to reserve a new id");
+			}
+			this[editionKey] ??= {};
+			let i = 1;
+			while (Object.hasOwn(this[editionKey], toKey({ ...scope, [generatedField]: NEW_ID_PREFIX + i } as Parts))) {
+				i++;
+			}
+			const id = NEW_ID_PREFIX + i;
+			this[editionKey][toKey({ ...scope, [generatedField]: id } as Parts)] = {};
+			return id;
+		},
+		// preset: "field:value;field:value"
+		loadEditionPreset(this: StoreGeneric, key: Parts, preset: string | null = null) {
+			if (!editionKey || !preset) {
+				return;
+			}
+			this[editionKey] ??= {};
+			const stateId = toKey(key);
+			this[editionKey][stateId] ??= {};
+			for (const pair of preset.split(";")) {
+				const [field, value] = pair.split(":");
+				if (field && value) {
+					this[editionKey][stateId][field] = value;
+				}
+			}
+		},
+		setEdition(this: StoreGeneric, key: Parts, data: object) {
+			if (!editionKey) {
+				return;
+			}
+			this[editionKey] ??= {};
+			this[editionKey][toKey(key)] = data;
+		},
+		removeEdition(this: StoreGeneric, key: Parts) {
+			if (editionKey) {
+				delete this[editionKey]?.[toKey(key)];
+			}
+		},
+		removeReady(this: StoreGeneric, key: Parts) {
+			if (readyKey) {
+				delete this[readyKey]?.[toKey(key)];
+			}
+		},
+		// Replaces the edition / ready entries of a scope, entries are keyed like the result of slice
+		setStagedSlice(this: StoreGeneric, record: "edition" | "ready", scope: Parts, entries: Record<string, object>) {
+			const target = record === "edition" ? editionKey : readyKey;
+			if (!target) {
+				return;
+			}
+			this[target] ??= {};
+			for (const key of Object.keys(pick(this[target] as Records, scope))) {
+				delete this[target][key];
+			}
+			const rest = compositeKey.filter((field) => scope[field] === undefined || scope[field] === null);
+			for (const [entryKey, entry] of Object.entries(entries)) {
+				const values = entryKey.split(KEY_SEPARATOR);
+				const parts = { ...scope, ...Object.fromEntries(rest.map((field, index) => [field, values[index]])) } as Parts;
+				this[target][toKey(parts)] = { ...entry, ...keyFields(parts) };
 			}
 		},
 		valideEditionByKey(this: StoreGeneric, key: Parts, status = "modified", isFormData = false) {
@@ -233,7 +363,7 @@ export function createResource<T extends EntityTypes>({ compositeKey, path, enti
 				return;
 			}
 			// Skip the ones already pushed, and the ones whose key still holds a temporary id: they stay in ready for a later push
-			const pendingEntries = Object.entries(readyEntries).filter(([stateId, entry]) => !entry.pushChange && isSaved(toParts(stateId)));
+			const pendingEntries = Object.entries(readyEntries).filter(([stateId, entry]) => !entry.pushChange && isKeySaved(toParts(stateId), entry.status));
 			let pendingChanges = Promise.resolve();
 			for (const [stateId, entry] of pendingEntries) {
 				const { status, isFormData, ...data } = entry;
