@@ -1,0 +1,72 @@
+name: audit
+
+# Dependency vulnerability audit. Deliberately not part of the pull request checks:
+# the result depends on the advisory database, not on the PR diff, so a CVE published
+# today would block unrelated PRs. It runs on the main/tag pipeline (arch.yml) and on a
+# schedule, and a failure is handled with a dedicated `chore(deps)` PR.
+on:
+  workflow_call:
+    inputs:
+      branch:
+        description: 'The branch or tag to audit.'
+        required: false
+        type: string
+        default: ''
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'The branch or tag to audit (default branch if empty).'
+        required: false
+        type: string
+        default: ''
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  audit-dependencies:
+    name: audit - ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: API,    type: dotnet, source_dir: electrostoreAPI }
+          - { name: NOTIF,  type: dotnet, source_dir: electrostoreNOTIF }
+          - { name: CRON,   type: dotnet, source_dir: electrostoreCRON }
+          - { name: WORKER, type: dotnet, source_dir: electrostoreWORKER }
+          - { name: FRONT,  type: npm,    source_dir: electrostoreFRONT }
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./${{ matrix.source_dir }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+      with:
+        ref: ${{ inputs.branch }}
+    - name: Set up C#
+      if: matrix.type == 'dotnet'
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: '10.0.x'
+    - name: Audit NuGet packages
+      if: matrix.type == 'dotnet'
+      run: |
+        dotnet restore
+        # `dotnet list package` always exits 0, so fail on its report instead.
+        dotnet list package --vulnerable --include-transitive 2>&1 | tee audit.txt
+        if grep -q "has the following vulnerable packages" audit.txt; then
+          echo "::error::Vulnerable NuGet packages found in ${{ matrix.name }}"
+          exit 1
+        fi
+    - name: Set up Node.js
+      if: matrix.type == 'npm'
+      uses: actions/setup-node@v6
+      with:
+        node-version: '24'
+    - name: Audit npm packages (runtime dependencies)
+      if: matrix.type == 'npm'
+      run: npm audit --omit=dev --audit-level=high

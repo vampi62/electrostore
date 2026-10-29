@@ -76,6 +76,15 @@ jobs:
       branch: ${{needs.init-work.outputs.BRANCH}}
     secrets: inherit
 
+  audit:
+    needs:
+      - init-work
+    uses: ./.github/workflows/audit.yml
+    permissions:
+      contents: read
+    with:
+      branch: ${{needs.init-work.outputs.BRANCH}}
+
   tests:
     needs:
       - init-work
@@ -130,6 +139,7 @@ jobs:
     needs:
       - init-work
       - quality
+      - audit
       - tests
       - build
       - release

@@ -1,0 +1,36 @@
+version: 2
+
+# Dependency bumps get their own `chore(deps)` PRs, kept out of feature PRs.
+# Security updates (CVE) are opened by Dependabot as soon as an advisory is published
+# (enable "Dependabot security updates" in the repository settings).
+updates:
+  - package-ecosystem: nuget
+    directories:
+      - /electrostoreAPI
+      - /electrostoreNOTIF
+      - /electrostoreCRON
+      - /electrostoreWORKER
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      nuget:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /electrostoreFRONT
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      npm:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "ci(deps)"
