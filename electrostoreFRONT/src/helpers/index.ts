@@ -3,7 +3,5 @@ export * from "./fetch-wrapper";
 export * from "./query-builder";
 export * from "./buildRSQLFilter";
 export * from "./filterValue";
-export * from "./mainResource";
-export * from "./nestedResource";
 export * from "./editionDraft";
 export * from "./resource";
