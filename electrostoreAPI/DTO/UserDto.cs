@@ -12,6 +12,9 @@ public record ReadUserDto
     public required string firstname_user { get; init; }
     public required string email_user { get; init; }
     public UserRole role_user { get; init; }
+    public bool is_active { get; init; }
+    public bool is_verified { get; init; }
+    public DateTime? last_login { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
 }
@@ -45,6 +48,8 @@ public record CreateUserDto
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, (int)UserRole.Admin, ErrorMessage = "{0} must be a valid role, between {1} and {2}.")]
     public required UserRole role_user { get; init; }
+
+    public bool is_active { get; init; } = true;
 }
 public record UpdateUserDto
 {
@@ -68,6 +73,8 @@ public record UpdateUserDto
 
     [Range(0, (int)UserRole.Admin, ErrorMessage = "{0} must be a valid role, between {1} and {2}.")]
     public UserRole? role_user { get; init; }
+
+    public bool? is_active { get; init; }
 
     public string? current_password_user { get; init; }
 }

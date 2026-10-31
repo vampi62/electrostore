@@ -79,4 +79,38 @@ describe('Auth Store', () => {
     expect(localStorageMock.removeItem).toHaveBeenCalledWith('accessToken')
     expect(localStorageMock.removeItem).toHaveBeenCalledWith('refreshToken')
   })
+
+  it('verifies the email with the token received by mail', async () => {
+    const { fetchWrapper } = await import('@/helpers')
+    fetchWrapper.post.mockResolvedValue('')
+    const store = useAuthStore()
+
+    await store.verifyEmail('user@test.com', 'the-token')
+
+    expect(fetchWrapper.post).toHaveBeenCalledWith({
+      url: expect.stringMatching(/\/auth\/verify-email$/),
+      body: { email: 'user@test.com', token: 'the-token' }
+    })
+  })
+
+  it('does not swallow the error when the email verification fails', async () => {
+    const { fetchWrapper } = await import('@/helpers')
+    fetchWrapper.post.mockRejectedValue(new Error('Invalid token'))
+    const store = useAuthStore()
+
+    await expect(store.verifyEmail('user@test.com', 'bad')).rejects.toThrow('Invalid token')
+  })
+
+  it('asks for a new verification email', async () => {
+    const { fetchWrapper } = await import('@/helpers')
+    fetchWrapper.post.mockResolvedValue('')
+    const store = useAuthStore()
+
+    await store.resendVerification('user@test.com')
+
+    expect(fetchWrapper.post).toHaveBeenCalledWith({
+      url: expect.stringMatching(/\/auth\/resend-verification$/),
+      body: { email: 'user@test.com' }
+    })
+  })
 })

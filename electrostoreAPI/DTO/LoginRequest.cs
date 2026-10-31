@@ -38,6 +38,24 @@ public record ResetPasswordRequest
     public required string password { get; set; }
 }
 
+public record ResendVerificationRequest
+{
+    [Required(ErrorMessage = "{0} is required.")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
+    public required string email { get; set; }
+}
+
+public record VerifyEmailRequest
+{
+    [Required(ErrorMessage = "{0} is required.")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
+    public required string email { get; set; }
+
+    [Required(ErrorMessage = "{0} is required.")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
+    public required string token { get; set; }
+}
+
 public record SsoLoginRequest
 {
     [Required(ErrorMessage = "{0} is required.")]

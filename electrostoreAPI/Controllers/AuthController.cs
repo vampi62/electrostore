@@ -62,6 +62,24 @@ namespace ElectrostoreAPI.Controllers
             return Ok();
         }
 
+        [HttpPost("resend-verification")]
+        [AllowAnonymous]
+        [SwaggerOperation(Summary = "Resend Email Verification", Description = "Send a new email verification message to the user, if the email is not verified yet. The answer is the same whether the email exists or not")]
+        public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationRequest resendVerificationRequest)
+        {
+            await _AuthService.ResendVerification(resendVerificationRequest);
+            return Ok();
+        }
+
+        [HttpPost("verify-email")]
+        [AllowAnonymous]
+        [SwaggerOperation(Summary = "Verify Email", Description = "Verify the user's email using the token sent by email")]
+        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest verifyEmailRequest)
+        {
+            await _AuthService.VerifyEmail(verifyEmailRequest);
+            return Ok();
+        }
+
         [HttpPost("reset-password")]
         [AllowAnonymous]
         [SwaggerOperation(Summary = "Reset Password", Description = "Reset the user's password using a reset token")]

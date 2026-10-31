@@ -30,8 +30,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<ElectrostoreAPI.Models.ItemsHistory> ItemsHistory { get; set; }
     public DbSet<ElectrostoreAPI.Models.ItemsDocuments> ItemsDocuments { get; set; }
     public DbSet<ElectrostoreAPI.Models.ItemsTags> ItemsTags { get; set; }
-    public DbSet<ElectrostoreAPI.Models.JwiAccessTokens> JwiAccessTokens { get; set; }
-    public DbSet<ElectrostoreAPI.Models.JwiRefreshTokens> JwiRefreshTokens { get; set; }
+    public DbSet<ElectrostoreAPI.Models.JwtTokens> JwtTokens { get; set; }
     public DbSet<ElectrostoreAPI.Models.Leds> Leds { get; set; }
     public DbSet<ElectrostoreAPI.Models.Projects> Projects { get; set; }
     public DbSet<ElectrostoreAPI.Models.ProjectsComments> ProjectsComments { get; set; }
@@ -45,6 +44,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<ElectrostoreAPI.Models.Tags> Tags { get; set; }
     public DbSet<ElectrostoreAPI.Models.UserPushSubscriptions> UserPushSubscriptions { get; set; }
     public DbSet<ElectrostoreAPI.Models.Users> Users { get; set; }
+    public DbSet<ElectrostoreAPI.Models.UsersExternalLogins> UsersExternalLogins { get; set; }
+    public DbSet<ElectrostoreAPI.Models.UsersPasswords> UsersPasswords { get; set; }
+    public DbSet<ElectrostoreAPI.Models.UsersSessions> UsersSessions { get; set; }
     public DbSet<ElectrostoreAPI.Models.Zones> Zones { get; set; }
 
     public override int SaveChanges()
@@ -103,6 +105,16 @@ public class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<StoresTags>()
             .HasKey(st => new { st.id_store, st.id_tag });
+
+        modelBuilder.Entity<UsersExternalLogins>()
+            .HasIndex(l => new { l.provider, l.provider_subject })
+            .IsUnique();
+
+        modelBuilder.Entity<UsersSessions>()
+            .HasOne(s => s.UserExternalLogin)
+            .WithMany(l => l.UsersSessions)
+            .HasForeignKey(s => s.id_user_external_login)
+            .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<ItemsHistory>()
             .HasOne(h => h.Item)

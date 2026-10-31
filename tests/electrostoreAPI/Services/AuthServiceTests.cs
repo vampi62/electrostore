@@ -80,8 +80,8 @@ namespace ElectrostoreAPI.Tests.Services
                 name_user = "Nom",
                 firstname_user = "Prenom",
                 email_user = email,
-                password_user = BCrypt.Net.BCrypt.HashPassword(password),
-                role_user = role
+                role_user = role,
+                UsersPasswords = [new Models.UsersPasswords { password_user = BCrypt.Net.BCrypt.HashPassword(password) }]
             };
         }
 
@@ -262,10 +262,125 @@ namespace ElectrostoreAPI.Tests.Services
             // Act
             await authService.ForgotPassword(new ForgotPasswordRequest { email = "user@test.com" });
             // Assert
+            var userPassword = await context.UsersPasswords.FindAsync(1);
+            Assert.NotNull(userPassword!.reset_token);
+            Assert.NotNull(userPassword.reset_token_expiration);
+            Assert.True(userPassword.reset_token_expiration > DateTime.Now);
+        }
+
+        [Fact]
+        public async Task ForgotPassword_ShouldNotSendAnotherEmail_WithinTheCooldown()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildUser(1, "user@test.com", "Password1!"));
+            await context.SaveChangesAsync();
+            var authService = CreateService(context, BuildEmptyConfiguration());
+            // Act
+            await authService.ForgotPassword(new ForgotPasswordRequest { email = "user@test.com" });
+            var firstToken = (await context.UsersPasswords.FindAsync(1))!.reset_token;
+            await authService.ForgotPassword(new ForgotPasswordRequest { email = "user@test.com" });
+            // Assert
+            var userPassword = await context.UsersPasswords.FindAsync(1);
+            Assert.NotNull(userPassword!.reset_token_sent_at);
+            Assert.Equal(firstToken, userPassword.reset_token);
+            _kafkaProducerService.Verify(k => k.PublishAsync("notification-requests", "user@test.com-password-reset", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task ForgotPassword_ShouldSendNewToken_AfterTheCooldown()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = BuildUser(1, "user@test.com", "Password1!");
+            var oldToken = Guid.NewGuid();
+            user.UsersPasswords.Single().reset_token = oldToken;
+            user.UsersPasswords.Single().reset_token_sent_at = DateTime.UtcNow.AddMinutes(-5);
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            var authService = CreateService(context, BuildEmptyConfiguration());
+            // Act
+            await authService.ForgotPassword(new ForgotPasswordRequest { email = "user@test.com" });
+            // Assert
+            var userPassword = await context.UsersPasswords.FindAsync(1);
+            Assert.NotEqual(oldToken, userPassword!.reset_token);
+            Assert.True(userPassword.reset_token_sent_at > DateTime.UtcNow.AddMinutes(-1));
+            _kafkaProducerService.Verify(k => k.PublishAsync("notification-requests", "user@test.com-password-reset", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        // --- ResendVerification / VerifyEmail ---
+
+        [Fact]
+        public async Task ResendVerification_ShouldAskTheUserServiceToSendTheEmail()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var authService = CreateService(context, BuildEmptyConfiguration());
+
+            await authService.ResendVerification(new ResendVerificationRequest { email = "user@test.com" });
+
+            _userService.Verify(u => u.SendEmailVerification("user@test.com"), Times.Once);
+        }
+
+        [Fact]
+        public async Task ResendVerification_ShouldThrowInvalidOperationException_WhenSmtpIsDisabled()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var authService = CreateService(context, BuildSmtpDisabledConfiguration());
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => authService.ResendVerification(new ResendVerificationRequest { email = "user@test.com" }));
+            _userService.Verify(u => u.SendEmailVerification(It.IsAny<string>()), Times.Never);
+        }
+
+        private async Task<Guid> SeedUnverifiedUser(ApplicationDbContext context, DateTime expiration)
+        {
+            var token = Guid.NewGuid();
+            var user = BuildUser(1, "user@test.com", "Password1!");
+            user.email_verification_token = token;
+            user.email_verification_token_expiration = expiration;
+            user.email_verification_token_sent_at = DateTime.UtcNow;
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            return token;
+        }
+
+        [Fact]
+        public async Task VerifyEmail_ShouldVerifyUserAndClearToken_WhenTokenValid()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var token = await SeedUnverifiedUser(context, DateTime.UtcNow.AddHours(1));
+            var authService = CreateService(context, BuildEmptyConfiguration());
+
+            await authService.VerifyEmail(new VerifyEmailRequest { email = "user@test.com", token = token.ToString().ToUpperInvariant() });
+
             var user = await context.Users.FindAsync(1);
-            Assert.NotNull(user!.reset_token);
-            Assert.NotNull(user.reset_token_expiration);
-            Assert.True(user.reset_token_expiration > DateTime.Now);
+            Assert.True(user!.is_verified);
+            Assert.Null(user.email_verification_token);
+            Assert.Null(user.email_verification_token_expiration);
+        }
+
+        [Fact]
+        public async Task VerifyEmail_ShouldThrowInvalidOperationException_WhenTokenExpired()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var token = await SeedUnverifiedUser(context, DateTime.UtcNow.AddHours(-1));
+            var authService = CreateService(context, BuildEmptyConfiguration());
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => authService.VerifyEmail(new VerifyEmailRequest { email = "user@test.com", token = token.ToString() }));
+            Assert.False((await context.Users.FindAsync(1))!.is_verified);
+        }
+
+        [Theory]
+        [InlineData("not-a-guid", "user@test.com")]
+        [InlineData("00000000-0000-0000-0000-000000000000", "user@test.com")]
+        [InlineData(null, "other@test.com")]
+        public async Task VerifyEmail_ShouldThrowInvalidOperationException_WhenTokenOrEmailDoNotMatch(string? token, string email)
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var validToken = await SeedUnverifiedUser(context, DateTime.UtcNow.AddHours(1));
+            var authService = CreateService(context, BuildEmptyConfiguration());
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => authService.VerifyEmail(new VerifyEmailRequest { email = email, token = token ?? validToken.ToString() }));
+            Assert.False((await context.Users.FindAsync(1))!.is_verified);
         }
 
         [Fact]
@@ -306,8 +421,8 @@ namespace ElectrostoreAPI.Tests.Services
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
             var user = BuildUser(1, "user@test.com", "Password1!");
-            user.reset_token = Guid.NewGuid();
-            user.reset_token_expiration = DateTime.Now.AddHours(1);
+            user.UsersPasswords.Single().reset_token = Guid.NewGuid();
+            user.UsersPasswords.Single().reset_token_expiration = DateTime.Now.AddHours(1);
             context.Users.Add(user);
             await context.SaveChangesAsync();
             var configuration = BuildEmptyConfiguration();
@@ -326,8 +441,8 @@ namespace ElectrostoreAPI.Tests.Services
             using var context = new ApplicationDbContext(_dbContextOptions);
             var resetToken = Guid.NewGuid();
             var user = BuildUser(1, "user@test.com", "Password1!");
-            user.reset_token = resetToken;
-            user.reset_token_expiration = DateTime.Now.AddHours(-1);
+            user.UsersPasswords.Single().reset_token = resetToken;
+            user.UsersPasswords.Single().reset_token_expiration = DateTime.Now.AddHours(-1);
             context.Users.Add(user);
             await context.SaveChangesAsync();
             var configuration = BuildEmptyConfiguration();
@@ -346,8 +461,8 @@ namespace ElectrostoreAPI.Tests.Services
             using var context = new ApplicationDbContext(_dbContextOptions);
             var resetToken = Guid.NewGuid();
             var user = BuildUser(1, "user@test.com", "Password1!");
-            user.reset_token = resetToken;
-            user.reset_token_expiration = DateTime.Now.AddHours(1);
+            user.UsersPasswords.Single().reset_token = resetToken;
+            user.UsersPasswords.Single().reset_token_expiration = DateTime.Now.AddHours(1);
             context.Users.Add(user);
             await context.SaveChangesAsync();
             var configuration = BuildEmptyConfiguration();
@@ -355,10 +470,11 @@ namespace ElectrostoreAPI.Tests.Services
             // Act
             await authService.ResetPassword(new ResetPasswordRequest { email = "user@test.com", token = resetToken.ToString(), password = "NewPassword1!" });
             // Assert
-            var updatedUser = await context.Users.FindAsync(1);
-            Assert.True(BCrypt.Net.BCrypt.Verify("NewPassword1!", updatedUser!.password_user));
-            Assert.Null(updatedUser.reset_token);
-            Assert.Null(updatedUser.reset_token_expiration);
+            var updatedPassword = await context.UsersPasswords.FindAsync(1);
+            Assert.True(BCrypt.Net.BCrypt.Verify("NewPassword1!", updatedPassword!.password_user));
+            Assert.Null(updatedPassword.reset_token);
+            Assert.Null(updatedPassword.reset_token_expiration);
+            Assert.NotNull(updatedPassword.password_last_changed);
             _jwiService.Verify(j => j.RevokeAllAccessTokenByUser(1, "User reset password"), Times.Once);
             _jwiService.Verify(j => j.RevokeAllRefreshTokenByUser(1, "User reset password"), Times.Once);
         }
@@ -387,7 +503,8 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal("access-token", result.token);
             Assert.Equal("refresh-token", result.refresh_token);
             Assert.Equal("user@test.com", result.user.email_user);
-            _jwiService.Verify(j => j.SaveToken(jwt, 1, "user_password", null), Times.Once);
+            _jwiService.Verify(j => j.SaveToken(jwt, 1, "user_password", null, null), Times.Once);
+            Assert.NotNull((await context.Users.FindAsync(1))!.last_login);
         }
 
         [Fact]
@@ -416,6 +533,111 @@ namespace ElectrostoreAPI.Tests.Services
             {
                 await authService.LoginWithPassword(new LoginRequest { email = "user@test.com", password = "WrongPassword1!" });
             });
+        }
+
+        [Fact]
+        public async Task LoginWithPassword_ShouldThrowUnauthorizedAccessException_WhenUserHasNoPassword()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(new Models.Users { id_user = 1, name_user = "Nom", firstname_user = "Prenom", email_user = "sso@test.com" });
+            await context.SaveChangesAsync();
+            var authService = CreateService(context, BuildEmptyConfiguration());
+            // Act & Assert
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
+            {
+                await authService.LoginWithPassword(new LoginRequest { email = "sso@test.com", password = "Password1!" });
+            });
+        }
+
+        [Fact]
+        public async Task LoginWithPassword_ShouldThrowUnauthorizedAccessException_WhenUserIsInactive()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = BuildUser(1, "user@test.com", "Password1!");
+            user.is_active = false;
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            var authService = CreateService(context, BuildEmptyConfiguration());
+            // Act & Assert
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
+            {
+                await authService.LoginWithPassword(new LoginRequest { email = "user@test.com", password = "Password1!" });
+            });
+            _jwiService.Verify(j => j.SaveToken(It.IsAny<Jwt>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<int?>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task CheckUserPassword_ShouldReturnFalse_WhenUserHasNoPassword()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(new Models.Users { id_user = 1, name_user = "Nom", firstname_user = "Prenom", email_user = "sso@test.com" });
+            await context.SaveChangesAsync();
+            var authService = CreateService(context, BuildEmptyConfiguration());
+            // Act & Assert
+            Assert.False(await authService.CheckUserPasswordByEmail("sso@test.com", "Password1!"));
+            Assert.False(await authService.CheckUserPasswordById(1, "Password1!"));
+        }
+
+        private static Models.Users BuildExternalLoginUser() =>
+            new() { id_user = 1, name_user = "Nom", firstname_user = "Prenom", email_user = "sso@test.com" };
+
+        [Fact]
+        public async Task ForgotPassword_ShouldCreateAnEmptyPassword_WhenUserHasNoPassword()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildExternalLoginUser());
+            await context.SaveChangesAsync();
+            var authService = CreateService(context, BuildEmptyConfiguration());
+            // Act
+            await authService.ForgotPassword(new ForgotPasswordRequest { email = "sso@test.com" });
+            // Assert
+            var userPassword = await context.UsersPasswords.SingleAsync();
+            Assert.Equal(1, userPassword.id_user);
+            Assert.Equal(string.Empty, userPassword.password_user);
+            Assert.NotNull(userPassword.reset_token);
+            Assert.NotNull(userPassword.reset_token_expiration);
+            _kafkaProducerService.Verify(k => k.PublishAsync("notification-requests", "sso@test.com-password-reset", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task ForgotPassword_ShouldNotCreateAPassword_WhenUserDoesNotExist()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var authService = CreateService(context, BuildEmptyConfiguration());
+            // Act
+            await authService.ForgotPassword(new ForgotPasswordRequest { email = "missing@test.com" });
+            // Assert
+            Assert.Empty(await context.UsersPasswords.ToListAsync());
+            _kafkaProducerService.Verify(k => k.PublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task ExternalLoginUser_ShouldNotBeAbleToLogInWithPassword_UntilTheResetIsDone()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildExternalLoginUser());
+            await context.SaveChangesAsync();
+            _jwtService.Setup(j => j.GenerateToken(It.IsAny<ReadUserDto>(), "user_password")).ReturnsAsync(BuildJwt());
+            var authService = CreateService(context, BuildEmptyConfiguration());
+            await authService.ForgotPassword(new ForgotPasswordRequest { email = "sso@test.com" });
+            // Act & Assert: the empty password matches nothing, even an empty one
+            foreach (var attempt in new[] { string.Empty, " ", "Password1!" })
+            {
+                await Assert.ThrowsAsync<UnauthorizedAccessException>(() => authService.LoginWithPassword(new LoginRequest { email = "sso@test.com", password = attempt }));
+                Assert.False(await authService.CheckUserPasswordByEmail("sso@test.com", attempt));
+                Assert.False(await authService.CheckUserPasswordById(1, attempt));
+            }
+            // the reset gives him a real password
+            var resetToken = (await context.UsersPasswords.SingleAsync()).reset_token!.Value;
+            await authService.ResetPassword(new ResetPasswordRequest { email = "sso@test.com", token = resetToken.ToString(), password = "NewPassword1!" });
+            var result = await authService.LoginWithPassword(new LoginRequest { email = "sso@test.com", password = "NewPassword1!" });
+            Assert.Equal("sso-access", result.token);
         }
 
         // --- RefreshJwt ---
@@ -447,7 +669,28 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal("new-access-token", result.token);
             Assert.Equal("new-refresh-token", result.refresh_token);
             _jwiService.Verify(j => j.RevokePairTokenByRefreshToken("old-token-id", "User refresh token", 1), Times.Once);
-            _jwiService.Verify(j => j.SaveToken(newJwt, 1, "user_password", sessionId), Times.Once);
+            _jwiService.Verify(j => j.SaveToken(newJwt, 1, "user_password", sessionId, null), Times.Once);
+            Assert.NotNull((await context.Users.FindAsync(1))!.last_login);
+        }
+
+        [Fact]
+        public async Task RefreshJwt_ShouldThrowUnauthorizedAccessException_WhenUserIsInactive()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = BuildUser(1, "user@test.com", "Password1!");
+            user.is_active = false;
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            _sessionService.Setup(s => s.GetClientId()).Returns(1);
+            _sessionService.Setup(s => s.GetTokenId()).Returns("old-token-id");
+            _sessionService.Setup(s => s.GetTokenAuthMethod()).Returns("user_password");
+            _jwiService.Setup(j => j.GetSessionIdByTokenId("old-token-id", 1)).ReturnsAsync(Guid.NewGuid());
+            var authService = CreateService(context, BuildEmptyConfiguration());
+            // Act & Assert
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => authService.RefreshJwt());
+            _jwiService.Verify(j => j.SaveToken(It.IsAny<Jwt>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<int?>()), Times.Never);
+            Assert.Null((await context.Users.FindAsync(1))!.last_login);
         }
 
         [Fact]
@@ -507,34 +750,38 @@ namespace ElectrostoreAPI.Tests.Services
             return (service, state);
         }
 
+        private void SetupCreateExternalUser(int idUser, int externalLoginId)
+        {
+            _userService
+                .Setup(u => u.CreateExternalUser(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<UserRole>(), It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync((string name, string firstname, string email, UserRole role, string provider, string subject) => (new ReadUserDto
+                {
+                    id_user = idUser,
+                    name_user = name,
+                    firstname_user = firstname,
+                    email_user = email,
+                    role_user = role
+                }, externalLoginId));
+        }
+
         [Fact]
-        public async Task LoginWithSSO_ShouldCreateUserWithMappedRole_AndReturnTokens()
+        public async Task LoginWithSSO_ShouldCreateExternalUserWithMappedRole_AndReturnTokens()
         {
             using var context = new ApplicationDbContext(_dbContextOptions);
             using var server = new FakeOidcServer
             {
-                UserInfoBody = """{"sub":"1","email":"new@example.com","given_name":"Given","family_name":"Family","groups":["moderators","admins"]}"""
+                UserInfoBody = """{"sub":"sub-42","email":"new@example.com","given_name":"Given","family_name":"Family","groups":["moderators","admins"]}"""
             };
             var (service, state) = await PrepareSsoLogin(context, server);
-            _userService
-                .Setup(u => u.CreateUser(It.IsAny<CreateUserDto>(), true))
-                .ReturnsAsync((CreateUserDto dto, bool _) => new ReadUserDto
-                {
-                    id_user = 42,
-                    name_user = dto.name_user,
-                    firstname_user = dto.firstname_user,
-                    email_user = dto.email_user,
-                    role_user = dto.role_user
-                });
+            SetupCreateExternalUser(42, 7);
 
             var result = await service.LoginWithSSO("authentik", new SsoLoginRequest { code = "the-code", state = state });
 
             Assert.Equal("sso-access", result.token);
             Assert.Equal("sso-refresh", result.refresh_token);
             Assert.Equal(42, result.user.id_user);
-            _userService.Verify(u => u.CreateUser(It.Is<CreateUserDto>(d =>
-                d.email_user == "new@example.com" && d.name_user == "Family" && d.firstname_user == "Given" && d.role_user == UserRole.Admin), true), Times.Once);
-            _jwiService.Verify(j => j.SaveToken(It.IsAny<Jwt>(), 42, "sso_authentik", null), Times.Once);
+            _userService.Verify(u => u.CreateExternalUser("Family", "Given", "new@example.com", UserRole.Admin, "authentik", "sub-42"), Times.Once);
+            _jwiService.Verify(j => j.SaveToken(It.IsAny<Jwt>(), 42, "sso_authentik", null, 7), Times.Once);
             Assert.Contains("code=the-code", server.LastTokenRequestBody);
             Assert.Equal("Bearer access", server.LastUserInfoAuthorization);
             _kafkaProducerService.Verify(k => k.PublishAsync("notification-requests", "new@example.com-sso-login", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -549,21 +796,25 @@ namespace ElectrostoreAPI.Tests.Services
                 UserInfoBody = """{"sub":"1","email":"anon@example.com","groups":[]}"""
             };
             var (service, state) = await PrepareSsoLogin(context, server);
-            _userService
-                .Setup(u => u.CreateUser(It.IsAny<CreateUserDto>(), true))
-                .ReturnsAsync((CreateUserDto dto, bool _) => new ReadUserDto
-                {
-                    id_user = 1,
-                    name_user = dto.name_user,
-                    firstname_user = dto.firstname_user,
-                    email_user = dto.email_user,
-                    role_user = dto.role_user
-                });
+            SetupCreateExternalUser(1, 1);
 
             await service.LoginWithSSO("authentik", new SsoLoginRequest { code = "c", state = state });
 
-            _userService.Verify(u => u.CreateUser(It.Is<CreateUserDto>(d =>
-                d.role_user == UserRole.User && d.name_user == "SSO" && d.firstname_user == "User"), true), Times.Once);
+            _userService.Verify(u => u.CreateExternalUser("SSO", "User", "anon@example.com", UserRole.User, "authentik", "1"), Times.Once);
+        }
+
+        [Fact]
+        public async Task LoginWithSSO_ShouldThrowInvalidOperationException_WhenProviderOmitsSubject()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            using var server = new FakeOidcServer
+            {
+                UserInfoBody = """{"email":"nosub@example.com","groups":[]}"""
+            };
+            var (service, state) = await PrepareSsoLogin(context, server);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.LoginWithSSO("authentik", new SsoLoginRequest { code = "c", state = state }));
+            _userService.Verify(u => u.CreateExternalUser(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<UserRole>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
 
         [Fact]
@@ -583,7 +834,68 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal(1, result.user.id_user);
             Assert.Equal(UserRole.Moderator, result.user.role_user);
             Assert.Equal(UserRole.Moderator, (await context.Users.FindAsync(1))!.role_user);
-            _userService.Verify(u => u.CreateUser(It.IsAny<CreateUserDto>(), It.IsAny<bool>()), Times.Never);
+            _userService.Verify(u => u.CreateExternalUser(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<UserRole>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task LoginWithSSO_ShouldLinkExistingUserFoundByEmailToTheExternalLogin()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildUser(1, "existing@example.com", "Password1!"));
+            await context.SaveChangesAsync();
+            using var server = new FakeOidcServer
+            {
+                UserInfoBody = """{"sub":"sub-1","email":"existing@example.com","groups":[]}"""
+            };
+            var (service, state) = await PrepareSsoLogin(context, server);
+
+            await service.LoginWithSSO("authentik", new SsoLoginRequest { code = "c", state = state });
+
+            var externalLogin = await context.UsersExternalLogins.SingleAsync();
+            Assert.Equal(1, externalLogin.id_user);
+            Assert.Equal("authentik", externalLogin.provider);
+            Assert.Equal("sub-1", externalLogin.provider_subject);
+            _jwiService.Verify(j => j.SaveToken(It.IsAny<Jwt>(), 1, "sso_authentik", null, externalLogin.id_user_external_login), Times.Once);
+            Assert.NotNull((await context.Users.FindAsync(1))!.last_login);
+        }
+
+        [Fact]
+        public async Task LoginWithSSO_ShouldFindUserByExternalLogin_EvenWhenTheEmailChanged()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildUser(1, "old@example.com", "Password1!"));
+            var existingLogin = new Models.UsersExternalLogins { id_user = 1, provider = "authentik", provider_subject = "sub-1" };
+            context.UsersExternalLogins.Add(existingLogin);
+            await context.SaveChangesAsync();
+            using var server = new FakeOidcServer
+            {
+                UserInfoBody = """{"sub":"sub-1","email":"new@example.com","groups":[]}"""
+            };
+            var (service, state) = await PrepareSsoLogin(context, server);
+
+            var result = await service.LoginWithSSO("authentik", new SsoLoginRequest { code = "c", state = state });
+
+            Assert.Equal(1, result.user.id_user);
+            Assert.Single(await context.UsersExternalLogins.ToListAsync());
+            _jwiService.Verify(j => j.SaveToken(It.IsAny<Jwt>(), 1, "sso_authentik", null, existingLogin.id_user_external_login), Times.Once);
+        }
+
+        [Fact]
+        public async Task LoginWithSSO_ShouldRejectInactiveUser()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = BuildUser(1, "existing@example.com", "Password1!");
+            user.is_active = false;
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            using var server = new FakeOidcServer
+            {
+                UserInfoBody = """{"sub":"sub-1","email":"existing@example.com","groups":[]}"""
+            };
+            var (service, state) = await PrepareSsoLogin(context, server);
+
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.LoginWithSSO("authentik", new SsoLoginRequest { code = "c", state = state }));
+            _jwiService.Verify(j => j.SaveToken(It.IsAny<Jwt>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<int?>()), Times.Never);
         }
 
         [Fact]
@@ -700,7 +1012,7 @@ namespace ElectrostoreAPI.Tests.Services
 
             await service.ForgotPassword(new ForgotPasswordRequest { email = "user@test.com" });
 
-            Assert.NotNull((await context.Users.FindAsync(1))!.reset_token);
+            Assert.NotNull((await context.UsersPasswords.FindAsync(1))!.reset_token);
         }
 
         [Fact]
@@ -708,8 +1020,8 @@ namespace ElectrostoreAPI.Tests.Services
         {
             using var context = new ApplicationDbContext(_dbContextOptions);
             var user = BuildUser(1, "user@test.com", "OldPassword1!");
-            user.reset_token = Guid.NewGuid();
-            user.reset_token_expiration = DateTime.Now.AddHours(1);
+            user.UsersPasswords.Single().reset_token = Guid.NewGuid();
+            user.UsersPasswords.Single().reset_token_expiration = DateTime.Now.AddHours(1);
             context.Users.Add(user);
             await context.SaveChangesAsync();
             _kafkaProducerService
@@ -717,9 +1029,9 @@ namespace ElectrostoreAPI.Tests.Services
                 .ThrowsAsync(new InvalidOperationException("kafka down"));
             var service = CreateService(context, BuildEmptyConfiguration());
 
-            await service.ResetPassword(new ResetPasswordRequest { email = "user@test.com", token = user.reset_token.ToString()!, password = "NewPassword1!" });
+            await service.ResetPassword(new ResetPasswordRequest { email = "user@test.com", token = user.UsersPasswords.Single().reset_token.ToString()!, password = "NewPassword1!" });
 
-            Assert.True(BCrypt.Net.BCrypt.Verify("NewPassword1!", (await context.Users.FindAsync(1))!.password_user));
+            Assert.True(BCrypt.Net.BCrypt.Verify("NewPassword1!", (await context.UsersPasswords.FindAsync(1))!.password_user));
         }
 
         [Fact]

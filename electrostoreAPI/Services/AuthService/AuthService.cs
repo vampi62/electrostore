@@ -1,8 +1,10 @@
 using AutoMapper;
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Kafka.Producer;
 using ElectrostoreAPI.Kafka.Messages;
+using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.SessionService;
 using ElectrostoreAPI.Services.UserService;
 using ElectrostoreAPI.Services.JwiService;
@@ -99,9 +101,9 @@ public class AuthService : IAuthService
         var tokenResponse = await ExchangeCodeForToken(request.code, clientId!, clientSecret!, authority!, redirectUri!);
         var userInfo = await GetUserInfo(tokenResponse.access_token, authority!);
         _logger.LogDebug("SSO user info received: {UserInfo}", JsonSerializer.Serialize(userInfo));
-        var user = await GetOrCreateUser(userInfo, groupMappingSection);
+        var (user, externalLoginId) = await GetOrCreateUser(sso_method, userInfo, groupMappingSection);
         var jwt = await _jwtService.GenerateToken(user, "sso_" + sso_method);
-        await _jwiService.SaveToken(jwt, user.id_user, "sso_" + sso_method);
+        await _jwiService.SaveToken(jwt, user.id_user, "sso_" + sso_method, externalLoginId: externalLoginId);
         try
         {
             var notification = new NotificationMessage
@@ -172,72 +174,127 @@ public class AuthService : IAuthService
         return userInfo ?? throw new InvalidOperationException("Invalid user info response");
     }
 
-    private async Task<ReadUserDto> GetOrCreateUser(UserInfoResponse userInfo, IConfigurationSection groupMappingSection = null!)
+    private async Task<(ReadUserDto user, int externalLoginId)> GetOrCreateUser(string provider, UserInfoResponse userInfo, IConfigurationSection groupMappingSection = null!)
+    {
+        if (string.IsNullOrEmpty(userInfo.Sub))
+        {
+            throw new InvalidOperationException("Invalid user info response");
+        }
+        var userRole = GetMappedUserRole(userInfo, groupMappingSection);
+        var externalLogin = await _context.UsersExternalLogins
+            .Include(l => l.User)
+            .FirstOrDefaultAsync(l => l.provider == provider && l.provider_subject == userInfo.Sub);
+        var existingUser = externalLogin?.User ?? await _context.Users.FirstOrDefaultAsync(u => u.email_user == userInfo.Email);
+        if (existingUser is not null)
+        {
+            return await UpdateExistingExternalUser(existingUser, externalLogin, provider, userInfo, userRole, groupMappingSection is not null);
+        }
+        return await _userService.CreateExternalUser(
+            string.IsNullOrWhiteSpace(userInfo.FamilyName) ? "SSO" : userInfo.FamilyName,
+            string.IsNullOrWhiteSpace(userInfo.GivenName) ? "User" : userInfo.GivenName,
+            userInfo.Email,
+            userRole,
+            provider,
+            userInfo.Sub);
+    }
+
+    private static Enums.UserRole GetMappedUserRole(UserInfoResponse userInfo, IConfigurationSection groupMappingSection)
     {
         var userRole = Enums.UserRole.User;
-        if (groupMappingSection != null)
+        if (groupMappingSection is null)
         {
-            foreach (var role in Enum.GetValues<Enums.UserRole>())
+            return userRole;
+        }
+
+        foreach (var role in Enum.GetValues<Enums.UserRole>())
+        {
+            var mappedGroup = groupMappingSection[role.ToString()];
+            if (!string.IsNullOrEmpty(mappedGroup) && userInfo.Groups.Contains(mappedGroup) && role > userRole)
             {
-                var mappedGroup = groupMappingSection[role.ToString()];
-                if ((!string.IsNullOrEmpty(mappedGroup)) && userInfo.Groups.Contains(mappedGroup) && (role > userRole)) // Assign the highest role found
-                {
-                    userRole = role;
-                }
+                userRole = role;
             }
         }
-        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userInfo.Email);
-        if (existingUser != null)
+
+        return userRole;
+    }
+
+    private async Task<(ReadUserDto user, int externalLoginId)> UpdateExistingExternalUser(
+        Users existingUser,
+        UsersExternalLogins? externalLogin,
+        string provider,
+        UserInfoResponse userInfo,
+        Enums.UserRole userRole,
+        bool hasGroupMapping)
+    {
+        if (!existingUser.is_active)
         {
-            if ((groupMappingSection != null) && (existingUser.role_user != userRole))
-            {
-                // Update user role if it has changed
-                existingUser.role_user = userRole;
-                await _context.SaveChangesAsync();
-            }
-            return _mapper.Map<ReadUserDto>(existingUser);
+            throw new UnauthorizedAccessException("Account is disabled");
         }
-        var newUserDto = new CreateUserDto
+
+        if (externalLogin is null)
         {
-            name_user = string.IsNullOrWhiteSpace(userInfo.FamilyName) ? "SSO" : userInfo.FamilyName,
-            firstname_user = string.IsNullOrWhiteSpace(userInfo.GivenName) ? "User" : userInfo.GivenName,
-            email_user = userInfo.Email,
-            password_user = GenerateSecureRandomString(32),
-            role_user = userRole
-        };
-        return await _userService.CreateUser(newUserDto, true); // true indicates that this is an SSO user login, so we avoid role checks
+            // First SSO login of an existing account (matched by email): link it to the identity provider.
+            externalLogin = new UsersExternalLogins
+            {
+                id_user = existingUser.id_user,
+                provider = provider,
+                provider_subject = userInfo.Sub
+            };
+            _context.UsersExternalLogins.Add(externalLogin);
+        }
+
+        if (hasGroupMapping && existingUser.role_user != userRole)
+        {
+            existingUser.role_user = userRole;
+        }
+
+        existingUser.last_login = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        return (_mapper.Map<ReadUserDto>(existingUser), externalLogin.id_user_external_login);
     }
 
     public async Task<bool> CheckUserPasswordByEmail(string email, string password)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == email) ?? throw new KeyNotFoundException($"User with email '{email}' not found");
-        return BCrypt.Net.BCrypt.Verify(password, user.password_user);
+        var userPassword = await _context.UsersPasswords.FindAsync(user.id_user);
+        return userPassword.IsPasswordValid(password);
     }
 
     public async Task<bool> CheckUserPasswordById(int id, string password)
     {
-        var user = await _context.Users.FindAsync(id);
-        if (user is null)
-        {
-            return false;
-        }
-        return BCrypt.Net.BCrypt.Verify(password, user.password_user);
+        var userPassword = await _context.UsersPasswords.FindAsync(id);
+        return userPassword.IsPasswordValid(password);
     }
 
     public async Task ForgotPassword(ForgotPasswordRequest request)
     {
         //check if SMTP is Enabled
-        if (bool.TryParse(_configuration["SMTP:Enable"], out var isEnabled) && !isEnabled)
+        if (!_configuration.IsSmtpEnabled())
         {
             throw new InvalidOperationException("SMTP is not enabled");
         }
         // check if user exists
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.email);
-        if (user is not null)
+        var userPassword = await _context.UsersPasswords
+            .Include(p => p.User)
+            .FirstOrDefaultAsync(p => p.User != null && p.User.email_user == request.email);
+        if (userPassword is null)
         {
+            // a user with an external login only has no password yet: an empty one blocks the password login until the reset is done
+            var externalUser = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.email);
+            if (externalUser is not null)
+            {
+                userPassword = new UsersPasswords { User = externalUser, password_user = string.Empty };
+                _context.UsersPasswords.Add(userPassword);
+            }
+        }
+        // a reset email has just been sent: do nothing (and answer the same way, so the caller can't tell if the email exists)
+        if (userPassword?.User is not null && (userPassword.reset_token_sent_at is null || userPassword.reset_token_sent_at <= DateTime.UtcNow - AuthDelays.EmailResendCooldown))
+        {
+            var user = userPassword.User;
             // add reset_token
-            user.reset_token = Guid.NewGuid();
-            user.reset_token_expiration = DateTime.Now.AddHours(1);
+            userPassword.reset_token = Guid.NewGuid();
+            userPassword.reset_token_expiration = DateTime.Now.AddHours(1);
+            userPassword.reset_token_sent_at = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             // send email with reset_token
             try
@@ -249,7 +306,7 @@ public class AuthService : IAuthService
                     Language = _configuration.GetAppLanguage(),
                     TemplateValues = new Dictionary<string, string>
                     {
-                        ["resetLink"] = _configuration["FrontendUrl"] + "/reset-password?token=" + user.reset_token.ToString() + "&email=" + user.email_user
+                        ["resetLink"] = _configuration["FrontendUrl"] + "/reset-password?token=" + userPassword.reset_token.ToString() + "&email=" + user.email_user
                     }
                 };
                 await _kafkaProducerService.PublishAsync(
@@ -268,18 +325,24 @@ public class AuthService : IAuthService
     public async Task ResetPassword(ResetPasswordRequest request)
     {
         //check if SMTP is Enabled
-        if (bool.TryParse(_configuration["SMTP:Enable"], out var isEnabled) && !isEnabled)
+        if (!_configuration.IsSmtpEnabled())
         {
             throw new InvalidOperationException("SMTP is not enabled");
         }
         // check if token is valid
-        var user = await _context.Users.FirstOrDefaultAsync(
-            u => u.email_user == request.email && u.reset_token.ToString() == request.token && u.reset_token_expiration > DateTime.Now
-        ) ?? throw new InvalidOperationException("Invalid token");
+        var userPassword = await _context.UsersPasswords
+            .Include(p => p.User)
+            .FirstOrDefaultAsync(
+                 p => p.User != null && p.reset_token != null && p.reset_token_expiration != null &&
+                     p.User.email_user == request.email && p.reset_token.ToString() == request.token &&
+                     p.reset_token_expiration > DateTime.Now
+            ) ?? throw new InvalidOperationException("Invalid token");
+        var user = userPassword.User ?? throw new InvalidOperationException("User not found");
         // update password
-        user.password_user = BCrypt.Net.BCrypt.HashPassword(request.password);
-        user.reset_token = null;
-        user.reset_token_expiration = null;
+        userPassword.password_user = BCrypt.Net.BCrypt.HashPassword(request.password);
+        userPassword.password_last_changed = DateTime.UtcNow;
+        userPassword.reset_token = null;
+        userPassword.reset_token_expiration = null;
         await _context.SaveChangesAsync();
         await _jwiService.RevokeAllAccessTokenByUser(user.id_user, "User reset password");
         await _jwiService.RevokeAllRefreshTokenByUser(user.id_user, "User reset password");
@@ -304,15 +367,47 @@ public class AuthService : IAuthService
         }
     }
 
+    public async Task ResendVerification(ResendVerificationRequest request)
+    {
+        if (!_configuration.IsSmtpEnabled())
+        {
+            throw new InvalidOperationException("SMTP is not enabled");
+        }
+        // nothing is returned about the email (unknown, already verified or too soon after the previous one)
+        await _userService.SendEmailVerification(request.email);
+    }
+
+    public async Task VerifyEmail(VerifyEmailRequest request)
+    {
+        if (!Guid.TryParse(request.token, out var token))
+        {
+            throw new InvalidOperationException("Invalid token");
+        }
+        var user = await _context.Users.FirstOrDefaultAsync(
+            u => u.email_user == request.email && u.email_verification_token == token && u.email_verification_token_expiration > DateTime.UtcNow
+        ) ?? throw new InvalidOperationException("Invalid token");
+        user.is_verified = true;
+        user.email_verification_token = null;
+        user.email_verification_token_expiration = null;
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<LoginResponse> LoginWithPassword(LoginRequest request)
     {
         // check if user exists
         var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.email) ?? throw new UnauthorizedAccessException("Invalid password"); // do not reveal if email exists
         // check if password is correct
-        if (!BCrypt.Net.BCrypt.Verify(request.password, user.password_user))
+        var userPassword = await _context.UsersPasswords.FindAsync(user.id_user);
+        if (!userPassword.IsPasswordValid(request.password))
         {
             throw new UnauthorizedAccessException("Invalid password");
         }
+        if (!user.is_active)
+        {
+            throw new UnauthorizedAccessException("Account is disabled");
+        }
+        user.last_login = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
         // generate tokens
         var token = await _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user), "user_password");
         await _jwiService.SaveToken(token, user.id_user, "user_password");
@@ -353,6 +448,12 @@ public class AuthService : IAuthService
         var authMethod = _sessionService.GetTokenAuthMethod();
         var sessionId = await _jwiService.GetSessionIdByTokenId(tokenId, clientId);
         var user = await _context.Users.FindAsync(clientId) ?? throw new KeyNotFoundException($"User with id '{clientId}' not found");
+        if (!user.is_active)
+        {
+            throw new UnauthorizedAccessException("Account is disabled");
+        }
+        user.last_login = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
         var token = await _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user), authMethod);
         await _jwiService.RevokePairTokenByRefreshToken(tokenId, "User refresh token", clientId);
         await _jwiService.SaveToken(token, user.id_user, authMethod, sessionId);

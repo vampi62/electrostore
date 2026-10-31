@@ -1,0 +1,8 @@
+{
+  "subject": "Validez votre adresse email",
+  "body": "<p>Bonjour,</p><p>Veuillez confirmer l'adresse email de votre compte ElectroStore.</p><p>Cliquez sur le lien ci-dessous pour la valider :</p><p><a href=\"{{verificationLink}}\">Valider mon adresse email</a></p><p>Ce lien est valable <strong>24 heures</strong>. Si vous n'avez pas créé ou modifié de compte ElectroStore, ignorez ce message.</p><p>Merci,<br/>L'équipe ElectroStore</p>",
+  "title": "Validation de l'adresse email",
+  "data": {
+    "event": "email_verification"
+  }
+}

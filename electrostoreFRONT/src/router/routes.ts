@@ -1,7 +1,7 @@
 import type { RouteLocationNormalized } from "vue-router";
 
 // pages accessible without authentication (handled by the global router)
-export const publicPages = ["/login", "/auth/callback", "/register", "/forgot-password", "/reset-password"];
+export const publicPages = ["/login", "/auth/callback", "/register", "/forgot-password", "/reset-password", "/verify-email"];
 
 // default view opened in a new tab and target of "/"
 export const defaultPath = "/inventory";

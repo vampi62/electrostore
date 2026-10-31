@@ -130,7 +130,10 @@ Infrastructure/auth concerns, unrelated to the inventory domain:
 
 | Table | Purpose |
 |---|---|
-| `JwiAccessTokens` / `JwiRefreshTokens` | JWT session tokens, linked to `Users` |
+| `UsersPasswords` | Password hash, reset token and lockout fields of a `Users` row (one row per user; absent for users who only log in through SSO until they start a password reset, which creates it with an empty hash that no password matches) |
+| `UsersExternalLogins` | SSO identity (`provider` + `provider_subject`) linked to a `Users` row |
+| `UsersSessions` | One login session of a `Users` row (auth method, IP, revocation), optionally linked to the `UsersExternalLogins` it came from |
+| `JwtTokens` | Access / refresh JWT issued within a `UsersSessions` row (`token_type`, expiry, revocation) |
 | `UserPushSubscriptions` | Web push subscription endpoints, linked to `Users` |
 | `CronJobs` | Scheduled task registry consumed by `electrostoreCRON` |
 

@@ -12,6 +12,7 @@ export { default as ProjectsView } from "./ProjectsView.vue";
 export { default as ProjectView } from "./ProjectView.vue";
 export { default as ResetPasswordView } from "./ResetPasswordView.vue";
 export { default as RegisterView } from "./RegisterView.vue";
+export { default as VerifyEmailView } from "./VerifyEmailView.vue";
 export { default as StoresView } from "./StoresView.vue";
 export { default as StoreView } from "./StoreView.vue";
 export { default as TagsView } from "./TagsView.vue";

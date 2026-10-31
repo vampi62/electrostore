@@ -162,6 +162,18 @@ export const useAuthStore = defineStore("auth",{
 				console.log("Error resetting password", request);
 			}
 		},
+		async resendVerification(email: string) {
+			return await fetchWrapper.post({
+				url: `${baseUrl}/auth/resend-verification`,
+				body: { "email": email },
+			});
+		},
+		async verifyEmail(email: string, token: string) {
+			return await fetchWrapper.post({
+				url: `${baseUrl}/auth/verify-email`,
+				body: { "email": email, "token": token },
+			});
+		},
 		logout() {
 			this.clearToken();
 			router.push("/login");

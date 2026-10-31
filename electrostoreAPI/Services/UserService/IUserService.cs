@@ -9,6 +9,10 @@ public interface IUserService
 
     public Task<ReadUserDto> CreateUser(CreateUserDto userDto, bool avoidRoleVerification = false);
     
+    public Task<(ReadUserDto user, int externalLoginId)> CreateExternalUser(string nameUser, string firstnameUser, string emailUser, UserRole roleUser, string provider, string providerSubject);
+
+    public Task SendEmailVerification(string email);
+
     public Task<ReadUserDto> CreateFirstAdminUser(CreateUserDto userDto);
 
     public Task<ReadExtendedUserDto> GetUserById(int id, List<string>? expand = null);
