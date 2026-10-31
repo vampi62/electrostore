@@ -180,47 +180,14 @@ public class AuthService : IAuthService
         {
             throw new InvalidOperationException("Invalid user info response");
         }
-        var userRole = Enums.UserRole.User;
-        if (groupMappingSection != null)
-        {
-            foreach (var role in Enum.GetValues<Enums.UserRole>())
-            {
-                var mappedGroup = groupMappingSection[role.ToString()];
-                if ((!string.IsNullOrEmpty(mappedGroup)) && userInfo.Groups.Contains(mappedGroup) && (role > userRole)) // Assign the highest role found
-                {
-                    userRole = role;
-                }
-            }
-        }
+        var userRole = GetMappedUserRole(userInfo, groupMappingSection);
         var externalLogin = await _context.UsersExternalLogins
             .Include(l => l.User)
             .FirstOrDefaultAsync(l => l.provider == provider && l.provider_subject == userInfo.Sub);
         var existingUser = externalLogin?.User ?? await _context.Users.FirstOrDefaultAsync(u => u.email_user == userInfo.Email);
-        if (existingUser != null)
+        if (existingUser is not null)
         {
-            if (!existingUser.is_active)
-            {
-                throw new UnauthorizedAccessException("Account is disabled");
-            }
-            if (externalLogin is null)
-            {
-                // first SSO login of an existing account (matched by email): link it to the identity provider
-                externalLogin = new UsersExternalLogins
-                {
-                    id_user = existingUser.id_user,
-                    provider = provider,
-                    provider_subject = userInfo.Sub
-                };
-                _context.UsersExternalLogins.Add(externalLogin);
-            }
-            if ((groupMappingSection != null) && (existingUser.role_user != userRole))
-            {
-                // Update user role if it has changed
-                existingUser.role_user = userRole;
-            }
-            existingUser.last_login = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
-            return (_mapper.Map<ReadUserDto>(existingUser), externalLogin.id_user_external_login);
+            return await UpdateExistingExternalUser(existingUser, externalLogin, provider, userInfo, userRole, groupMappingSection is not null);
         }
         return await _userService.CreateExternalUser(
             string.IsNullOrWhiteSpace(userInfo.FamilyName) ? "SSO" : userInfo.FamilyName,
@@ -229,6 +196,61 @@ public class AuthService : IAuthService
             userRole,
             provider,
             userInfo.Sub);
+    }
+
+    private static Enums.UserRole GetMappedUserRole(UserInfoResponse userInfo, IConfigurationSection groupMappingSection)
+    {
+        var userRole = Enums.UserRole.User;
+        if (groupMappingSection is null)
+        {
+            return userRole;
+        }
+
+        foreach (var role in Enum.GetValues<Enums.UserRole>())
+        {
+            var mappedGroup = groupMappingSection[role.ToString()];
+            if (!string.IsNullOrEmpty(mappedGroup) && userInfo.Groups.Contains(mappedGroup) && role > userRole)
+            {
+                userRole = role;
+            }
+        }
+
+        return userRole;
+    }
+
+    private async Task<(ReadUserDto user, int externalLoginId)> UpdateExistingExternalUser(
+        Users existingUser,
+        UsersExternalLogins? externalLogin,
+        string provider,
+        UserInfoResponse userInfo,
+        Enums.UserRole userRole,
+        bool hasGroupMapping)
+    {
+        if (!existingUser.is_active)
+        {
+            throw new UnauthorizedAccessException("Account is disabled");
+        }
+
+        if (externalLogin is null)
+        {
+            // First SSO login of an existing account (matched by email): link it to the identity provider.
+            externalLogin = new UsersExternalLogins
+            {
+                id_user = existingUser.id_user,
+                provider = provider,
+                provider_subject = userInfo.Sub
+            };
+            _context.UsersExternalLogins.Add(externalLogin);
+        }
+
+        if (hasGroupMapping && existingUser.role_user != userRole)
+        {
+            existingUser.role_user = userRole;
+        }
+
+        existingUser.last_login = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        return (_mapper.Map<ReadUserDto>(existingUser), externalLogin.id_user_external_login);
     }
 
     public async Task<bool> CheckUserPasswordByEmail(string email, string password)
@@ -254,7 +276,7 @@ public class AuthService : IAuthService
         // check if user exists
         var userPassword = await _context.UsersPasswords
             .Include(p => p.User)
-            .FirstOrDefaultAsync(p => p.User!.email_user == request.email);
+            .FirstOrDefaultAsync(p => p.User != null && p.User.email_user == request.email);
         if (userPassword is null)
         {
             // a user with an external login only has no password yet: an empty one blocks the password login until the reset is done
@@ -266,7 +288,7 @@ public class AuthService : IAuthService
             }
         }
         // a reset email has just been sent: do nothing (and answer the same way, so the caller can't tell if the email exists)
-        if (userPassword?.User is not null && !(userPassword.reset_token_sent_at > DateTime.UtcNow - AuthDelays.EmailResendCooldown))
+        if (userPassword?.User is not null && userPassword.reset_token_sent_at <= DateTime.UtcNow - AuthDelays.EmailResendCooldown)
         {
             var user = userPassword.User;
             // add reset_token
@@ -311,9 +333,11 @@ public class AuthService : IAuthService
         var userPassword = await _context.UsersPasswords
             .Include(p => p.User)
             .FirstOrDefaultAsync(
-                p => p.User!.email_user == request.email && p.reset_token.ToString() == request.token && p.reset_token_expiration > DateTime.Now
+                 p => p.User != null && p.reset_token != null && p.reset_token_expiration != null &&
+                     p.User.email_user == request.email && p.reset_token.ToString() == request.token &&
+                     p.reset_token_expiration > DateTime.Now
             ) ?? throw new InvalidOperationException("Invalid token");
-        var user = userPassword.User!;
+        var user = userPassword.User ?? throw new InvalidOperationException("User not found");
         // update password
         userPassword.password_user = BCrypt.Net.BCrypt.HashPassword(request.password);
         userPassword.password_last_changed = DateTime.UtcNow;
