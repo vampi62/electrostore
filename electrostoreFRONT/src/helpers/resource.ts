@@ -116,7 +116,7 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 	}
 
 	function keyFields(parts: Parts): Parts {
-		return Object.fromEntries(compositeKey.map((field) => [field, parts[field]])) as Parts;
+		return Object.fromEntries(compositeKey.map((field) => [field, parts[field]])) as unknown as Parts;
 	}
 
 	// The only key field a scope does not give (the one the bulk ids refer to)

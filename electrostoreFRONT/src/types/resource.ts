@@ -17,12 +17,12 @@ export type IdKey<T extends EntityTypes> = Extract<keyof T["readExtended"], stri
 
 // Values of some fields of a composite key. Complete, it identifies one record; partial, it selects a slice of them.
 // Any field can be given to reach a route (e.g. id_store for a box), the ones of the DTO are suggested.
-export type KeyParts<T extends EntityTypes> = Partial<Record<IdKey<T> | (string & {}), string>>;
+export type KeyParts<T extends EntityTypes> = Partial<Record<IdKey<T>, string>> & Partial<Record<string, string>>;
 
 // One way to reach a resource. Several routes can serve the same one (/item/{id_item}/tag and /tag/{id_tag}/item):
 // the first whose key fields are all given is used.
 export interface ResourceRoute<T extends EntityTypes> {
-	keys: Array<IdKey<T> | (string & {})>;
+	keys: string[];
 	url: (parts: KeyParts<T>) => string;
 }
 
