@@ -3,7 +3,7 @@ import { useViewScroll } from "@/composables";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 
-import { useStoresStore, useTagsStore, useAuthStore } from "@/stores";
+import { useStoresStore, useStoresTagsStore, useTagsStore, useAuthStore } from "@/stores";
 
 import type { FilterLabel } from "@/types/filter";
 import type { TableauLabel, TableauMeta } from "@/types/tableau";
@@ -12,13 +12,14 @@ import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 const { t } = useI18n();
 
 const storesStore = useStoresStore();
+const storesTagsStore = useStoresTagsStore();
 const tagsStore = useTagsStore();
 const authStore = useAuthStore();
 
 async function fetchTagData(minOffset: number, maxOffset: number) {
 	let tagsNotFound: string[] = [];
 	for (let id = minOffset; id < maxOffset; id++) {
-		for (const tag in storesStore.storeTags[id]) {
+		for (const tag in storesTagsStore.storeTagsGroupedByStore[id]) {
 			if (!tagsStore.tags[tag]) {
 				tagsNotFound.push(tag);
 			}
@@ -83,7 +84,7 @@ useViewScroll(false);
 		<FilterContainer :filters="filter" :store-data="storesStore.stores" @ready="filterReady = true" :save-state="true" state-key="storesFilterState" />
 	</div>
 	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
-		:store-data="[storesStore.stores,storesStore.storeTags,tagsStore.tags]"
+		:store-data="[storesStore.stores,storesTagsStore.storeTagsGroupedByStore,tagsStore.tags]"
 		:filters="filter"
 		:loading="storesStore.storesLoading"
 		:total-count="Number(storesStore.storesTotalCount) || 0"

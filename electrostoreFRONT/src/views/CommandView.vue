@@ -11,7 +11,7 @@ import { downloadFile, viewFile, isNewId } from "@/utils";
 import CommandStatus from "@/enums/CommandStatus";
 import TrackingStatus from "@/enums/TrackingStatus";
 import TrackingSubStatus from "@/enums/TrackingSubStatus";
-import { useConfigsStore, useCommandsStore, useUsersStore, useItemsStore, useCarriersStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useCommandsStore, useCommandsCommentsStore, useCommandsDocumentsStore, useCommandsHistoryStore, useItemsCommandsStore, useUsersStore, useItemsStore, useCarriersStore, useAuthStore } from "@/stores";
 
 import type { FilterLabel } from "@/types/filter";
 import type { FormLabel } from "@/types/form";
@@ -26,6 +26,10 @@ const router = useRouter();
 
 const configsStore = useConfigsStore();
 const commandsStore = useCommandsStore();
+const commandCommentsStore = useCommandsCommentsStore();
+const commandDocumentsStore = useCommandsDocumentsStore();
+const commandHistoryStore = useCommandsHistoryStore();
+const itemCommandsStore = useItemsCommandsStore();
 const usersStore = useUsersStore();
 const itemsStore = useItemsStore();
 const carriersStore = useCarriersStore();
@@ -58,7 +62,7 @@ async function fetchAllData() {
 			return;
 		}
 		commandsStore.loadToEdition(commandId.value);
-		commandsStore.getHistoryByInterval(commandId.value);
+		commandHistoryStore.getCommandHistoryByInterval({ id_command: commandId.value });
 		usersStore.users[authStore.user.id_user] = authStore.user; // avoids undefined user when the current user posts first comment
 	}
 }
@@ -194,7 +198,7 @@ const trackingCurrentStep = computed(() => {
 });
 const trackingHistory = computed(() => {
 	const result: Record<string, RoadMapHistoryEntry[]> = {};
-	const historyData = commandsStore.history[commandId.value];
+	const historyData = commandHistoryStore.commandHistoryByCommand(commandId.value);
 	if (!historyData) {
 		return result;
 	}
@@ -377,12 +381,12 @@ const documentAddModalShow = ref(false);
 const documentAdd = async(files: { name: string; document: File }[]) => {
 	for (const file of files) {
 		const documentModalData = { name_command_document: file.name, document: file.document, type_command_document: file.document.type, created_at: new Date() };
-		const newId = commandsStore.getAvailableNewDocumentId(commandId.value);
-		commandsStore.documentEdition[commandId.value][newId] = documentModalData;
+		const newId = commandDocumentsStore.getAvailableNewCommandDocumentId({ id_command: commandId.value });
+		commandDocumentsStore.commandDocumentEditionByCommand(commandId.value)[newId] = documentModalData;
 		try {
 			schemaAddDocument.validateSync(documentModalData, { abortEarly: false });
-			commandsStore.valideDocumentEditionById(commandId.value, newId, "created", true);
-			delete commandsStore.documentEdition[commandId.value][newId];
+			commandDocumentsStore.valideCommandDocumentEditionByKey({ id_command: commandId.value, id_command_document: newId }, "created", true);
+			delete commandDocumentsStore.commandDocumentEditionByCommand(commandId.value)[newId];
 			addNotification({ message: t("command.DocumentAdded"), type: "success" });
 		} catch (e) {
 			addNotification({ message: e, type: "error" });
@@ -393,9 +397,9 @@ const documentAdd = async(files: { name: string; document: File }[]) => {
 const documentEdit = (row: TableauRowData) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
-		commandsStore.valideDocumentEditionById(commandId.value, row.id_command_document,
-			commandsStore.documentReady[commandId.value]?.[row.id_command_document]?.status === "created" ? "created" : "modified");
-		delete commandsStore.documentEdition[commandId.value][row.id_command_document];
+		commandDocumentsStore.valideCommandDocumentEditionByKey({ id_command: commandId.value, id_command_document: row.id_command_document },
+			commandDocumentsStore.commandDocumentReadyByCommand(commandId.value)?.[row.id_command_document]?.status === "created" ? "created" : "modified");
+		delete commandDocumentsStore.commandDocumentEditionByCommand(commandId.value)[row.id_command_document];
 		addNotification({ message: t("command.DocumentUpdated"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -403,7 +407,7 @@ const documentEdit = (row: TableauRowData) => {
 };
 const documentRestore = (row: TableauRowData) => {
 	try {
-		delete commandsStore.documentReady[commandId.value][row.id_command_document];
+		delete commandDocumentsStore.commandDocumentReadyByCommand(commandId.value)[row.id_command_document];
 		addNotification({ message: t("command.DocumentRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -411,18 +415,18 @@ const documentRestore = (row: TableauRowData) => {
 };
 const documentDelete = (row: TableauRowData) => {
 	try {
-		commandsStore.valideDocumentEditionById(commandId.value, row.id_command_document, "deleted");
+		commandDocumentsStore.valideCommandDocumentEditionByKey({ id_command: commandId.value, id_command_document: row.id_command_document }, "deleted");
 		addNotification({ message: t("command.DocumentDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
 };
 const documentDownload = async(fileContent: TableauRowData) => {
-	const file = await commandsStore.downloadDocument(commandId.value, fileContent.id_command_document);
+	const file = await commandDocumentsStore.downloadCommandDocument(commandId.value, fileContent.id_command_document);
 	downloadFile(file, { keyName: fileContent.name_command_document, keyType: fileContent.type_command_document });
 };
 const documentView = async(fileContent: TableauRowData) => {
-	const file = await commandsStore.downloadDocument(commandId.value, fileContent.id_command_document);
+	const file = await commandDocumentsStore.downloadCommandDocument(commandId.value, fileContent.id_command_document);
 	if (viewFile(file, { keyName: fileContent.name_command_document, keyType: fileContent.type_command_document })) {
 		addNotification({ message: t("command.DocumentOpenInNewTab"), type: "success" });
 	} else {
@@ -435,9 +439,9 @@ const itemModalShow = ref(false);
 const itemSave = (row: TableauRowData) => {
 	try {
 		schemaItem.validateSync(row, { abortEarly: false });
-		commandsStore.valideItemEditionById(commandId.value, row.id_item,
-			commandsStore.items[commandId.value]?.[row.id_item] ? "modified" : "created");
-		delete commandsStore.itemEdition[commandId.value][row.id_item];
+		itemCommandsStore.valideItemCommandEditionByKey({ id_command: commandId.value, id_item: row.id_item },
+			itemCommandsStore.itemCommandsByCommand(commandId.value)?.[row.id_item] ? "modified" : "created");
+		delete itemCommandsStore.itemCommandEditionByCommand(commandId.value)[row.id_item];
 		addNotification({ message: t("command.ItemUpdated"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -445,10 +449,10 @@ const itemSave = (row: TableauRowData) => {
 };
 const itemDelete = (row: TableauRowData) => {
 	try {
-		if (commandsStore.itemReady[commandId.value]?.[row.id_item]?.status === "created") {
-			delete commandsStore.itemReady[commandId.value][row.id_item];
+		if (itemCommandsStore.itemCommandReadyByCommand(commandId.value)?.[row.id_item]?.status === "created") {
+			delete itemCommandsStore.itemCommandReadyByCommand(commandId.value)[row.id_item];
 		} else {
-			commandsStore.valideItemEditionById(commandId.value, row.id_item, "deleted");
+			itemCommandsStore.valideItemCommandEditionByKey({ id_command: commandId.value, id_item: row.id_item }, "deleted");
 		}
 		addNotification({ message: t("command.ItemDeleted"), type: "success" });
 	} catch (e) {
@@ -457,7 +461,7 @@ const itemDelete = (row: TableauRowData) => {
 };
 const itemRestore = (row: TableauRowData) => {
 	try {
-		delete commandsStore.itemReady[commandId.value][row.id_item];
+		delete itemCommandsStore.itemCommandReadyByCommand(commandId.value)[row.id_item];
 		addNotification({ message: t("command.ItemRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -551,7 +555,7 @@ const labelTableauDocument = ref<TableauLabel[]>([
 			icon: "fa-solid fa-edit",
 			showCondition: "!edition?.id_command_document && ready?.status !== 'deleted'",
 			action: (row) => {
-				commandsStore.documentEdition[commandId.value][row.id_command_document] = { ...row };
+				commandDocumentsStore.commandDocumentEditionByCommand(commandId.value)[row.id_command_document] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -560,7 +564,7 @@ const labelTableauDocument = ref<TableauLabel[]>([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_command_document",
 			action: (row) => {
-				delete commandsStore.documentEdition[commandId.value][row.id_command_document];
+				delete commandDocumentsStore.commandDocumentEditionByCommand(commandId.value)[row.id_command_document];
 			},
 			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
 		},
@@ -568,7 +572,7 @@ const labelTableauDocument = ref<TableauLabel[]>([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_command_document",
-			action: (row) => documentEdit(commandsStore.documentEdition[commandId.value][row.id_command_document]),
+			action: (row) => documentEdit(commandDocumentsStore.commandDocumentEditionByCommand(commandId.value)[row.id_command_document]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -614,7 +618,7 @@ const labelTableauItem = ref<TableauLabel[]>([
 			icon: "fa-solid fa-edit",
 			showCondition: "!edition?.id_item && ready?.status !== 'deleted'",
 			action: (row) => {
-				commandsStore.itemEdition[commandId.value][row.id_item] = { ...row };
+				itemCommandsStore.itemCommandEditionByCommand(commandId.value)[row.id_item] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -622,7 +626,7 @@ const labelTableauItem = ref<TableauLabel[]>([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_item",
-			action: (row) => itemSave(commandsStore.itemEdition[commandId.value][row.id_item]),
+			action: (row) => itemSave(itemCommandsStore.itemCommandEditionByCommand(commandId.value)[row.id_item]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -631,7 +635,7 @@ const labelTableauItem = ref<TableauLabel[]>([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_item",
 			action: (row) => {
-				delete commandsStore.itemEdition[commandId.value][row.id_item];
+				delete itemCommandsStore.itemCommandEditionByCommand(commandId.value)[row.id_item];
 			},
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
 		},
@@ -667,7 +671,7 @@ const labelTableauModalItem = ref<TableauLabel[]>([
 			icon: "fa-solid fa-plus",
 			showCondition: "!ready?.status && store[1]?.[rowData.id_item] === undefined && !edition?.id_item",
 			action: (row) => {
-				commandsStore.itemEdition[commandId.value][row.id_item] = { price_command_item: 1, quantity_command_item: 1, id_item: row.id_item };
+				itemCommandsStore.itemCommandEditionByCommand(commandId.value)[row.id_item] = { price_command_item: 1, quantity_command_item: 1, id_item: row.id_item };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -676,7 +680,7 @@ const labelTableauModalItem = ref<TableauLabel[]>([
 			icon: "fa-solid fa-edit",
 			showCondition: "!ready?.status && store[1]?.[rowData.id_item] && !edition?.id_item",
 			action: (row) => {
-				commandsStore.itemEdition[commandId.value][row.id_item] = { ...row };
+				itemCommandsStore.itemCommandEditionByCommand(commandId.value)[row.id_item] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -684,7 +688,7 @@ const labelTableauModalItem = ref<TableauLabel[]>([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_item",
-			action: (row) => itemSave(commandsStore.itemEdition[commandId.value][row.id_item]),
+			action: (row) => itemSave(itemCommandsStore.itemCommandEditionByCommand(commandId.value)[row.id_item]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -693,7 +697,7 @@ const labelTableauModalItem = ref<TableauLabel[]>([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_item",
 			action: (row) => {
-				delete commandsStore.itemEdition[commandId.value][row.id_item];
+				delete itemCommandsStore.itemCommandEditionByCommand(commandId.value)[row.id_item];
 			},
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
 		},
@@ -715,7 +719,10 @@ const labelTableauModalItem = ref<TableauLabel[]>([
 	] },
 ]);
 useViewScroll(true);
-useTabGuard(commandsStore, () => commandId.value, "commandEdition", "commands");
+useTabGuard(commandsStore, () => commandId.value, "commandEdition", "commands", [
+	{ key: "documentReady", get: (id) => commandDocumentsStore.commandDocumentReadyByCommand(id), set: (id, entries) => commandDocumentsStore.setCommandDocumentStagedSlice("ready", { id_command: id }, entries) },
+	{ key: "itemReady", get: (id) => itemCommandsStore.itemCommandReadyByCommand(id), set: (id, entries) => itemCommandsStore.setItemCommandStagedSlice("ready", { id_command: id }, entries) },
+]);
 </script>
 <template>
 	<div class="flex items-center justify-between mb-4">
@@ -748,58 +755,58 @@ useTabGuard(commandsStore, () => commandId.value, "commandEdition", "commands");
 			/>
 		</div>
 		<CollapsibleSection title="command.Documents"
-			:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)">
+			:total-count="commandDocumentsStore.commandDocumentsCountByCommand(commandId)">
 			<template #append-row>
 				<button type="button" @click="documentAddModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('command.AddDocument') }}
 				</button>
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_command_document' }"
-					:store-data="[commandsStore.documents[commandId]]"
-					:store-edition="commandsStore.documentEdition[commandId]"
-					:store-ready="commandsStore.documentReady[commandId]"
+					:store-data="[commandDocumentsStore.commandDocumentsByCommand(commandId)]"
+					:store-edition="commandDocumentsStore.commandDocumentEditionByCommand(commandId)"
+					:store-ready="commandDocumentsStore.commandDocumentReadyByCommand(commandId)"
 					:schema="schemaEditDocument"
-					:loading="commandsStore.documentsLoading"
-					:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)"
-					:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => commandsStore.getDocumentByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
+					:loading="commandDocumentsStore.commandDocumentsLoading"
+					:total-count="commandDocumentsStore.commandDocumentsCountByCommand(commandId)"
+					:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => commandDocumentsStore.getCommandDocumentByInterval({ id_command: commandId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="command.Items"
-			:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)">
+			:total-count="itemCommandsStore.itemCommandsCountByCommand(commandId)">
 			<template #append-row>
 				<button type="button" @click="itemModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('command.AddItem') }}
 				</button>
 				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
-					:store-data="[commandsStore.items[commandId],itemsStore.items]"
-					:store-edition="commandsStore.itemEdition[commandId]"
-					:store-ready="commandsStore.itemReady[commandId]"
+					:store-data="[itemCommandsStore.itemCommandsByCommand(commandId),itemsStore.items]"
+					:store-edition="itemCommandsStore.itemCommandEditionByCommand(commandId)"
+					:store-ready="itemCommandsStore.itemCommandReadyByCommand(commandId)"
 					:schema="schemaItem"
-					:loading="commandsStore.itemsLoading"
-					:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)"
-					:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => commandsStore.getItemByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
+					:loading="itemCommandsStore.itemCommandsLoading"
+					:total-count="itemCommandsStore.itemCommandsCountByCommand(commandId)"
+					:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemCommandsStore.getItemCommandByInterval({ id_command: commandId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="command.Comments"
-			:total-count="Number(commandsStore.commentsTotalCount[commandId] || 0)" :permission="!isNewId(commandId)">
+			:total-count="commandCommentsStore.commandCommentsCountByCommand(commandId)" :permission="!isNewId(commandId)">
 			<template #append-row>
 				<Comment :meta="{ contenu: 'content_command_comment', key: 'id_command_comment', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
-					:store-data="[commandsStore.comments[commandId], usersStore.users]"
+					:store-data="[commandCommentsStore.commandCommentsByCommand(commandId), usersStore.users]"
 					:store-user="authStore.user" :store-config="configsStore"
-					:store-edition="commandsStore.commentEdition[commandId]"
+					:store-edition="commandCommentsStore.commandCommentEditionByCommand(commandId)"
 					:store-function="{
-						create: (data: Record<string, string>) => commandsStore.createComment(commandId, { content_command_comment: data.content_command_comment }),
-						update: (id: string, data: Record<string, string>) => commandsStore.updateComment(commandId, id, { content_command_comment: data.content_command_comment }),
-						delete: (id: string) => commandsStore.deleteComment(commandId, id),
+						create: (data: Record<string, string>) => commandCommentsStore.createCommandComment({ id_command: commandId }, { content_command_comment: data.content_command_comment }),
+						update: (id: string, data: Record<string, string>) => commandCommentsStore.updateCommandComment({ id_command: commandId, id_command_comment: id }, { content_command_comment: data.content_command_comment }),
+						delete: (id: string) => commandCommentsStore.deleteCommandComment({ id_command: commandId, id_command_comment: id }),
 					}"
-					:loading="commandsStore.commentsLoading" :texte-modal-delete="{ textTitle: 'command.CommentDeleteTitle', textP: 'command.CommentDeleteText' }"
-					:total-count="Number(commandsStore.commentsTotalCount[commandId] || 0)"
-					:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => commandsStore.getCommentByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
+					:loading="commandCommentsStore.commandCommentsLoading" :texte-modal-delete="{ textTitle: 'command.CommentDeleteTitle', textP: 'command.CommentDeleteText' }"
+					:total-count="commandCommentsStore.commandCommentsCountByCommand(commandId)"
+					:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => commandCommentsStore.getCommandCommentByInterval({ id_command: commandId }, limit, offset, expand, filter, sort, clear) : undefined"
 				/>
 			</template>
 		</CollapsibleSection>
@@ -831,11 +838,11 @@ useTabGuard(commandsStore, () => commandId.value, "commandEdition", "commands");
 			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" />
 
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
-				:store-data="[itemsStore.items,commandsStore.items[commandId]]"
-				:store-edition="commandsStore.itemEdition[commandId]"
-				:store-ready="commandsStore.itemReady[commandId]"
+				:store-data="[itemsStore.items,itemCommandsStore.itemCommandsByCommand(commandId)]"
+				:store-edition="itemCommandsStore.itemCommandEditionByCommand(commandId)"
+				:store-ready="itemCommandsStore.itemCommandReadyByCommand(commandId)"
 				:filters="filterItem"
-				:loading="commandsStore.itemsLoading" :schema="schemaItem"
+				:loading="itemCommandsStore.itemCommandsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
 				:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"

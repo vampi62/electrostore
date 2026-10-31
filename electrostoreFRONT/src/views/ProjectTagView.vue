@@ -8,7 +8,7 @@ import { useViewScroll, useTabGuard } from "@/composables";
 import type { useNotification } from "@/composables";
 import type FormContainer from "@/components/FormContainer.vue";
 import { isNewId } from "@/utils";
-import { useConfigsStore, useProjectTagsStore, useProjectsStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useProjectTagsStore, useProjectsTagsStore, useProjectsStore, useAuthStore } from "@/stores";
 
 import type { FilterLabel } from "@/types/filter";
 import type { TableauLabel, TableauRowData } from "@/types/tableau";
@@ -21,6 +21,7 @@ const router = useRouter();
 
 const configsStore = useConfigsStore();
 const projectTagsStore = useProjectTagsStore();
+const projectsTagsStore = useProjectsTagsStore();
 const projectsStore = useProjectsStore();
 const authStore = useAuthStore();
 
@@ -121,14 +122,14 @@ async function fetchAllProjects() {
 }
 function projectSave(row: TableauRowData) {
 	try {
-		if (projectTagsStore.projectTagProjectReady[projectTagId.value]?.[row.id_project]?.status === "deleted") {
-			delete projectTagsStore.projectTagProjectReady[projectTagId.value][row.id_project];
+		if (projectsTagsStore.projectProjectTagReadyByProjectTag(projectTagId.value)?.[row.id_project]?.status === "deleted") {
+			delete projectsTagsStore.projectProjectTagReadyByProjectTag(projectTagId.value)[row.id_project];
 			addNotification({ message: t("projectTag.ProjectRestored"), type: "success" });
 			return;
 		}
-		projectTagsStore.projectTagProjectEdition[projectTagId.value][row.id_project] = { id_project: row.id_project };
-		projectTagsStore.valideProjectTagProjectEditionById(projectTagId.value, row.id_project, "created");
-		delete projectTagsStore.projectTagProjectEdition[projectTagId.value][row.id_project];
+		projectsTagsStore.projectProjectTagEditionByProjectTag(projectTagId.value)[row.id_project] = { id_project: row.id_project };
+		projectsTagsStore.valideProjectProjectTagEditionByKey({ id_project_tag: projectTagId.value, id_project: row.id_project }, "created");
+		delete projectsTagsStore.projectProjectTagEditionByProjectTag(projectTagId.value)[row.id_project];
 		addNotification({ message: t("projectTag.ProjectAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -136,10 +137,10 @@ function projectSave(row: TableauRowData) {
 }
 function projectDelete(project: TableauRowData) {
 	try {
-		if (projectTagsStore.projectTagProjectReady[projectTagId.value]?.[project.id_project]?.status === "created") {
-			delete projectTagsStore.projectTagProjectReady[projectTagId.value][project.id_project];
+		if (projectsTagsStore.projectProjectTagReadyByProjectTag(projectTagId.value)?.[project.id_project]?.status === "created") {
+			delete projectsTagsStore.projectProjectTagReadyByProjectTag(projectTagId.value)[project.id_project];
 		} else {
-			projectTagsStore.valideProjectTagProjectEditionById(projectTagId.value, project.id_project, "deleted");
+			projectsTagsStore.valideProjectProjectTagEditionByKey({ id_project_tag: projectTagId.value, id_project: project.id_project }, "deleted");
 		}
 		addNotification({ message: t("projectTag.ProjectDeleted"), type: "success" });
 	} catch (e) {
@@ -148,7 +149,7 @@ function projectDelete(project: TableauRowData) {
 }
 function projectRestore(project: TableauRowData) {
 	try {
-		delete projectTagsStore.projectTagProjectReady[projectTagId.value][project.id_project];
+		delete projectsTagsStore.projectProjectTagReadyByProjectTag(projectTagId.value)[project.id_project];
 		addNotification({ message: t("projectTag.ProjectRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -232,7 +233,9 @@ const labelTableauModalProject = ref<TableauLabel[]>([
 	] },
 ]);
 useViewScroll(true);
-useTabGuard(projectTagsStore, () => projectTagId.value, "projectTagEdition", "projectTags");
+useTabGuard(projectTagsStore, () => projectTagId.value, "projectTagEdition", "projectTags", [
+	{ key: "projectTagProjectReady", get: (id) => projectsTagsStore.projectProjectTagReadyByProjectTag(id), set: (id, entries) => projectsTagsStore.setProjectProjectTagStagedSlice("ready", { id_project_tag: id }, entries) },
+]);
 </script>
 
 <template>
@@ -251,18 +254,18 @@ useTabGuard(projectTagsStore, () => projectTagId.value, "projectTagEdition", "pr
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-edition="projectTagsStore.projectTagEdition[projectTagId]" :store-data="projectTagsStore.projectTags[projectTagId]"/>
 		</div>
 		<CollapsibleSection title="projectTag.Projects"
-			:total-count="Number(projectTagsStore.projectTagsProjectTotalCount[projectTagId] || 0)" :permission="!isNewId(projectTagId)">
+			:total-count="projectsTagsStore.projectProjectTagsCountByProjectTag(projectTagId)" :permission="!isNewId(projectTagId)">
 			<template #append-row>
 				<button type="button" @click="projectOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('projectTag.AddProject') }}
 				</button>
 				<Tableau :labels="labelTableauProject" :meta="{ key: 'id_project', expand: ['project'] }"
-					:store-data="[projectTagsStore.projectTagsProject[projectTagId],projectsStore.projects]"
-					:store-ready="projectTagsStore.projectTagProjectReady[projectTagId]"
-					:loading="projectTagsStore.projectTagsProjectLoading"
-					:total-count="Number(projectTagsStore.projectTagsProjectTotalCount[projectTagId] || 0)"
-					:fetch-function="!isNewId(projectTagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectTagsStore.getProjectTagProjectByInterval(projectTagId, limit, offset, expand, filter, sort, clear) : undefined"
+					:store-data="[projectsTagsStore.projectProjectTagsByProjectTag(projectTagId),projectsStore.projects]"
+					:store-ready="projectsTagsStore.projectProjectTagReadyByProjectTag(projectTagId)"
+					:loading="projectsTagsStore.projectProjectTagsLoading"
+					:total-count="projectsTagsStore.projectProjectTagsCountByProjectTag(projectTagId)"
+					:fetch-function="!isNewId(projectTagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectsTagsStore.getProjectProjectTagByInterval({ id_project_tag: projectTagId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -289,10 +292,10 @@ useTabGuard(projectTagsStore, () => projectTagId.value, "projectTagEdition", "pr
 
 			<!-- Tableau Projects -->
 			<Tableau :labels="labelTableauModalProject" :meta="{ key: 'id_project' }"
-				:store-data="[projectsStore.projects, projectTagsStore.projectTagsProject[projectTagId]]"
-				:store-ready="projectTagsStore.projectTagProjectReady[projectTagId]"
+				:store-data="[projectsStore.projects, projectsTagsStore.projectProjectTagsByProjectTag(projectTagId)]"
+				:store-ready="projectsTagsStore.projectProjectTagReadyByProjectTag(projectTagId)"
 				:filters="filterProject"
-				:loading="projectTagsStore.projectTagsProjectLoading"
+				:loading="projectsTagsStore.projectProjectTagsLoading"
 				:total-count="Number(projectsStore.projectsTotalCount || 0)"
 				:fetch-function="!isNewId(projectTagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectsStore.getProjectByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"

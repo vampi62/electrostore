@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, createMainResource } from "@/helpers";
+import { fetchWrapper, createResource } from "@/helpers";
 import { isNewId } from "@/utils";
 
 import { useStoresStore } from "@/stores";
@@ -12,7 +12,6 @@ type ReadZoneDto = components["schemas"]["ReadZoneDto"];
 type ReadExtendedZoneDto = components["schemas"]["ReadExtendedZoneDto"];
 type CreateZoneDto = WithFile<NonNullable<paths["/api/zone"]["post"]["requestBody"]>["content"]["multipart/form-data"], "img_file">;
 type UpdateZoneDto = WithFile<NonNullable<paths["/api/zone/{id_zone}"]["put"]["requestBody"]>["content"]["multipart/form-data"], "img_file">;
-type ReadStoreDto = components["schemas"]["ReadStoreDto"];
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -23,20 +22,19 @@ function hydrateZone(store: StoreGeneric, idZone: string, zone: ReadExtendedZone
 	store.zoneStoresTotalCount[idZone] = zone.stores_count;
 	if (expand.includes("stores") && zone.stores) {
 		const storesStore = useStoresStore();
-		store.zoneStores[idZone] = {};
 		for (const zoneStore of zone.stores) {
-			if (!zoneStore.id_store) {
-				continue;
+			if (zoneStore.id_store) {
+				storesStore.stores[zoneStore.id_store] = zoneStore;
 			}
-			store.zoneStores[idZone][zoneStore.id_store] = zoneStore;
-			storesStore.stores[zoneStore.id_store] = zoneStore;
 		}
 	}
 }
 
-const zoneResource = createMainResource<{ readExtended: ReadExtendedZoneDto, readBasic: ReadZoneDto, create: CreateZoneDto, update: UpdateZoneDto }>({
-	path: () => "/zone",
-	idField: "id_zone",
+const zoneResource = createResource<{ readExtended: ReadExtendedZoneDto, readBasic: ReadZoneDto, create: CreateZoneDto, update: UpdateZoneDto }>({
+	compositeKey: ["id_zone"],
+	generatedField: "id_zone",
+	path: [{ keys: [], url: () => "/zone" }],
+	entityPath: [{ keys: ["id_zone"], url: ({ id_zone }) => `/zone/${id_zone}` }],
 	stateKey: "zones",
 	countKey: "zonesTotalCount",
 	loadingKey: "zonesLoading",
@@ -57,18 +55,24 @@ export const useZonesStore = defineStore("zones", {
 		zoneEdition: {} as Record<string, Edition<{ create: CreateZoneDto, update: UpdateZoneDto }>>,
 
 		zoneStoresTotalCount: {} as Record<string, number>,
-		zoneStores: {} as Record<string, Record<string, ReadStoreDto>>,
 
 		imagesURL: {} as Record<string, string>,
 		thumbnailsURL: {} as Record<string, string>,
 	}),
+	getters: {
+		// the stores of a zone are the stores loaded with its id_zone, indexed by id_store
+		zoneStoresByZone: () => (idZone: string) => {
+			const storesStore = useStoresStore();
+			return Object.fromEntries(Object.entries(storesStore.stores).filter(([, store]) => String(store.id_zone) === idZone));
+		},
+	},
 	actions: {
-		getZoneByInterval: zoneResource.getByInterval,
-		getZoneById: zoneResource.getById,
-		createZone: zoneResource.create,
-		getAvailableNewZoneId: zoneResource.getAvailableNewId,
-		updateZone: zoneResource.update,
-		deleteZone: zoneResource.remove,
+		getZoneByInterval: zoneResource.single.getByInterval,
+		getZoneById: zoneResource.single.getById,
+		createZone: zoneResource.single.create,
+		getAvailableNewZoneId: zoneResource.single.getAvailableNewId,
+		updateZone: zoneResource.single.update,
+		deleteZone: zoneResource.single.remove,
 		loadToEdition(id: string, preset: string | null = null) {
 			if (!isNewId(id) && this.zones[id]) {
 				this.zoneEdition[id] = {
@@ -82,7 +86,7 @@ export const useZonesStore = defineStore("zones", {
 				this.zoneEdition[id] = {
 					loading: false,
 				};
-				zoneResource.loadEditionPreset.call(this, id, preset);
+				zoneResource.single.loadEditionPreset.call(this, id, preset);
 			}
 		},
 		setLoadingEdition(id: string, loading: boolean) {

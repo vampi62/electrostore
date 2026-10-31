@@ -9,7 +9,7 @@ import type { useNotification } from "@/composables";
 import type FormContainer from "@/components/FormContainer.vue";
 import { isNewId, loadLedPreferences, saveLedPreferences, LED_ANIMATIONS } from "@/utils";
 import { UserRole } from "@/enums";
-import { useConfigsStore, useUsersStore, useCommandsStore, useProjectsStore, useEquipementsStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useUsersStore, useCommandsCommentsStore, useProjectsCommentsStore, useEquipementsCommentsStore, useUsersSessionsStore, useUsersPushStore, useCommandsStore, useProjectsStore, useEquipementsStore, useAuthStore } from "@/stores";
 
 import type { FilterLabel } from "@/types/filter";
 import type { FormLabel } from "@/types/form";
@@ -26,6 +26,11 @@ const router = useRouter();
 
 const configsStore = useConfigsStore();
 const usersStore = useUsersStore();
+const commandCommentsStore = useCommandsCommentsStore();
+const projectCommentsStore = useProjectsCommentsStore();
+const equipementCommentsStore = useEquipementsCommentsStore();
+const userSessionsStore = useUsersSessionsStore();
+const userPushStore = useUsersPushStore();
 const commandsStore = useCommandsStore();
 const projectsStore = useProjectsStore();
 const equipementsStore = useEquipementsStore();
@@ -141,8 +146,8 @@ const userDelete = async() => {
 
 const revokeToken = async(tokenId: string) => {
 	try {
-		await usersStore.updateToken(userId.value, tokenId, { "revoked_reason": "Revoked by user" });
-		usersStore.getTokenById(userId.value, tokenId);
+		await userSessionsStore.updateUserSession({ id_user: userId.value, session_id: tokenId }, { "revoked_reason": "Revoked by user" });
+		userSessionsStore.getUserSessionById({ id_user: userId.value, session_id: tokenId });
 		addNotification({ message: t("user.TokenRevoked"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -278,8 +283,8 @@ async function checkExistingSubscription() {
 			return;
 		}
 		// Cherche si cet endpoint est déjà enregistré côté API pour cet utilisateur
-		await usersStore.getPushSubscriptionsByInterval(userId.value, 100, 0, [], [], {}, true);
-		const subs = usersStore.pushSubscriptions[userId.value] || {};
+		await userPushStore.getUserPushSubscriptionByInterval({ id_user: userId.value }, 100, 0, [], [], {}, true);
+		const subs = userPushStore.userPushSubscriptionsByUser(userId.value);
 		const match = Object.values(subs).find((s) => s.endpoint === sub.endpoint);
 		pushSubscriptionId.value = match?.id_user_push_subscription ?? null;
 	} catch (e) {
@@ -315,13 +320,13 @@ async function subscribePush() {
 			addNotification({ message: t("user.PushSubscribeError"), type: "error" });
 			return;
 		}
-		const created = await usersStore.createPushSubscription(userId.value, {
+		const created = await userPushStore.createUserPushSubscription({ id_user: userId.value }, {
 			endpoint: json.endpoint,
 			p256dh: json.keys.p256dh,
 			auth: json.keys.auth,
 			device_name: pushDeviceName.value || undefined,
 		});
-		pushSubscriptionId.value = Number(created);
+		pushSubscriptionId.value = Number(created.split(":").at(-1));
 		addNotification({ message: t("user.PushSubscribed"), type: "success" });
 	} catch (e) {
 		addNotification({ message: t("user.PushSubscribeError"), type: "error" });
@@ -342,7 +347,7 @@ async function unsubscribePush() {
 		if (sub) {
 			await sub.unsubscribe();
 		}
-		await usersStore.deletePushSubscription(userId.value, String(pushSubscriptionId.value));
+		await userPushStore.deleteUserPushSubscription({ id_user: userId.value, id_user_push_subscription: String(pushSubscriptionId.value) });
 		pushSubscriptionId.value = null;
 	} catch (e) {
 		addNotification({ message: t("user.PushDeleteError"), type: "error" });
@@ -380,7 +385,7 @@ const deletePushSubscriptionFromTable = async(subscriptionId: number) => {
 			}
 			pushSubscriptionId.value = null;
 		}
-		await usersStore.deletePushSubscription(userId.value, String(subscriptionId));
+		await userPushStore.deleteUserPushSubscription({ id_user: userId.value, id_user_push_subscription: String(subscriptionId) });
 		addNotification({ message: t("user.PushDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: t("user.PushDeleteError"), type: "error" });
@@ -425,53 +430,53 @@ onMounted(() => {
 		<CollapsibleSection title="user.Participation" :permission="!isNewId(userId)">
 			<template #append-row>
 				<CollapsibleSection title="user.CommandsComments" :disable-margin="true"
-					:total-count="Number(usersStore.commandsCommentTotalCount[userId] || 0)" :permission="!isNewId(userId)">
+					:total-count="commandCommentsStore.commandCommentsCountByUser(userId)" :permission="!isNewId(userId)">
 					<template #append-row>
 						<Comment :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'content_command_comment', key: 'id_command_comment', canEdit: false, roleRequired: false, expand: ['command'] }"
-							:store-data="[usersStore.commandsComment[userId], usersStore.users]"
+							:store-data="[commandCommentsStore.commandCommentsByUser(userId), usersStore.users]"
 							:store-user="authStore.user" :store-config="configsStore"
-							:loading="usersStore.commandsCommentLoading"
-							:total-count="Number(usersStore.commandsCommentTotalCount[userId]) || 0"
-							:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => usersStore.getCommandCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+							:loading="commandCommentsStore.commandCommentsLoading"
+							:total-count="commandCommentsStore.commandCommentsCountByUser(userId)"
+							:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => commandCommentsStore.getCommandCommentByInterval({ id_user: userId }, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>
 				<CollapsibleSection title="user.ProjectsComments" :disable-margin="true"
-					:total-count="Number(usersStore.projectsCommentTotalCount[userId] || 0)" :permission="!isNewId(userId)">
+					:total-count="projectCommentsStore.projectCommentsCountByUser(userId)" :permission="!isNewId(userId)">
 					<template #append-row>
 						<Comment :meta="{ link: '/projects/', idRessource: 'id_project', contenu: 'content_project_comment', key: 'id_project_comment', canEdit: false, roleRequired: false, expand: ['project'] }"
-							:store-data="[usersStore.projectsComment[userId], usersStore.users]"
+							:store-data="[projectCommentsStore.projectCommentsByUser(userId), usersStore.users]"
 							:store-user="authStore.user" :store-config="configsStore"
-							:loading="usersStore.projectsCommentLoading"
-							:total-count="Number(usersStore.projectsCommentTotalCount[userId]) || 0"
-							:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => usersStore.getProjectCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+							:loading="projectCommentsStore.projectCommentsLoading"
+							:total-count="projectCommentsStore.projectCommentsCountByUser(userId)"
+							:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectCommentsStore.getProjectCommentByInterval({ id_user: userId }, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>
 				<CollapsibleSection title="user.EquipementsComments" :disable-margin="true"
-					:total-count="Number(usersStore.equipementsCommentTotalCount[userId] || 0)" :permission="!isNewId(userId)">
+					:total-count="equipementCommentsStore.equipementCommentsCountByUser(userId)" :permission="!isNewId(userId)">
 					<template #append-row>
 						<Comment :meta="{ link: '/equipements/', idRessource: 'id_equipement', contenu: 'content_equipement_comment', key: 'id_equipement_comment', canEdit: false, roleRequired: false, expand: ['equipement'] }"
-							:store-data="[usersStore.equipementsComment[userId], equipementsStore.equipements]"
+							:store-data="[equipementCommentsStore.equipementCommentsByUser(userId), equipementsStore.equipements]"
 							:store-user="authStore.user" :store-config="configsStore"
-							:loading="usersStore.equipementsCommentLoading"
-							:total-count="Number(usersStore.equipementsCommentTotalCount[userId]) || 0"
-							:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => usersStore.getEquipementCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+							:loading="equipementCommentsStore.equipementCommentsLoading"
+							:total-count="equipementCommentsStore.equipementCommentsCountByUser(userId)"
+							:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementCommentsStore.getEquipementCommentByInterval({ id_user: userId }, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="user.Tokens"
-			:total-count="Number(usersStore.tokensTotalCount[userId] || 0)" :permission="!isNewId(userId)">
+			:total-count="userSessionsStore.userSessionsCountByUser(userId)" :permission="!isNewId(userId)">
 			<template #append-row>
-				<FilterContainer class="my-4 flex gap-4" :filters="filterSession" :store-data="usersStore.tokens[userId]" />
+				<FilterContainer class="my-4 flex gap-4" :filters="filterSession" :store-data="userSessionsStore.userSessionsByUser(userId)" />
 				<Tableau :labels="labelTableauSession" :meta="{ key: 'session_id' }"
-					:store-data="[usersStore.tokens[userId]]"
+					:store-data="[userSessionsStore.userSessionsByUser(userId)]"
 					:filters="filterSession"
-					:loading="usersStore.tokensLoading"
-					:total-count="Number(usersStore.tokensTotalCount[userId]) || 0"
-					:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => usersStore.getTokenByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+					:loading="userSessionsStore.userSessionsLoading"
+					:total-count="userSessionsStore.userSessionsCountByUser(userId)"
+					:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => userSessionsStore.getUserSessionByInterval({ id_user: userId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'min-h-64 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -496,7 +501,7 @@ onMounted(() => {
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="user.PushNotifications"
-			:total-count="Number(usersStore.pushSubscriptionsTotalCount[userId] || 0)" :permission="!isNewId(userId)"
+			:total-count="userPushStore.userPushSubscriptionsCountByUser(userId)" :permission="!isNewId(userId)"
 			v-if="configsStore.getStatusByKey('notif_web_push')">
 			<template #append-row>
 				<div v-if="notificationPermission === 'denied'" class="flex items-center gap-2 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 mb-2">
@@ -538,10 +543,10 @@ onMounted(() => {
 					</button>
 				</div>
 				<Tableau :labels="labelTableauPushSubscriptions" :meta="{ key: 'id_user_push_subscription' }"
-					:store-data="[usersStore.pushSubscriptions[userId]]"
-					:loading="usersStore.pushSubscriptionsLoading"
-					:total-count="Number(usersStore.pushSubscriptionsTotalCount[userId]) || 0"
-					:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => usersStore.getPushSubscriptionsByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+					:store-data="[userPushStore.userPushSubscriptionsByUser(userId)]"
+					:loading="userPushStore.userPushSubscriptionsLoading"
+					:total-count="userPushStore.userPushSubscriptionsCountByUser(userId)"
+					:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => userPushStore.getUserPushSubscriptionByInterval({ id_user: userId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'min-h-32 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>

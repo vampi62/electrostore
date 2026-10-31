@@ -3,13 +3,21 @@ import type { StoreGeneric } from "pinia";
 
 // Unsaved changes of a view and their draft (serializable copy).
 // Convention of the stores: the edition of an element is store[mainKey][id], the changes staged for its nested resources
-// (pending creations / modifications / deletions) are in every store[*Ready][id].
+// (pending creations / modifications / deletions) are in every store[*Ready][id], or, when the nested resources have their own store, in the related ones.
 
 export interface EditionDraft {
 	edition: Record<string, unknown>;
 	ready: Record<string, Record<string, unknown>>;
 	// number of staged files that cannot be kept in a draft (File objects)
 	lost: number;
+}
+
+// Changes staged in the store of a nested resource (see createResource), entries are indexed by the rest of their composite key
+export interface RelatedStaged {
+	// name of the entries in the draft
+	key: string;
+	get: (id: string) => Record<string, unknown>;
+	set: (id: string, entries: Record<string, object>) => void;
 }
 
 // fields of an edition that are only used by the UI
@@ -33,11 +41,14 @@ function sameValue(a: unknown, b: unknown) {
 
 const readyKeys = (store: StoreGeneric) => Object.keys(store.$state).filter((key) => key.endsWith("Ready"));
 
-export function isEditionDirty(store: StoreGeneric, id: string, mainKey: string, sourceKey: string): boolean {
+export function isEditionDirty(store: StoreGeneric, id: string, mainKey: string, sourceKey: string, related: RelatedStaged[] = []): boolean {
 	if (!id) {
 		return false;
 	}
 	if (readyKeys(store).some((key) => Object.keys(store.$state[key]?.[id] ?? {}).length > 0)) {
+		return true;
+	}
+	if (related.some((staged) => Object.keys(staged.get(id)).length > 0)) {
 		return true;
 	}
 	const edition = store.$state[mainKey]?.[id];
@@ -63,7 +74,7 @@ export function isEditionDirty(store: StoreGeneric, id: string, mainKey: string,
 	});
 }
 
-export function snapshotEdition(store: StoreGeneric, id: string, mainKey: string): EditionDraft {
+export function snapshotEdition(store: StoreGeneric, id: string, mainKey: string, related: RelatedStaged[] = []): EditionDraft {
 	let lost = 0;
 	const edition: Record<string, unknown> = {};
 	for (const [key, value] of Object.entries(store.$state[mainKey]?.[id] ?? {})) {
@@ -77,9 +88,13 @@ export function snapshotEdition(store: StoreGeneric, id: string, mainKey: string
 		}
 	}
 	const ready: Record<string, Record<string, unknown>> = {};
-	for (const key of readyKeys(store)) {
+	const staged = [
+		...readyKeys(store).map((key) => ({ key, entries: store.$state[key]?.[id] ?? {} })),
+		...related.map((relatedStaged) => ({ key: relatedStaged.key, entries: relatedStaged.get(id) })),
+	];
+	for (const { key, entries: stagedEntries } of staged) {
 		const entries: Record<string, unknown> = {};
-		for (const [entryId, entry] of Object.entries(store.$state[key]?.[id] ?? {})) {
+		for (const [entryId, entry] of Object.entries(stagedEntries)) {
 			// an entry holding a file would be pushed without it
 			if (Object.values(entry as object).some((value) => value instanceof Blob)) {
 				lost++;
@@ -94,10 +109,13 @@ export function snapshotEdition(store: StoreGeneric, id: string, mainKey: string
 	return structuredClone({ edition, ready, lost });
 }
 
-export function applyDraft(store: StoreGeneric, id: string, mainKey: string, draft: EditionDraft) {
+export function applyDraft(store: StoreGeneric, id: string, mainKey: string, draft: EditionDraft, related: RelatedStaged[] = []) {
 	Object.assign(store.$state[mainKey][id], draft.edition, { loading: false });
 	for (const [key, entries] of Object.entries(draft.ready)) {
-		if (store.$state[key] !== undefined) {
+		const relatedStaged = related.find((candidate) => candidate.key === key);
+		if (relatedStaged) {
+			relatedStaged.set(id, entries as Record<string, object>);
+		} else if (store.$state[key] !== undefined) {
 			store.$state[key][id] = entries;
 		}
 	}

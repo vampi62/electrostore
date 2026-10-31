@@ -1,17 +1,19 @@
 import { defineStore } from "pinia";
 
-import { createMainResource } from "@/helpers";
+import { createResource } from "@/helpers";
 
 import type { components } from "@/types/api";
 import { isNewId } from "@/utils/newId";
 type ReadCarrierDto = components["schemas"]["ReadCarrierDto"];
 
-const carrierResource = createMainResource<{ readExtended: ReadCarrierDto }>({
-	path: () => "/carrier",
-	idField: "id_carrier",
+const carrierResource = createResource<{ readExtended: ReadCarrierDto }>({
+	compositeKey: ["id_carrier"],
+	path: [{ keys: [], url: () => "/carrier" }],
+	entityPath: [{ keys: ["id_carrier"], url: ({ id_carrier }) => `/carrier/${id_carrier}` }],
 	stateKey: "carriers",
 	countKey: "carriersTotalCount",
 	loadingKey: "carriersLoading",
+	editionKey: "carrierEdition",
 });
 
 export const useCarriersStore = defineStore("carriers", {
@@ -22,8 +24,8 @@ export const useCarriersStore = defineStore("carriers", {
 		carrierEdition: {} as Record<string, Partial<ReadCarrierDto> & { loading?: boolean }>,
 	}),
 	actions: {
-		getCarrierByInterval: carrierResource.getByInterval,
-		getCarrierById: carrierResource.getById,
+		getCarrierByInterval: carrierResource.single.getByInterval,
+		getCarrierById: carrierResource.single.getById,
 		loadToEdition(id: string, preset: string | null = null) {
 			if (!isNewId(id) && this.carriers[id]) {
 				this.carrierEdition[id] = {
@@ -35,7 +37,7 @@ export const useCarriersStore = defineStore("carriers", {
 					loading: false,
 				};
 			}
-			carrierResource.loadEditionPreset.call(this, id, preset);
+			carrierResource.single.loadEditionPreset.call(this, id, preset);
 		},
 		setLoadingEdition(id: string, loading: boolean) {
 			if (!this.carrierEdition[id]) {
