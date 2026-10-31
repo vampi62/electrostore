@@ -15,6 +15,7 @@ const router = createRouter({
 		{ path: "/login", component: () => import("@/views/LoginView.vue") },
 		{ path: "/reset-password", component: () => import("@/views/ResetPasswordView.vue") },
 		{ path: "/register", component: () => import("@/views/RegisterView.vue") },
+		{ path: "/verify-email", component: () => import("@/views/VerifyEmailView.vue") },
 		{ path: "/:pathMatch(.*)*", component: { render: () => null }, meta: { app: true } },
 	],
 });

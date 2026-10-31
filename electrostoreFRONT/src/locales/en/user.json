@@ -36,6 +36,8 @@
 	"Email": "Email",
 	"Role": "Role",
 	"SelectRole": "Select a role",
+	"IsActive": "Active account",
+	"IsVerified": "Email verified",
 	"Check": "change password",
 	"Password": "New password",
 	"ConfirmPassword": "Confirm password",

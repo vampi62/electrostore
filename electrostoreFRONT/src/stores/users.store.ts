@@ -23,7 +23,8 @@ type ExpandedUserDto = ReadExtendedUserDto & {
 };
 // the edition form also carries the password confirmation, which is never sent to the api
 // unset_check is the checkbox of the form that enables the password fields
-type UserEdition = Edition<{ create: CreateUserDto, update: UpdateUserDto }> & { confirm_password_user?: string; unset_check?: boolean };
+// is_verified is only displayed, it can't be edited
+type UserEdition = Edition<{ create: CreateUserDto, update: UpdateUserDto }> & { confirm_password_user?: string; unset_check?: boolean; is_verified?: boolean };
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -83,6 +84,8 @@ export const useUsersStore = defineStore("users", {
 					firstname_user: this.users[id].firstname_user ?? undefined,
 					email_user: this.users[id].email_user ?? undefined,
 					role_user: this.users[id].role_user,
+					is_active: this.users[id].is_active,
+					is_verified: this.users[id].is_verified,
 					current_password_user: "",
 					password_user: "",
 					confirm_password_user: "",
@@ -90,6 +93,7 @@ export const useUsersStore = defineStore("users", {
 			} else {
 				this.userEdition[id] = {
 					loading: false,
+					is_active: true,
 				};
 				userResource.single.loadEditionPreset.call(this, id, preset);
 			}

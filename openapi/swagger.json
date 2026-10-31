@@ -308,6 +308,68 @@
         }
       }
     },
+    "/api/auth/resend-verification": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendVerificationRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendVerificationRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendVerificationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/auth/verify-email": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/auth/reset-password": {
       "post": {
         "tags": [
@@ -9530,78 +9592,6 @@
         }
       }
     },
-    "/api/store/{id_store}/box/{id_box}/show": {
-      "post": {
-        "tags": [
-          "StoreBox"
-        ],
-        "parameters": [
-          {
-            "name": "id_store",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "id_box",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "red",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "green",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "blue",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "timeshow",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "animation",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
     "/api/store/{id_store}/box/{id_box}/equipement": {
       "get": {
         "tags": [
@@ -11131,6 +11121,78 @@
           },
           {
             "name": "id_led",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "red",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "green",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "blue",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "timeshow",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "animation",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/store/{id_store}/box/{id_box}/show": {
+      "post": {
+        "tags": [
+          "StoreLed"
+        ],
+        "parameters": [
+          {
+            "name": "id_store",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_box",
             "in": "path",
             "required": true,
             "schema": {
@@ -15633,6 +15695,7 @@
         "type": "object",
         "properties": {
           "price_command": {
+            "maximum": 3.4028234663852886E+38,
             "minimum": 0,
             "type": "number",
             "format": "float",
@@ -15691,6 +15754,7 @@
             "format": "int32"
           },
           "price_command_item": {
+            "maximum": 3.4028234663852886E+38,
             "minimum": 0,
             "type": "number",
             "format": "float"
@@ -15717,6 +15781,7 @@
             "format": "int32"
           },
           "price_command_item": {
+            "maximum": 3.4028234663852886E+38,
             "minimum": 0,
             "type": "number",
             "format": "float"
@@ -16262,6 +16327,9 @@
           },
           "role_user": {
             "$ref": "#/components/schemas/UserRole"
+          },
+          "is_active": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -16347,9 +16415,7 @@
             "type": "string",
             "nullable": true
           },
-          "data": {
-            "nullable": true
-          }
+          "data": { }
         },
         "additionalProperties": false
       },
@@ -16371,6 +16437,13 @@
           },
           "value": {
             "type": "string",
+            "nullable": true
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FilterDto"
+            },
             "nullable": true
           }
         },
@@ -16497,9 +16570,7 @@
             "type": "string",
             "nullable": true
           },
-          "payload": {
-            "nullable": true
-          }
+          "payload": { }
         },
         "additionalProperties": false
       },
@@ -17192,6 +17263,13 @@
             },
             "nullable": true
           },
+          "allowed_document_extensions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
           "max_size_audio_in_mb": {
             "type": "integer",
             "format": "int32"
@@ -17204,13 +17282,6 @@
             "nullable": true
           },
           "allowed_audio_extensions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "allowed_document_extensions": {
             "type": "array",
             "items": {
               "type": "string"
@@ -19829,6 +19900,17 @@
           "role_user": {
             "$ref": "#/components/schemas/UserRole"
           },
+          "is_active": {
+            "type": "boolean"
+          },
+          "is_verified": {
+            "type": "boolean"
+          },
+          "last_login": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "created_at": {
             "type": "string",
             "format": "date-time"
@@ -20936,6 +21018,17 @@
           "role_user": {
             "$ref": "#/components/schemas/UserRole"
           },
+          "is_active": {
+            "type": "boolean"
+          },
+          "is_verified": {
+            "type": "boolean"
+          },
+          "last_login": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "created_at": {
             "type": "string",
             "format": "date-time"
@@ -21067,6 +21160,19 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResendVerificationRequest": {
+        "required": [
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "minLength": 1,
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -21527,6 +21633,7 @@
         "type": "object",
         "properties": {
           "price_command": {
+            "maximum": 3.4028234663852886E+38,
             "minimum": 0,
             "type": "number",
             "format": "float",
@@ -21578,6 +21685,7 @@
             "nullable": true
           },
           "price_command_item": {
+            "maximum": 3.4028234663852886E+38,
             "minimum": 0,
             "type": "number",
             "format": "float",
@@ -21608,6 +21716,16 @@
           },
           "is_enabled": {
             "type": "boolean",
+            "nullable": true
+          },
+          "last_run_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "next_run_at": {
+            "type": "string",
+            "format": "date-time",
             "nullable": true
           }
         },
@@ -21944,6 +22062,10 @@
           "role_user": {
             "$ref": "#/components/schemas/UserRole"
           },
+          "is_active": {
+            "type": "boolean",
+            "nullable": true
+          },
           "current_password_user": {
             "type": "string",
             "nullable": true
@@ -21959,6 +22081,24 @@
         ],
         "type": "integer",
         "format": "int32"
+      },
+      "VerifyEmailRequest": {
+        "required": [
+          "email",
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "token": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
       }
     },
     "securitySchemes": {

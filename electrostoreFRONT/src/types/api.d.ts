@@ -256,6 +256,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/resend-verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ResendVerificationRequest"];
+                    "text/json": components["schemas"]["ResendVerificationRequest"];
+                    "application/*+json": components["schemas"]["ResendVerificationRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/reset-password": {
         parameters: {
             query?: never;
@@ -277,6 +316,45 @@ export interface paths {
                     "application/json": components["schemas"]["ResetPasswordRequest"];
                     "text/json": components["schemas"]["ResetPasswordRequest"];
                     "application/*+json": components["schemas"]["ResetPasswordRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/verify-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["VerifyEmailRequest"];
+                    "text/json": components["schemas"]["VerifyEmailRequest"];
+                    "application/*+json": components["schemas"]["VerifyEmailRequest"];
                 };
             };
             responses: {
@@ -9823,6 +9901,7 @@ export interface components {
             email_user: string;
             password_user: string;
             role_user: components["schemas"]["UserRole"];
+            is_active?: boolean;
         };
         CreateUserPushSubscriptionDtoByUserId: {
             endpoint: string;
@@ -10885,6 +10964,10 @@ export interface components {
             firstname_user: string | null;
             email_user: string | null;
             role_user?: components["schemas"]["UserRole"];
+            is_active?: boolean;
+            is_verified?: boolean;
+            /** Format: date-time */
+            last_login?: string | null;
             /** Format: date-time */
             created_at?: string;
             /** Format: date-time */
@@ -11229,6 +11312,10 @@ export interface components {
             firstname_user: string | null;
             email_user: string | null;
             role_user?: components["schemas"]["UserRole"];
+            is_active?: boolean;
+            is_verified?: boolean;
+            /** Format: date-time */
+            last_login?: string | null;
             /** Format: date-time */
             created_at?: string;
             /** Format: date-time */
@@ -11269,6 +11356,9 @@ export interface components {
             created_at?: string;
             /** Format: date-time */
             updated_at?: string;
+        };
+        ResendVerificationRequest: {
+            email: string;
         };
         ResetPasswordRequest: {
             email: string;
@@ -11507,6 +11597,7 @@ export interface components {
             email_user?: string | null;
             password_user?: string | null;
             role_user?: components["schemas"]["UserRole"];
+            is_active?: boolean | null;
             current_password_user?: string | null;
         };
         /**
@@ -11514,6 +11605,10 @@ export interface components {
          * @enum {integer}
          */
         UserRole: 0 | 1 | 2;
+        VerifyEmailRequest: {
+            email: string;
+            token: string;
+        };
     };
     responses: never;
     parameters: never;

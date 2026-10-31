@@ -101,6 +101,7 @@ const userSave = async() => {
 		}
 		if (isNewId(userId.value)) {
 			const data = { ...usersStore.userEdition[userId.value] };
+			delete data.is_verified;
 			if (authStore.user?.isSSOUser) {
 				delete data.current_password_user;
 			}
@@ -113,6 +114,7 @@ const userSave = async() => {
 			router.push("/users/" + userId.value);
 		} else {
 			const data = { ...usersStore.userEdition[userId.value] };
+			delete data.is_verified;
 			if (!data.password_user) {
 				delete data.password_user;
 				delete data.confirm_password_user;
@@ -197,6 +199,8 @@ const labelForm = ref<FormLabel[]>([
 	{ key: "firstname_user", label: "user.FirstName", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
 	{ key: "email_user", label: "user.Email", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
 	{ key: "role_user", label: "user.Role", type: "select", options: userTypeRole, enableCondition: "func.hasPermission([2])" },
+	{ key: "is_active", label: "user.IsActive", type: "checkbox", enableCondition: "func.hasPermission([2])" },
+	{ key: "is_verified", label: "user.IsVerified", type: "checkbox", enableCondition: "false", showCondition: "edition?.is_verified !== undefined" },
 	{ key: "unset_check", label: "user.Check", type: "checkbox", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
 	{ key: "password_user", label: "user.Password", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && edition?.unset_check",
