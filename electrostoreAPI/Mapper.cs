@@ -113,10 +113,6 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.item, opt => opt.MapFrom(src => src.Item))
             .ForMember(dest => dest.tag, opt => opt.MapFrom(src => src.Tag));
 
-        CreateMap<JwiAccessTokens, ReadAccessTokenDto>();
-
-        CreateMap<JwiRefreshTokens, ReadRefreshTokenDto>();
-
         CreateMap<CreateLedDto, Leds>();
         CreateMap<Leds, ReadLedDto>();
         CreateMap<UpdateBulkLedByStoreDto, UpdateLedDto>();

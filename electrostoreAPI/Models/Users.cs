@@ -21,15 +21,23 @@ public class Users : BaseEntity
     [MaxLength(FieldLengths.MaxEmailLength)]
     public required string email_user { get; set; }
 
-    [MaxLength(255)]
-    public required string password_user { get; set; }
+    public bool is_active { get; set; } = true;
+
+    public bool is_verified { get; set; } = false;
+
+    public DateTime? last_login { get; set; }
+
+    public Guid? email_verification_token { get; set; }
+
+    public DateTime? email_verification_token_expiration { get; set; }
+
+    public DateTime? email_verification_token_sent_at { get; set; }
 
     public UserRole role_user { get; set; } = UserRole.User;
 
-    public Guid? reset_token { get; set; }
-
-    public DateTime? reset_token_expiration { get; set; }
-
     public ICollection<CommandsComments> CommandsComments { get; set; } = new List<CommandsComments>();
     public ICollection<ProjectsComments> ProjectsComments { get; set; } = new List<ProjectsComments>();
+    public ICollection<UsersExternalLogins> UsersExternalLogins { get; set; } = new List<UsersExternalLogins>();
+    public ICollection<UsersSessions> UsersSessions { get; set; } = new List<UsersSessions>();
+    public ICollection<UsersPasswords> UsersPasswords { get; set; } = new List<UsersPasswords>();
 }

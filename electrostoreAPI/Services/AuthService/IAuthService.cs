@@ -15,6 +15,10 @@ public interface IAuthService
 
     public Task ResetPassword(ResetPasswordRequest request);
 
+    public Task ResendVerification(ResendVerificationRequest request);
+
+    public Task VerifyEmail(VerifyEmailRequest request);
+
     public Task<LoginResponse> LoginWithPassword(LoginRequest request);
 
     public Task<LoginResponse> RefreshJwt();

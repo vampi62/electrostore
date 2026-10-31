@@ -33,13 +33,16 @@ namespace ElectrostoreAPI.Tests.Services
         private UserService CreateService(ApplicationDbContext context) =>
             new(_mapper, context, new ConfigurationBuilder().Build(), _kafkaProducerService.Object, _sessionService.Object, _jwiService.Object, CreateLogger<UserService>());
 
+        private UserService CreateService(ApplicationDbContext context, IDictionary<string, string?> configuration) =>
+            new(_mapper, context, new ConfigurationBuilder().AddInMemoryCollection(configuration).Build(), _kafkaProducerService.Object, _sessionService.Object, _jwiService.Object, CreateLogger<UserService>());
+
         private static Users BuildUser(string email, UserRole role = UserRole.User) => new()
         {
             name_user = "Nom",
             firstname_user = "Prenom",
             email_user = email,
-            password_user = BCrypt.Net.BCrypt.HashPassword("Password1!"),
-            role_user = role
+            role_user = role,
+            UsersPasswords = [new UsersPasswords { password_user = BCrypt.Net.BCrypt.HashPassword("Password1!") }]
         };
 
         private static CreateUserDto BuildCreateDto(string email, UserRole role = UserRole.User) => new()
@@ -106,7 +109,52 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal("new@test.com", result.email_user);
             var persisted = await context.Users.FindAsync(result.id_user);
             Assert.NotNull(persisted);
-            Assert.NotEqual("Password1!", persisted!.password_user);
+            Assert.True(persisted!.is_active);
+            Assert.False(persisted.is_verified);
+            var password = await context.UsersPasswords.FindAsync(result.id_user);
+            Assert.NotNull(password);
+            Assert.NotEqual("Password1!", password!.password_user);
+            Assert.True(BCrypt.Net.BCrypt.Verify("Password1!", password.password_user));
+            Assert.NotNull(password.password_last_changed);
+        }
+
+        // --- CreateExternalUser ---
+
+        [Fact]
+        public async Task CreateExternalUser_ShouldPersistVerifiedUserWithExternalLoginAndNoPassword()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            var (user, externalLoginId) = await service.CreateExternalUser("Family", "Given", "sso@test.com", UserRole.Moderator, "authentik", "sub-1");
+
+            Assert.Equal("sso@test.com", user.email_user);
+            Assert.Equal(UserRole.Moderator, user.role_user);
+            var persisted = await context.Users.SingleAsync();
+            Assert.True(persisted.is_active);
+            Assert.True(persisted.is_verified);
+            Assert.NotNull(persisted.last_login);
+            Assert.Empty(await context.UsersPasswords.ToListAsync());
+            var externalLogin = await context.UsersExternalLogins.SingleAsync();
+            Assert.Equal(externalLoginId, externalLogin.id_user_external_login);
+            Assert.Equal(user.id_user, externalLogin.id_user);
+            Assert.Equal("authentik", externalLogin.provider);
+            Assert.Equal("sub-1", externalLogin.provider_subject);
+            var notification = Assert.Single(SentNotifications());
+            Assert.Equal("account-created", notification.Message.TemplateId);
+        }
+
+        [Fact]
+        public async Task CreateExternalUser_ShouldThrowInvalidOperationException_WhenEmailAlreadyUsed()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildUser("dup@test.com"));
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                service.CreateExternalUser("Family", "Given", "dup@test.com", UserRole.User, "authentik", "sub-1"));
+            Assert.Empty(await context.UsersExternalLogins.ToListAsync());
         }
 
         [Fact]
@@ -348,11 +396,149 @@ namespace ElectrostoreAPI.Tests.Services
 
             await service.CreateUser(BuildCreateDto("new@test.com"));
 
-            var notification = Assert.Single(SentNotifications());
+            var notification = Assert.Single(SentNotifications(), n => n.Message.TemplateId == "account-created");
             Assert.Equal("new@test.com-account-created", notification.Key);
-            Assert.Equal("account-created", notification.Message.TemplateId);
             Assert.Equal("new@test.com", notification.Message.RecipientEmail);
             Assert.Equal("en", notification.Message.Language);
+        }
+
+        [Fact]
+        public async Task CreateUser_ShouldSendEmailVerification_AndStoreTheToken()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context, new Dictionary<string, string?> { { "FrontendUrl", "https://app.example.com" } });
+
+            var result = await service.CreateUser(BuildCreateDto("new+tag@test.com"));
+
+            Assert.False(result.is_verified);
+            var stored = await context.Users.SingleAsync();
+            Assert.NotNull(stored.email_verification_token);
+            Assert.True(stored.email_verification_token_expiration > DateTime.UtcNow.AddHours(23));
+            Assert.NotNull(stored.email_verification_token_sent_at);
+            var notification = Assert.Single(SentNotifications(), n => n.Message.TemplateId == "email-verification");
+            Assert.Equal("new+tag@test.com-email-verification", notification.Key);
+            Assert.Equal("new+tag@test.com", notification.Message.RecipientEmail);
+            Assert.Equal(
+                $"https://app.example.com/verify-email?token={stored.email_verification_token}&email=new%2Btag%40test.com",
+                notification.Message.TemplateValues!["verificationLink"]);
+        }
+
+        [Fact]
+        public async Task CreateUser_ShouldNotSendEmailVerification_WhenSmtpIsDisabled()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context, new Dictionary<string, string?> { { "SMTP:Enable", "false" } });
+
+            await service.CreateUser(BuildCreateDto("new@test.com"));
+
+            Assert.DoesNotContain(SentNotifications(), n => n.Message.TemplateId == "email-verification");
+            Assert.Null((await context.Users.SingleAsync()).email_verification_token);
+        }
+
+        [Fact]
+        public async Task CreateUser_ShouldStillSucceed_WhenEmailVerificationCannotBePublished()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            _kafkaProducerService
+                .Setup(k => k.PublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("kafka down"));
+            var service = CreateService(context);
+
+            var result = await service.CreateUser(BuildCreateDto("new@test.com"));
+
+            Assert.Equal("new@test.com", result.email_user);
+        }
+
+        [Fact]
+        public async Task CreateUser_ShouldCreateDeactivatedUser_WhenAdminAsksForIt()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+            var dto = BuildCreateDto("off@test.com") with { is_active = false };
+
+            var result = await service.CreateUser(dto);
+
+            Assert.False(result.is_active);
+            Assert.False((await context.Users.SingleAsync()).is_active);
+        }
+
+        [Fact]
+        public async Task CreateUser_ShouldCreateActiveUserByDefault()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            var result = await service.CreateUser(BuildCreateDto("on@test.com"));
+
+            Assert.True(result.is_active);
+            Assert.Null(result.last_login);
+        }
+
+        [Fact]
+        public async Task CreateUser_ShouldThrowUnauthorizedAccessException_WhenNonAdminCreatesDeactivatedUser()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            _sessionService.Setup(s => s.GetClientRole()).Returns(UserRole.User);
+            var service = CreateService(context);
+            var dto = BuildCreateDto("off@test.com") with { is_active = false };
+
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.CreateUser(dto));
+            Assert.Empty(await context.Users.ToListAsync());
+        }
+
+        // --- SendEmailVerification ---
+
+        [Fact]
+        public async Task SendEmailVerification_ShouldDoNothing_WhenEmailIsUnknownOrAlreadyVerified()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var verified = BuildUser("verified@test.com");
+            verified.is_verified = true;
+            context.Users.Add(verified);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await service.SendEmailVerification("unknown@test.com");
+            await service.SendEmailVerification("verified@test.com");
+
+            Assert.Empty(SentNotifications());
+            Assert.Null((await context.Users.SingleAsync()).email_verification_token);
+        }
+
+        [Fact]
+        public async Task SendEmailVerification_ShouldNotResend_WithinTheCooldown()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildUser("a@test.com"));
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await service.SendEmailVerification("a@test.com");
+            var firstToken = (await context.Users.SingleAsync()).email_verification_token;
+            await service.SendEmailVerification("a@test.com");
+
+            Assert.Single(SentNotifications());
+            Assert.Equal(firstToken, (await context.Users.SingleAsync()).email_verification_token);
+        }
+
+        [Fact]
+        public async Task SendEmailVerification_ShouldSendNewTokenAfterTheCooldown()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = BuildUser("a@test.com");
+            user.email_verification_token = Guid.NewGuid();
+            user.email_verification_token_sent_at = DateTime.UtcNow.AddMinutes(-5);
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            var oldToken = user.email_verification_token;
+            var service = CreateService(context);
+
+            await service.SendEmailVerification("a@test.com");
+
+            Assert.Single(SentNotifications());
+            var stored = await context.Users.SingleAsync();
+            Assert.NotEqual(oldToken, stored.email_verification_token);
+            Assert.True(stored.email_verification_token_sent_at > DateTime.UtcNow.AddMinutes(-1));
         }
 
         [Fact]
@@ -379,7 +565,8 @@ namespace ElectrostoreAPI.Tests.Services
             var result = await service.CreateFirstAdminUser(BuildCreateDto("root@test.com", UserRole.Admin));
 
             Assert.Equal(UserRole.Admin, result.role_user);
-            var stored = await context.Users.SingleAsync();
+            Assert.Single(await context.Users.ToListAsync());
+            var stored = await context.UsersPasswords.SingleAsync();
             Assert.NotEqual("Password1!", stored.password_user);
             Assert.True(BCrypt.Net.BCrypt.Verify("Password1!", stored.password_user));
             Assert.Empty(SentNotifications());
@@ -418,6 +605,51 @@ namespace ElectrostoreAPI.Tests.Services
         }
 
         [Fact]
+        public async Task UpdateUser_ShouldRejectCurrentPassword_WhenUserHasNoPassword()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = await SeedAuthenticatedUser(context, authMethod: "local");
+            context.UsersPasswords.RemoveRange(context.UsersPasswords);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                service.UpdateUser(user.id_user, new UpdateUserDto { name_user = "x", current_password_user = "Password1!" }));
+        }
+
+        [Fact]
+        public async Task UpdateUser_ShouldRejectCurrentPassword_WhenPasswordIsEmpty()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = await SeedAuthenticatedUser(context, authMethod: "local");
+            (await context.UsersPasswords.SingleAsync()).password_user = string.Empty;
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                service.UpdateUser(user.id_user, new UpdateUserDto { name_user = "x", current_password_user = string.Empty }));
+        }
+
+        [Fact]
+        public async Task UpdateUser_ShouldCreatePasswordForExternalLoginUser_WhenPasswordIsSet()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = new Users { name_user = "Nom", firstname_user = "Prenom", email_user = "sso@test.com" };
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            _sessionService.Setup(s => s.GetClientId()).Returns(user.id_user);
+            _sessionService.Setup(s => s.GetTokenAuthMethod()).Returns("sso_oidc");
+            var service = CreateService(context);
+
+            await service.UpdateUser(user.id_user, new UpdateUserDto { password_user = "NewPassword1!" });
+
+            var password = await context.UsersPasswords.SingleAsync();
+            Assert.Equal(user.id_user, password.id_user);
+            Assert.True(BCrypt.Net.BCrypt.Verify("NewPassword1!", password.password_user));
+            Assert.NotNull(password.password_last_changed);
+        }
+
+        [Fact]
         public async Task UpdateUser_ShouldAcceptCorrectCurrentPassword_ForNonSsoUsers()
         {
             using var context = new ApplicationDbContext(_dbContextOptions);
@@ -449,12 +681,127 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal("F", result.firstname_user);
             Assert.Equal("new@test.com", result.email_user);
             Assert.Equal(UserRole.Moderator, result.role_user);
-            Assert.True(BCrypt.Net.BCrypt.Verify("NewPassword1!", (await context.Users.FindAsync(user.id_user))!.password_user));
-            var notifications = SentNotifications().ToList();
+            Assert.True(BCrypt.Net.BCrypt.Verify("NewPassword1!", (await context.UsersPasswords.FindAsync(user.id_user))!.password_user));
+            var notifications = SentNotifications().Where(n => n.Message.TemplateId == "email-changed").ToList();
             Assert.Equal(2, notifications.Count);
-            Assert.All(notifications, n => Assert.Equal("email-changed", n.Message.TemplateId));
             Assert.Contains(notifications, n => n.Message.RecipientEmail == "new@test.com");
             Assert.Contains(notifications, n => n.Message.RecipientEmail == "old@test.com");
+            // the new address has to be verified
+            var verification = Assert.Single(SentNotifications(), n => n.Message.TemplateId == "email-verification");
+            Assert.Equal("new@test.com", verification.Message.RecipientEmail);
+            Assert.False(result.is_verified);
+        }
+
+        [Fact]
+        public async Task UpdateUser_ShouldResetVerification_WhenEmailChanges()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = await SeedAuthenticatedUser(context, "old@test.com");
+            user.is_verified = true;
+            user.email_verification_token = Guid.NewGuid();
+            await context.SaveChangesAsync();
+            var oldToken = user.email_verification_token;
+            var service = CreateService(context);
+
+            var result = await service.UpdateUser(user.id_user, new UpdateUserDto { email_user = "new@test.com" });
+
+            Assert.False(result.is_verified);
+            var stored = await context.Users.SingleAsync();
+            Assert.NotNull(stored.email_verification_token);
+            Assert.NotEqual(oldToken, stored.email_verification_token);
+        }
+
+        [Fact]
+        public async Task UpdateUser_ShouldKeepVerification_WhenEmailIsUnchanged()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = await SeedAuthenticatedUser(context, "same@test.com");
+            user.is_verified = true;
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.UpdateUser(user.id_user, new UpdateUserDto { email_user = "same@test.com", name_user = "x" });
+
+            Assert.True(result.is_verified);
+            Assert.DoesNotContain(SentNotifications(), n => n.Message.TemplateId == "email-verification");
+        }
+
+        // --- UpdateUser: is_active ---
+
+        [Fact]
+        public async Task UpdateUser_ShouldDeactivateUser_AndRevokeItsSessions()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var admin = await SeedAuthenticatedUser(context, "admin@test.com", role: UserRole.Admin);
+            var target = BuildUser("target@test.com");
+            context.Users.Add(target);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.UpdateUser(target.id_user, new UpdateUserDto { is_active = false });
+
+            Assert.False(result.is_active);
+            Assert.False((await context.Users.FindAsync(target.id_user))!.is_active);
+            _jwiService.Verify(j => j.RevokeAllRefreshTokenByUser(target.id_user, "User deactivated"), Times.Once);
+            _jwiService.Verify(j => j.RevokeAllAccessTokenByUser(target.id_user, It.IsAny<string>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task UpdateUser_ShouldReactivateUser_WithoutRevokingTheRefreshTokens()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            await SeedAuthenticatedUser(context, "admin@test.com", role: UserRole.Admin);
+            var target = BuildUser("target@test.com");
+            target.is_active = false;
+            context.Users.Add(target);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            var result = await service.UpdateUser(target.id_user, new UpdateUserDto { is_active = true });
+
+            Assert.True(result.is_active);
+            _jwiService.Verify(j => j.RevokeAllRefreshTokenByUser(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task UpdateUser_ShouldThrowUnauthorizedAccessException_WhenNonAdminChangesIsActive()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = await SeedAuthenticatedUser(context, "user@test.com");
+            _sessionService.Setup(s => s.GetClientRole()).Returns(UserRole.User);
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.UpdateUser(user.id_user, new UpdateUserDto { is_active = false }));
+            Assert.True((await context.Users.FindAsync(user.id_user))!.is_active);
+        }
+
+        [Fact]
+        public async Task UpdateUser_ShouldAcceptUnchangedIsActive_FromNonAdmin()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var user = await SeedAuthenticatedUser(context, "user@test.com");
+            _sessionService.Setup(s => s.GetClientRole()).Returns(UserRole.User);
+            var service = CreateService(context);
+
+            var result = await service.UpdateUser(user.id_user, new UpdateUserDto { is_active = true, name_user = "x" });
+
+            Assert.True(result.is_active);
+            Assert.Equal("x", result.name_user);
+        }
+
+        [Fact]
+        public async Task UpdateUser_ShouldThrowInvalidOperationException_WhenDeactivatingTheLastActiveAdmin()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var admin = await SeedAuthenticatedUser(context, "admin@test.com", role: UserRole.Admin);
+            var inactiveAdmin = BuildUser("other-admin@test.com", UserRole.Admin);
+            inactiveAdmin.is_active = false;
+            context.Users.Add(inactiveAdmin);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.UpdateUser(admin.id_user, new UpdateUserDto { is_active = false }));
+            Assert.True((await context.Users.FindAsync(admin.id_user))!.is_active);
         }
 
         [Fact]

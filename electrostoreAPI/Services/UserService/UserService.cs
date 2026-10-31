@@ -1,4 +1,5 @@
 using AutoMapper;
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Extensions;
@@ -73,6 +74,10 @@ public class UserService : IUserService
             {
                 throw new UnauthorizedAccessException("You are not allowed to create a user with this role");
             }
+            if (User < UserRole.Admin && !userDto.is_active)
+            {
+                throw new UnauthorizedAccessException("You are not allowed to create a deactivated user");
+            }
         }
         // Check if email is already used
         var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user);
@@ -85,11 +90,98 @@ public class UserService : IUserService
             name_user = userDto.name_user,
             firstname_user = userDto.firstname_user,
             email_user = userDto.email_user,
-            password_user = BCrypt.Net.BCrypt.HashPassword(userDto.password_user),
-            role_user = userDto.role_user
+            role_user = userDto.role_user,
+            is_active = userDto.is_active
         };
         _context.Users.Add(newUser);
+        _context.UsersPasswords.Add(NewPassword(newUser, userDto.password_user));
         await _context.SaveChangesAsync();
+        await SendAccountCreatedNotification(newUser);
+        await SendEmailVerification(newUser);
+        return _mapper.Map<ReadUserDto>(newUser);
+    }
+
+    public async Task<(ReadUserDto user, int externalLoginId)> CreateExternalUser(string nameUser, string firstnameUser, string emailUser, UserRole roleUser, string provider, string providerSubject)
+    {
+        // Check if email is already used
+        if (await _context.Users.AnyAsync(u => u.email_user == emailUser))
+        {
+            throw new InvalidOperationException($"Email '{emailUser}' is already used");
+        }
+        // the identity provider is the one verifying the email, and the user has no password
+        var newUser = new Users
+        {
+            name_user = nameUser,
+            firstname_user = firstnameUser,
+            email_user = emailUser,
+            role_user = roleUser,
+            is_verified = true,
+            last_login = DateTime.UtcNow
+        };
+        var externalLogin = new UsersExternalLogins
+        {
+            User = newUser,
+            provider = provider,
+            provider_subject = providerSubject
+        };
+        _context.Users.Add(newUser);
+        _context.UsersExternalLogins.Add(externalLogin);
+        await _context.SaveChangesAsync();
+        await SendAccountCreatedNotification(newUser);
+        return (_mapper.Map<ReadUserDto>(newUser), externalLogin.id_user_external_login);
+    }
+
+    public async Task SendEmailVerification(string email)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == email);
+        if (user is not null)
+        {
+            await SendEmailVerification(user);
+        }
+    }
+
+    // does nothing for a verified user, when SMTP is disabled or when a verification email has just been sent
+    private async Task SendEmailVerification(Users user)
+    {
+        if (user.is_verified || !_configuration.IsSmtpEnabled())
+        {
+            return;
+        }
+        var now = DateTime.UtcNow;
+        if (user.email_verification_token_sent_at > now - AuthDelays.EmailResendCooldown)
+        {
+            return;
+        }
+        user.email_verification_token = Guid.NewGuid();
+        user.email_verification_token_expiration = now + AuthDelays.EmailVerificationTokenLifetime;
+        user.email_verification_token_sent_at = now;
+        await _context.SaveChangesAsync();
+        try
+        {
+            var notification = new NotificationMessage
+            {
+                RecipientEmail = user.email_user,
+                TemplateId = "email-verification",
+                Language = _configuration.GetAppLanguage(),
+                TemplateValues = new Dictionary<string, string>
+                {
+                    ["verificationLink"] = _configuration["FrontendUrl"] + "/verify-email?token=" + user.email_verification_token + "&email=" + Uri.EscapeDataString(user.email_user)
+                }
+            };
+            await _kafkaProducerService.PublishAsync(
+                KafkaNotificationTopic,
+                user.email_user + "-email-verification",
+                JsonSerializer.Serialize(notification)
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unable to send email verification to {Email}", user.email_user);
+        }
+    }
+
+    private async Task SendAccountCreatedNotification(Users newUser)
+    {
         try
         {
             var notification = new NotificationMessage
@@ -114,7 +206,16 @@ public class UserService : IUserService
         {
             _logger.LogWarning(ex, "Unable to send account-created email to {Email}", newUser.email_user);
         }
-        return _mapper.Map<ReadUserDto>(newUser);
+    }
+
+    private static UsersPasswords NewPassword(Users user, string password)
+    {
+        return new UsersPasswords
+        {
+            User = user,
+            password_user = BCrypt.Net.BCrypt.HashPassword(password),
+            password_last_changed = DateTime.UtcNow
+        };
     }
 
     public async Task<ReadUserDto> CreateFirstAdminUser(CreateUserDto userDto)
@@ -130,10 +231,10 @@ public class UserService : IUserService
             name_user = userDto.name_user,
             firstname_user = userDto.firstname_user,
             email_user = userDto.email_user,
-            password_user = BCrypt.Net.BCrypt.HashPassword(userDto.password_user),
             role_user = userDto.role_user
         };
         _context.Users.Add(newUser);
+        _context.UsersPasswords.Add(NewPassword(newUser, userDto.password_user));
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadUserDto>(newUser);
     }
@@ -184,11 +285,28 @@ public class UserService : IUserService
             {
                 throw new InvalidOperationException($"Email '{userDto.email_user}' is already used by another user");
             }
+            if (userToUpdate.email_user != userDto.email_user)
+            {
+                // the new address has to be verified again
+                userToUpdate.is_verified = false;
+                userToUpdate.email_verification_token = null;
+                userToUpdate.email_verification_token_expiration = null;
+            }
             userToUpdate.email_user = userDto.email_user;
         }
         if (userDto.password_user is not null)
         {
-            userToUpdate.password_user = BCrypt.Net.BCrypt.HashPassword(userDto.password_user);
+            // an external login user has no password row until he sets one
+            var passwordToUpdate = await _context.UsersPasswords.FindAsync(id);
+            if (passwordToUpdate is null)
+            {
+                _context.UsersPasswords.Add(NewPassword(userToUpdate, userDto.password_user));
+            }
+            else
+            {
+                passwordToUpdate.password_user = BCrypt.Net.BCrypt.HashPassword(userDto.password_user);
+                passwordToUpdate.password_last_changed = DateTime.UtcNow;
+            }
         }
         if (userDto.role_user is not null)
         {
@@ -199,11 +317,35 @@ public class UserService : IUserService
             }
             userToUpdate.role_user = userDto.role_user ?? userToUpdate.role_user;
         }
+        var deactivated = false;
+        if (userDto.is_active is not null && userDto.is_active != userToUpdate.is_active)
+        {
+            if (_sessionService.GetClientRole() < UserRole.Admin)
+            {
+                throw new UnauthorizedAccessException("You are not allowed to activate or deactivate an account");
+            }
+            if (userDto.is_active == false && userToUpdate.role_user == UserRole.Admin
+                && await _context.Users.CountAsync(u => u.role_user == UserRole.Admin && u.is_active) == 1)
+            {
+                throw new InvalidOperationException("You can't deactivate the last active admin");
+            }
+            userToUpdate.is_active = userDto.is_active.Value;
+            deactivated = !userToUpdate.is_active;
+        }
         await _context.SaveChangesAsync();
         // Revoke all access tokens and refresh tokens for the user
         await _jwiService.RevokeAllAccessTokenByUser(id, "User update account");
+        if (deactivated)
+        {
+            // a deactivated account can't renew its sessions
+            await _jwiService.RevokeAllRefreshTokenByUser(id, "User deactivated");
+        }
         // send email to the user if the email has changed
         await AlerteUpdateUser(userToUpdate, userDto, oldUserEmail);
+        if (userToUpdate.email_user != oldUserEmail)
+        {
+            await SendEmailVerification(userToUpdate);
+        }
         return _mapper.Map<ReadUserDto>(userToUpdate);
     }
 
@@ -222,7 +364,8 @@ public class UserService : IUserService
             {
                 throw new InvalidOperationException("Non-SSO users must provide their current password to update an account");
             }
-            if (!BCrypt.Net.BCrypt.Verify(userDto.current_password_user, (await _context.Users.FindAsync(clientId))!.password_user))
+            var currentPassword = await _context.UsersPasswords.FindAsync(clientId);
+            if (!currentPassword.IsPasswordValid(userDto.current_password_user))
             {
                 throw new InvalidOperationException("Your current password is incorrect");
             }

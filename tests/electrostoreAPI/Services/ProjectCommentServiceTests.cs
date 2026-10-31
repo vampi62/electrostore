@@ -27,7 +27,6 @@ namespace ElectrostoreAPI.Tests.Services
             name_user = "Doe",
             firstname_user = "John",
             email_user = email,
-            password_user = "hash"
         };
 
         private async Task<(Projects parent, Users user)> SeedParentAndUser(ApplicationDbContext context)

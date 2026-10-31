@@ -836,20 +836,20 @@ namespace ElectrostoreAPI.Migrations
                     b.ToTable("ItemsTags");
                 });
 
-            modelBuilder.Entity("ElectrostoreAPI.Models.JwiAccessTokens", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.JwtTokens", b =>
                 {
-                    b.Property<Guid>("id_jwi_access")
+                    b.Property<Guid>("id_jwi")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<string>("auth_method_jwi_access")
+                    b.Property<string>("auth_method")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("created_by_ip_jwi_access")
+                    b.Property<string>("created_by_ip")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
@@ -857,90 +857,31 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<DateTime>("expires_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("id_user")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("is_revoked")
-                        .HasColumnType("tinyint(1)");
+                    b.Property<Guid>("id_user_session")
+                        .HasColumnType("char(36)");
 
                     b.Property<DateTime?>("revoked_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("revoked_by_ip_jwi_access")
+                    b.Property<string>("revoked_by_ip")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
-                    b.Property<string>("revoked_reason_jwi_access")
+                    b.Property<string>("revoked_reason")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
-                    b.Property<Guid>("session_id_jwi_access")
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime>("updated_at")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("id_jwi_access");
-
-                    b.HasIndex("id_user");
-
-                    b.ToTable("JwiAccessTokens");
-                });
-
-            modelBuilder.Entity("ElectrostoreAPI.Models.JwiRefreshTokens", b =>
-                {
-                    b.Property<Guid>("id_jwi_refresh")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("auth_method_jwi_refresh")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime>("created_at")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("created_by_ip_jwi_refresh")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<DateTime>("expires_at")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<Guid>("id_jwi_access")
-                        .HasColumnType("char(36)");
-
-                    b.Property<int>("id_user")
+                    b.Property<int>("token_type")
                         .HasColumnType("int");
 
-                    b.Property<bool>("is_revoked")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<DateTime?>("revoked_at")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("revoked_by_ip_jwi_refresh")
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<string>("revoked_reason_jwi_refresh")
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<Guid>("session_id_jwi_refresh")
-                        .HasColumnType("char(36)");
-
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");
 
-                    b.HasKey("id_jwi_refresh");
+                    b.HasKey("id_jwi");
 
-                    b.HasIndex("id_jwi_access");
+                    b.HasIndex("id_user_session");
 
-                    b.HasIndex("id_user");
-
-                    b.ToTable("JwiRefreshTokens");
+                    b.ToTable("JwtTokens");
                 });
 
             modelBuilder.Entity("ElectrostoreAPI.Models.Leds", b =>
@@ -1368,15 +1309,90 @@ namespace ElectrostoreAPI.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
+                    b.Property<Guid?>("email_verification_token")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("email_verification_token_expiration")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("email_verification_token_sent_at")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("firstname_user")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
+                    b.Property<bool>("is_active")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("is_verified")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("last_login")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("name_user")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
+
+                    b.Property<int>("role_user")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("id_user");
+
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.UsersExternalLogins", b =>
+                {
+                    b.Property<int>("id_user_external_login")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_user_external_login"));
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("id_user")
+                        .HasColumnType("int");
+
+                    b.Property<string>("provider")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("provider_subject")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("id_user_external_login");
+
+                    b.HasIndex("id_user");
+
+                    b.HasIndex("provider", "provider_subject")
+                        .IsUnique();
+
+                    b.ToTable("UsersExternalLogins");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.UsersPasswords", b =>
+                {
+                    b.Property<int>("id_user")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("password_last_changed")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("password_user")
                         .IsRequired()
@@ -1389,15 +1405,58 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<DateTime?>("reset_token_expiration")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("role_user")
-                        .HasColumnType("int");
+                    b.Property<DateTime?>("reset_token_sent_at")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("id_user");
 
-                    b.ToTable("Users");
+                    b.ToTable("UsersPasswords");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.UsersSessions", b =>
+                {
+                    b.Property<Guid>("id_user_session")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("auth_method")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("created_by_ip")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<int>("id_user")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("id_user_external_login")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("revoked_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("revoked_by_ip")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("id_user_session");
+
+                    b.HasIndex("id_user");
+
+                    b.HasIndex("id_user_external_login");
+
+                    b.ToTable("UsersSessions");
                 });
 
             modelBuilder.Entity("ElectrostoreAPI.Models.Zones", b =>
@@ -1707,34 +1766,15 @@ namespace ElectrostoreAPI.Migrations
                     b.Navigation("Tag");
                 });
 
-            modelBuilder.Entity("ElectrostoreAPI.Models.JwiAccessTokens", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.JwtTokens", b =>
                 {
-                    b.HasOne("ElectrostoreAPI.Models.Users", "User")
-                        .WithMany()
-                        .HasForeignKey("id_user")
+                    b.HasOne("ElectrostoreAPI.Models.UsersSessions", "Session")
+                        .WithMany("JwtTokens")
+                        .HasForeignKey("id_user_session")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("ElectrostoreAPI.Models.JwiRefreshTokens", b =>
-                {
-                    b.HasOne("ElectrostoreAPI.Models.JwiAccessTokens", "JWIAccessToken")
-                        .WithMany()
-                        .HasForeignKey("id_jwi_access")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ElectrostoreAPI.Models.Users", "User")
-                        .WithMany()
-                        .HasForeignKey("id_user")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("JWIAccessToken");
-
-                    b.Navigation("User");
+                    b.Navigation("Session");
                 });
 
             modelBuilder.Entity("ElectrostoreAPI.Models.Leds", b =>
@@ -1864,6 +1904,46 @@ namespace ElectrostoreAPI.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ElectrostoreAPI.Models.UsersExternalLogins", b =>
+                {
+                    b.HasOne("ElectrostoreAPI.Models.Users", "User")
+                        .WithMany("UsersExternalLogins")
+                        .HasForeignKey("id_user")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.UsersPasswords", b =>
+                {
+                    b.HasOne("ElectrostoreAPI.Models.Users", "User")
+                        .WithMany("UsersPasswords")
+                        .HasForeignKey("id_user")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.UsersSessions", b =>
+                {
+                    b.HasOne("ElectrostoreAPI.Models.Users", "User")
+                        .WithMany("UsersSessions")
+                        .HasForeignKey("id_user")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ElectrostoreAPI.Models.UsersExternalLogins", "UserExternalLogin")
+                        .WithMany("UsersSessions")
+                        .HasForeignKey("id_user_external_login")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("User");
+
+                    b.Navigation("UserExternalLogin");
+                });
+
             modelBuilder.Entity("ElectrostoreAPI.Models.Boxs", b =>
                 {
                     b.Navigation("BoxsTags");
@@ -1955,6 +2035,22 @@ namespace ElectrostoreAPI.Migrations
                     b.Navigation("CommandsComments");
 
                     b.Navigation("ProjectsComments");
+
+                    b.Navigation("UsersExternalLogins");
+
+                    b.Navigation("UsersPasswords");
+
+                    b.Navigation("UsersSessions");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.UsersExternalLogins", b =>
+                {
+                    b.Navigation("UsersSessions");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.UsersSessions", b =>
+                {
+                    b.Navigation("JwtTokens");
                 });
 
             modelBuilder.Entity("ElectrostoreAPI.Models.Zones", b =>

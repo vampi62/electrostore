@@ -29,7 +29,6 @@ namespace ElectrostoreAPI.Tests.Services
             name_user = "Nom",
             firstname_user = "Prenom",
             email_user = email,
-            password_user = "hashed"
         };
 
         // --- GetEquipementsMaintenancesByEquipementId ---

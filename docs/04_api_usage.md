@@ -33,10 +33,23 @@ Tokens must be included in the `Authorization` header of requests in the format 
   - `POST /api/auth/forgot-password`
   - Sends an email with a reset code valid for 1 hour.
   - Requires an SMTP server to be configured; otherwise, it returns an error.
+  - Also works for an account that only uses SSO: it creates an empty password (password login stays impossible) until the reset is completed.
+  - A new email is only sent once per minute for the same account; the answer is the same whether the email exists or not.
 
 - **Reset Password**
   - `POST /api/auth/reset-password`
   - Allows resetting the password using the code received by email.
+
+- **Resend Email Verification**
+  - `POST /api/auth/resend-verification`
+  - Sends a new email verification message (link valid for 24 hours) to an unverified account, at most once per minute.
+  - The answer is the same whether the email exists, is already verified or was just notified.
+  - Requires an SMTP server to be configured; otherwise, it returns an error.
+
+- **Verify Email**
+  - `POST /api/auth/verify-email`
+  - Marks the account email as verified using the token received by email (`{ "email": "...", "token": "..." }`).
+  - The link in the email points to `<FrontendUrl>/verify-email?token=...&email=...`.
 
 ### Route Using the Refresh Token
 

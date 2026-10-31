@@ -83,6 +83,31 @@ public class NotificationTemplateServiceTests
     }
 
     [Theory]
+    [InlineData("en", "Verify your email address")]
+    [InlineData("fr", "Validez votre adresse email")]
+    public void RenderTemplate_ShouldRenderTheEmailVerificationLink_FromRealTemplateFile(string language, string expectedSubject)
+    {
+        // Arrange
+        var service = CreateService();
+        var link = "https://app.example.com/verify-email?token=abc&email=a%40b.c";
+        var values = ParseValues($$"""
+        {
+            "verificationLink": "{{link}}"
+        }
+        """);
+
+        // Act
+        var result = service.RenderTemplate("email-verification", values, language);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(expectedSubject, result!.Subject);
+        Assert.Contains($"href=\"{link}\"", result.Body);
+        Assert.DoesNotContain("{{", result.Body);
+        Assert.Equal("email_verification", result.Data?["event"]);
+    }
+
+    [Theory]
     [InlineData("fr", "Rapport des mouvements de stock du 2026-08-28 au 2026-09-04", "Stock ajouté")]
     [InlineData("en", "Stock movement report from 2026-08-28 to 2026-09-04", "Stock added")]
     public void RenderTemplate_ShouldRenderTheMovementTable_FromRealTemplateFile(string language, string expectedSubject, string expectedType)

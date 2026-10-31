@@ -34,7 +34,6 @@ namespace ElectrostoreAPI.Tests.Services
             name_user = "Doe",
             firstname_user = "John",
             email_user = email,
-            password_user = "hash"
         };
 
         private static UserPushSubscriptions BuildSubscription(int userId, string endpoint = "https://push/1") => new()
