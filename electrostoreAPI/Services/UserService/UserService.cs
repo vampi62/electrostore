@@ -279,59 +279,17 @@ public class UserService : IUserService
         var oldUserEmail = userToUpdate.email_user;
         if (userDto.email_user is not null)
         {
-            // Check if email is already used
-            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user && u.id_user != id);
-            if (existingUser != null)
-            {
-                throw new InvalidOperationException($"Email '{userDto.email_user}' is already used by another user");
-            }
-            if (userToUpdate.email_user != userDto.email_user)
-            {
-                // the new address has to be verified again
-                userToUpdate.is_verified = false;
-                userToUpdate.email_verification_token = null;
-                userToUpdate.email_verification_token_expiration = null;
-            }
-            userToUpdate.email_user = userDto.email_user;
+            await ApplyEmailUpdate(userToUpdate, userDto.email_user);
         }
         if (userDto.password_user is not null)
         {
-            // an external login user has no password row until he sets one
-            var passwordToUpdate = await _context.UsersPasswords.FindAsync(id);
-            if (passwordToUpdate is null)
-            {
-                _context.UsersPasswords.Add(NewPassword(userToUpdate, userDto.password_user));
-            }
-            else
-            {
-                passwordToUpdate.password_user = BCrypt.Net.BCrypt.HashPassword(userDto.password_user);
-                passwordToUpdate.password_last_changed = DateTime.UtcNow;
-            }
+            await ApplyPasswordUpdate(userToUpdate, userDto.password_user);
         }
         if (userDto.role_user is not null)
         {
-            if (userToUpdate.role_user == UserRole.Admin && userDto.role_user != UserRole.Admin
-                && await _context.Users.CountAsync(u => u.role_user == UserRole.Admin) == 1)
-            {
-                throw new InvalidOperationException("You can't change the role of the last admin");
-            }
-            userToUpdate.role_user = userDto.role_user ?? userToUpdate.role_user;
+            await ApplyRoleUpdate(userToUpdate, userDto.role_user.Value);
         }
-        var deactivated = false;
-        if (userDto.is_active is not null && userDto.is_active != userToUpdate.is_active)
-        {
-            if (_sessionService.GetClientRole() < UserRole.Admin)
-            {
-                throw new UnauthorizedAccessException("You are not allowed to activate or deactivate an account");
-            }
-            if (userDto.is_active == false && userToUpdate.role_user == UserRole.Admin
-                && await _context.Users.CountAsync(u => u.role_user == UserRole.Admin && u.is_active) == 1)
-            {
-                throw new InvalidOperationException("You can't deactivate the last active admin");
-            }
-            userToUpdate.is_active = userDto.is_active.Value;
-            deactivated = !userToUpdate.is_active;
-        }
+        var deactivated = userDto.is_active is not null && await ApplyActiveUpdate(userToUpdate, userDto.is_active.Value);
         await _context.SaveChangesAsync();
         // Revoke all access tokens and refresh tokens for the user
         await _jwiService.RevokeAllAccessTokenByUser(id, "User update account");
@@ -347,6 +305,66 @@ public class UserService : IUserService
             await SendEmailVerification(userToUpdate);
         }
         return _mapper.Map<ReadUserDto>(userToUpdate);
+    }
+
+    private async Task ApplyEmailUpdate(Users user, string newEmail)
+    {
+        // Check if email is already used
+        if (await _context.Users.AnyAsync(u => u.email_user == newEmail && u.id_user != user.id_user))
+        {
+            throw new InvalidOperationException($"Email '{newEmail}' is already used by another user");
+        }
+        if (user.email_user != newEmail)
+        {
+            // the new address has to be verified again
+            user.is_verified = false;
+            user.email_verification_token = null;
+            user.email_verification_token_expiration = null;
+        }
+        user.email_user = newEmail;
+    }
+
+    private async Task ApplyPasswordUpdate(Users user, string newPassword)
+    {
+        // an external login user has no password row until he sets one
+        var passwordToUpdate = await _context.UsersPasswords.FindAsync(user.id_user);
+        if (passwordToUpdate is null)
+        {
+            _context.UsersPasswords.Add(NewPassword(user, newPassword));
+            return;
+        }
+        passwordToUpdate.password_user = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        passwordToUpdate.password_last_changed = DateTime.UtcNow;
+    }
+
+    private async Task ApplyRoleUpdate(Users user, UserRole newRole)
+    {
+        if (user.role_user == UserRole.Admin && newRole != UserRole.Admin
+            && await _context.Users.CountAsync(u => u.role_user == UserRole.Admin) == 1)
+        {
+            throw new InvalidOperationException("You can't change the role of the last admin");
+        }
+        user.role_user = newRole;
+    }
+
+    // returns true when the account has just been deactivated
+    private async Task<bool> ApplyActiveUpdate(Users user, bool isActive)
+    {
+        if (isActive == user.is_active)
+        {
+            return false;
+        }
+        if (_sessionService.GetClientRole() < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not allowed to activate or deactivate an account");
+        }
+        if (!isActive && user.role_user == UserRole.Admin
+            && await _context.Users.CountAsync(u => u.role_user == UserRole.Admin && u.is_active) == 1)
+        {
+            throw new InvalidOperationException("You can't deactivate the last active admin");
+        }
+        user.is_active = isActive;
+        return !isActive;
     }
 
     private async Task EnsureCanUpdateUser(int id, UpdateUserDto userDto)
