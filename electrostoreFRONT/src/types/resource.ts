@@ -15,16 +15,6 @@ export type Body<T extends EntityTypes, K extends keyof EntityTypes> =
 
 export type IdKey<T extends EntityTypes> = Extract<keyof T["readExtended"], string> | Extract<keyof T["readBasic"], string>;
 
-export interface MainResourceOptions<T extends EntityTypes> {
-	path: () => string;
-	idField: IdKey<T>;
-	countKey: string;
-	stateKey: string;
-	loadingKey: string;
-	editionKey?: string;
-	onHydrate?: (store: StoreGeneric, entity: T["readExtended"], expand: string[]) => void;
-}
-
 // Values of some fields of a composite key. Complete, it identifies one record; partial, it selects a slice of them.
 // Any field can be given to reach a route (e.g. id_store for a box), the ones of the DTO are suggested.
 export type KeyParts<T extends EntityTypes> = Partial<Record<IdKey<T> | (string & {}), string>>;
@@ -46,17 +36,6 @@ export interface ResourceOptions<T extends EntityTypes> {
 	generatedField?: IdKey<T>;
 	path: Array<ResourceRoute<T>>;
 	entityPath: Array<ResourceRoute<T>>;
-	countKey: string;
-	stateKey: string;
-	loadingKey: string;
-	editionKey?: string;
-	readyKey?: string;
-	onHydrate?: (store: StoreGeneric, entity: T["readExtended"], expand: string[]) => void;
-}
-
-export interface NestedResourceOptions<T extends EntityTypes> {
-	path: (idParentResource: string) => string;
-	idField: IdKey<T>;
 	countKey: string;
 	stateKey: string;
 	loadingKey: string;
