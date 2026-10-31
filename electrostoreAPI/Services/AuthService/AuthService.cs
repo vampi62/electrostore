@@ -288,7 +288,7 @@ public class AuthService : IAuthService
             }
         }
         // a reset email has just been sent: do nothing (and answer the same way, so the caller can't tell if the email exists)
-        if (userPassword?.User is not null && userPassword.reset_token_sent_at <= DateTime.UtcNow - AuthDelays.EmailResendCooldown)
+        if (userPassword?.User is not null && (userPassword.reset_token_sent_at is null || userPassword.reset_token_sent_at <= DateTime.UtcNow - AuthDelays.EmailResendCooldown))
         {
             var user = userPassword.User;
             // add reset_token
