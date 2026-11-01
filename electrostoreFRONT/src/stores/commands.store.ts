@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { createResource } from "@/helpers";
+import { createResource, withDraft } from "@/helpers";
 import { isNewId } from "@/utils";
 
 import { useCarriersStore, useCommandsCommentsStore, useCommandsDocumentsStore, useCommandsHistoryStore, useItemsCommandsStore } from "@/stores";
@@ -67,6 +67,10 @@ export const useCommandsStore = defineStore("commands", {
 		commands: {} as Record<string, ReadCommandDto>,
 		commandEdition: {} as Record<string, Edition<{ create: CreateCommandDto, update: UpdateCommandDto }>>,
 	}),
+	getters: {
+		// for lookups by id: the saved records, else the ones being created / edited
+		commandsWithDraft: (state) => withDraft(state.commands, state.commandEdition),
+	},
 	actions: {
 		getCommandByInterval: commandResource.single.getByInterval,
 		getCommandById: commandResource.single.getById,

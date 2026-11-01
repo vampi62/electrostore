@@ -2,7 +2,7 @@
 	<div class="flex-1 min-h-96 bg-gray-200 px-2 py-2 rounded">
 		<span v-for="key in sortedTags" :key="key"
 			class="p-1 rounded mr-2 mb-1" :class="tagPillClass(key)">
-			{{ tagsStore[key]?.[meta["keyName"]] }} ({{ tagsStore[key]?.[meta["keyPoids"]] }})
+			{{ tagsLookup[key]?.[meta["keyName"]] }} ({{ tagsLookup[key]?.[meta["keyPoids"]] }})
 			<span v-if="tagStatus(key) === 'deleted'" @click="restoreFunction(key)"
 				class="text-blue-500 cursor-pointer hover:text-blue-600">
 				<font-awesome-icon icon="fa-solid fa-rotate-left" />
@@ -60,6 +60,12 @@ export default {
 			type: Object as PropType<StateTree>,
 			required: true,
 		},
+		// tagsStore is the catalog of the saved tags (modal), tagsDraftStore completes it with the tags not saved yet to display the pills
+		tagsDraftStore: {
+			type: Object as PropType<StateTree>,
+			required: false,
+			default: undefined,
+		},
 		currentTags: {
 			type: Object as PropType<StateTree>,
 			required: true,
@@ -105,6 +111,9 @@ export default {
 		},
 	},
 	computed:{
+		tagsLookup() {
+			return this.tagsDraftStore ?? this.tagsStore;
+		},
 		// merges currentTags (saved) with readyStore (pending, unsaved) without duplicate ids
 		effectiveTags() {
 			const merged: Record<string, { status: string | null }> = {};
@@ -120,7 +129,7 @@ export default {
 		},
 		sortedTags() {
 			return Object.keys(this.effectiveTags)
-				.sort((a, b) => this.tagsStore[b]?.[this.meta["keyPoids"]] - this.tagsStore[a]?.[this.meta["keyPoids"]]);
+				.sort((a, b) => this.tagsLookup[b]?.[this.meta["keyPoids"]] - this.tagsLookup[a]?.[this.meta["keyPoids"]]);
 		},
 	},
 	data() {

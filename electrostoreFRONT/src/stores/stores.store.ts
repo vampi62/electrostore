@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, createResource } from "@/helpers";
+import { fetchWrapper, createResource, withDraft } from "@/helpers";
 import { isNewId } from "@/utils";
 import { StorePositionMode } from "@/enums";
 
@@ -86,6 +86,10 @@ export const useStoresStore = defineStore("stores", {
 		stores: {} as Record<string, ReadStoreDto>,
 		storeEdition: {} as Record<string, Edition<{ create: CreateStoreDto, update: UpdateStoreDto }>>,
 	}),
+	getters: {
+		// for lookups by id: the saved records, else the ones being created / edited
+		storesWithDraft: (state) => withDraft(state.stores, state.storeEdition),
+	},
 	actions: {
 		getStoreByInterval: storeResource.single.getByInterval,
 		getStoreById: storeResource.single.getById,

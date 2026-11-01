@@ -13,6 +13,20 @@ function isSaved(parts: Record<string, string | number>): boolean {
 	return !Object.values(parts).some((value) => String(value).startsWith(NEW_ID_PREFIX));
 }
 
+// Read-only view of the records of a store, completed by what is staged for the ids the api did not return (new element, link to a record not saved yet).
+// A saved record always wins; the drafts are tried in order (e.g. ready, then edition). Meant for lookups by id, not for lists.
+// A draft only holds the fields staged so far, so what is read from it may miss some fields of R.
+export function withDraft<R>(records: Record<string, R> | undefined, ...drafts: Array<Record<string, object> | undefined>): Record<string, R> {
+	const find = (name: string): R | undefined => records?.[name] ?? (drafts.map((draft) => draft?.[name]).find((value) => value !== undefined) as R | undefined);
+	const keys = () => [...new Set([...Object.keys(records ?? {}), ...drafts.flatMap((draft) => Object.keys(draft ?? {}))])];
+	return new Proxy({} as Record<string, R>, {
+		get: (_, name) => (typeof name === "string" ? find(name) : undefined),
+		has: (_, name) => typeof name === "string" && find(name) !== undefined,
+		ownKeys: () => keys(),
+		getOwnPropertyDescriptor: (_, name) => (typeof name === "string" && find(name) !== undefined ? { enumerable: true, configurable: true, value: find(name) } : undefined),
+	});
+}
+
 export function createResource<T extends EntityTypes>({ compositeKey, generatedField, routeOnlyFields = [], path, entityPath, countKey, stateKey, loadingKey, editionKey, readyKey, onHydrate }: ResourceOptions<T>) {
 	type ReadExtended = "readExtended" extends keyof T ? T["readExtended"] : T["readBasic"];
 	type Read = "readBasic" extends keyof T ? T["readBasic"] : T["readExtended"];

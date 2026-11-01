@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { createResource } from "@/helpers";
+import { createResource, withDraft } from "@/helpers";
 
 import { useItemsBoxsStore, useBoxsTagsStore } from "@/stores";
 
@@ -58,6 +58,10 @@ export const useStoresBoxsStore = defineStore("storesBoxs", {
 		boxEditionByStore: (state) => (id: string) => boxResource.live(state.boxEdition, { id_store: id }),
 		// every box loaded, indexed by id_box
 		boxsById: (state) => Object.fromEntries(Object.values(state.boxs).map((box) => [String(box.id_box), box])),
+		// same, completed by the boxes being created / edited
+		boxsByIdWithDraft(state) {
+			return withDraft(this.boxsById, Object.fromEntries(Object.entries(state.boxEdition).map(([key, edition]) => [boxResource.toParts(key).id_box, edition])));
+		},
 	},
 	actions: {
 		getBoxByInterval: boxResource.getByInterval,

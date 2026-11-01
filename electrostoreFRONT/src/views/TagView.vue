@@ -538,7 +538,7 @@ useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags", [
 					{{ $t('tag.AddItem') }}
 				</button>
 				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
-					:store-data="[itemsTagsStore.itemTagsByTag(tagId),itemsStore.items]"
+					:store-data="[itemsTagsStore.itemTagsByTag(tagId),itemsStore.itemsWithDraft]"
 					:store-ready="itemsTagsStore.itemTagReadyByTag(tagId)"
 					:loading="itemsTagsStore.itemTagsLoading"
 					:total-count="itemsTagsStore.itemTagsCountByTag(tagId)"
@@ -555,7 +555,7 @@ useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags", [
 					{{ $t('tag.AddStore') }}
 				</button>
 				<Tableau :labels="labelTableauStore" :meta="{ key: 'id_store', expand: ['store'] }"
-					:store-data="[storesTagsStore.storeTagsByTag(tagId),storesStore.stores]"
+					:store-data="[storesTagsStore.storeTagsByTag(tagId),storesStore.storesWithDraft]"
 					:store-ready="storesTagsStore.storeTagReadyByTag(tagId)"
 					:loading="storesTagsStore.storeTagsLoading"
 					:total-count="storesTagsStore.storeTagsCountByTag(tagId)"
@@ -568,7 +568,7 @@ useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags", [
 			:total-count="boxsTagsStore.boxTagsCountByTag(tagId)">
 			<template #append-row>
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box', expand: ['box'] }"
-					:store-data="[boxsTagsStore.boxTagsByTag(tagId),storesBoxsStore.boxsById]"
+					:store-data="[boxsTagsStore.boxTagsByTag(tagId),storesBoxsStore.boxsByIdWithDraft]"
 					:store-ready="boxsTagsStore.boxTagReadyByTag(tagId)"
 					:loading="boxsTagsStore.boxTagsLoading"
 					:total-count="boxsTagsStore.boxTagsCountByTag(tagId)"
@@ -585,7 +585,7 @@ useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags", [
 					{{ $t('tag.AddEquipement') }}
 				</button>
 				<Tableau :labels="labelTableauEquipement" :meta="{ key: 'id_equipement', expand: ['equipement'] }"
-					:store-data="[equipementsTagsStore.equipementTagsByTag(tagId),equipementsStore.equipements]"
+					:store-data="[equipementsTagsStore.equipementTagsByTag(tagId),equipementsStore.equipementsWithDraft]"
 					:store-ready="equipementsTagsStore.equipementTagReadyByTag(tagId)"
 					:loading="equipementsTagsStore.equipementTagsLoading"
 					:total-count="equipementsTagsStore.equipementTagsCountByTag(tagId)"

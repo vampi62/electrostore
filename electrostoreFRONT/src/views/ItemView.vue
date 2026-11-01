@@ -603,7 +603,7 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items", [
 					</div>
 				</template>
 			</FormContainer>
-			<Tags :current-tags="itemTagsStore.itemTagsByItem(itemId)" :ready-store="itemTagsStore.itemTagReadyByItem(itemId)" :tags-store="tagsStore.tags" :can-edit="authStore.hasPermission([1, 2])"
+			<Tags :current-tags="itemTagsStore.itemTagsByItem(itemId)" :ready-store="itemTagsStore.itemTagReadyByItem(itemId)" :tags-store="tagsStore.tags" :tags-draft-store="tagsStore.tagsWithDraft" :can-edit="authStore.hasPermission([1, 2])"
 				:delete-function="(value: string) => tagDelete(value)"
 				:restore-function="(value: string) => tagRestore(value)"
 				:filter-modal="filterTag"
@@ -651,7 +651,7 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items", [
 			:total-count="itemCommandsStore.itemCommandsCountByItem(itemId)">
 			<template #append-row>
 				<Tableau :labels="labelTableauCommand" :meta="{ key: 'id_item', path: '/commands/', expand: ['command'] }"
-					:store-data="[itemCommandsStore.itemCommandsByItem(itemId),commandsStore.commands]"
+					:store-data="[itemCommandsStore.itemCommandsByItem(itemId),commandsStore.commandsWithDraft]"
 					:loading="itemCommandsStore.itemCommandsLoading"
 					:total-count="itemCommandsStore.itemCommandsCountByItem(itemId)"
 					:fetch-function="!isNewId(itemId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemCommandsStore.getItemCommandByInterval({ id_item: itemId }, limit, offset, expand, filter, sort, clear) : undefined"
@@ -663,7 +663,7 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items", [
 			:total-count="itemProjectsStore.itemProjectsCountByItem(itemId)">
 			<template #append-row>
 				<Tableau :labels="labelTableauProject" :meta="{ key: 'id_project', path: '/projects/', expand: ['project'] }"
-					:store-data="[itemProjectsStore.itemProjectsByItem(itemId),projectsStore.projects]"
+					:store-data="[itemProjectsStore.itemProjectsByItem(itemId),projectsStore.projectsWithDraft]"
 					:loading="itemProjectsStore.itemProjectsLoading"
 					:total-count="itemProjectsStore.itemProjectsCountByItem(itemId)"
 					:fetch-function="!isNewId(itemId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemProjectsStore.getItemProjectByInterval({ id_item: itemId }, limit, offset, expand, filter, sort, clear) : undefined"

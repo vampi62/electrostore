@@ -561,7 +561,7 @@ useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects", 
 		/>
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-edition="projectsStore.projectEdition[projectId]" :store-data="projectsStore.projects[projectId]"/>
-			<Tags :current-tags="projectsTagsStore.projectProjectTagsByProject(projectId)" :ready-store="projectsTagsStore.projectProjectTagReadyByProject(projectId)" :tags-store="projectTagsStore.projectTags" :can-edit="authStore.hasPermission([2])"
+			<Tags :current-tags="projectsTagsStore.projectProjectTagsByProject(projectId)" :ready-store="projectsTagsStore.projectProjectTagReadyByProject(projectId)" :tags-store="projectTagsStore.projectTags" :tags-draft-store="projectTagsStore.projectTagsWithDraft" :can-edit="authStore.hasPermission([2])"
 				:delete-function="(value: string) => tagDelete(value)"
 				:restore-function="(value: string) => tagRestore(value)"
 				:filter-modal="filterTag"
@@ -610,7 +610,7 @@ useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects", 
 					{{ $t('project.AddItem') }}
 				</button>
 				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
-					:store-data="[itemProjectsStore.itemProjectsByProject(projectId), itemsStore.items]"
+					:store-data="[itemProjectsStore.itemProjectsByProject(projectId), itemsStore.itemsWithDraft]"
 					:store-edition="itemProjectsStore.itemProjectEditionByProject(projectId)"
 					:store-ready="itemProjectsStore.itemProjectReadyByProject(projectId)"
 					:loading="itemProjectsStore.itemProjectsLoading"

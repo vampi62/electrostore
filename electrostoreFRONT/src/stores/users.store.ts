@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, createResource } from "@/helpers";
+import { fetchWrapper, createResource, withDraft } from "@/helpers";
 import { isNewId } from "@/utils";
 
 import { useCommandsCommentsStore, useProjectsCommentsStore, useUsersSessionsStore, useUsersPushStore } from "@/stores";
@@ -69,6 +69,10 @@ export const useUsersStore = defineStore("users", {
 		users: {} as Record<string, ReadUserDto>,
 		userEdition: {} as Record<string, UserEdition>,
 	}),
+	getters: {
+		// for lookups by id: the saved records, else the ones being created / edited
+		usersWithDraft: (state) => withDraft(state.users, state.userEdition),
+	},
 	actions: {
 		getUserByInterval: userResource.single.getByInterval,
 		getUserById: userResource.single.getById,
