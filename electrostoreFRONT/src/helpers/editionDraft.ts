@@ -106,7 +106,7 @@ export function snapshotEdition(store: StoreGeneric, id: string, mainKey: string
 			ready[key] = entries;
 		}
 	}
-	return structuredClone({ edition, ready, lost });
+	return JSON.parse(JSON.stringify({ edition, ready, lost }));
 }
 
 export function applyDraft(store: StoreGeneric, id: string, mainKey: string, draft: EditionDraft, related: RelatedStaged[] = []) {

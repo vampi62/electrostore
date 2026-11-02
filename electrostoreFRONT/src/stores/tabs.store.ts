@@ -81,8 +81,10 @@ function createTabRouter(tabs: TabRouterStore, tabId: string, fullPath: string) 
 			}
 		}
 	});
-	router.afterEach((to) => {
-		tabs.setPath(tabId, to.fullPath);
+	router.afterEach((to, _from, failure) => {
+		if (!failure) {
+			tabs.setPath(tabId, to.fullPath);
+		}
 	});
 	// the first navigation of a memory router replaces the initial location
 	void router.replace(fullPath);
