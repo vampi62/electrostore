@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { createResource } from "@/helpers";
+import { createResource, withDraft } from "@/helpers";
 import { isNewId } from "@/utils";
 
 import { useProjectsCommentsStore, useProjectsDocumentsStore, useProjectsStatusStore, useProjectsTagsStore, useItemsProjectsStore } from "@/stores";
@@ -66,6 +66,10 @@ export const useProjectsStore = defineStore("projects", {
 		projects: {} as Record<string, ReadProjectDto>,
 		projectEdition: {} as Record<string, Edition<{ create: CreateProjectDto, update: UpdateProjectDto }>>,
 	}),
+	getters: {
+		// for lookups by id: the saved records, else the ones being created / edited
+		projectsWithDraft: (state) => withDraft(state.projects, state.projectEdition),
+	},
 	actions: {
 		getProjectByInterval: projectResource.single.getByInterval,
 		getProjectById: projectResource.single.getById,

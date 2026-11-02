@@ -528,7 +528,7 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores", [
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-edition="storesStore.storeEdition[storeId] || {}" :store-data="storesStore.stores[storeId]" :store-user="authStore.user"
 				:store-function="{ hasPermission: (validPerm: number[]) => authStore.hasPermission(validPerm) }"/>
-			<Tags :current-tags="storesTagsStore.storeTagsByStore(storeId)" :ready-store="storesTagsStore.storeTagReadyByStore(storeId)" :tags-store="tagsStore.tags" :can-edit="authStore.hasPermission([1, 2])"
+			<Tags :current-tags="storesTagsStore.storeTagsByStore(storeId)" :ready-store="storesTagsStore.storeTagReadyByStore(storeId)" :tags-store="tagsStore.tags" :tags-draft-store="tagsStore.tagsWithDraft" :can-edit="authStore.hasPermission([1, 2])"
 				:delete-function="(value: string) => tagDelete(value)"
 				:restore-function="(value: string) => tagRestore(value)"
 				:filter-modal="filterTag"
@@ -557,7 +557,7 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores", [
 				</div>
 				<div v-if="boxId != ''">
 					<Tableau :labels="labelTableauBoxItem" :meta="metaTableauBoxItem"
-						:store-data="[itemBoxsStore.itemBoxsByBox(boxId),itemsStore.items,itemsStore.thumbnailsURL]"
+						:store-data="[itemBoxsStore.itemBoxsByBox(boxId),itemsStore.itemsWithDraft,itemsStore.thumbnailsURL]"
 						:loading="itemBoxsStore.itemBoxsLoading"
 						:total-count="itemBoxsStore.itemBoxsCountByBox(boxId)"
 						:fetch-function="!isNewId(storeId) && boxId != null ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemBoxsStore.getItemBoxByInterval({ id_store: storeId, id_box: boxId }, limit, offset, expand, filter, sort, clear) : undefined"
@@ -573,7 +573,7 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores", [
 						</template>
 					</Tableau>
 					<Tableau :labels="labelTableauBoxEquipement" :meta="metaTableauBoxEquipement"
-						:store-data="[equipementBoxsStore.equipementBoxsByBox(boxId),equipementsStore.equipements, equipementsStore.thumbnailsURL]"
+						:store-data="[equipementBoxsStore.equipementBoxsByBox(boxId),equipementsStore.equipementsWithDraft, equipementsStore.thumbnailsURL]"
 						:loading="equipementBoxsStore.equipementBoxsLoading"
 						:total-count="equipementBoxsStore.equipementBoxsCountByBox(boxId)"
 						:fetch-function="!isNewId(storeId) && boxId != null ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementBoxsStore.getEquipementBoxByInterval({ id_store: storeId, id_box: boxId }, limit, offset, expand, filter, sort, clear) : undefined"

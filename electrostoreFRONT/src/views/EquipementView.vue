@@ -569,7 +569,7 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 					</div>
 				</template>
 			</FormContainer>
-			<Tags :current-tags="equipementTagsStore.equipementTagsByEquipement(equipementId)" :ready-store="equipementTagsStore.equipementTagReadyByEquipement(equipementId)" :tags-store="tagsStore.tags" :can-edit="authStore.hasPermission([1, 2])"
+			<Tags :current-tags="equipementTagsStore.equipementTagsByEquipement(equipementId)" :ready-store="equipementTagsStore.equipementTagReadyByEquipement(equipementId)" :tags-store="tagsStore.tags" :tags-draft-store="tagsStore.tagsWithDraft" :can-edit="authStore.hasPermission([1, 2])"
 				:delete-function="(value: string) => tagDelete(value)"
 				:restore-function="(value: string) => tagRestore(value)"
 				:filter-modal="filterTag"
@@ -584,7 +584,7 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 			<template #append-row>
 				<p class="text-sm text-gray-600 mb-2">{{ $t('equipement.BoxHint') }}</p>
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box' }"
-					:store-data="[equipementBoxsStore.equipementBoxsByEquipement(equipementId), storesStore.stores]"
+					:store-data="[equipementBoxsStore.equipementBoxsByEquipement(equipementId), storesStore.storesWithDraft]"
 					:store-ready="equipementBoxsStore.equipementBoxReadyByEquipement(equipementId)"
 					:loading="equipementBoxsStore.equipementBoxsLoading"
 					:total-count="equipementBoxsStore.equipementBoxsCountByEquipement(equipementId)"

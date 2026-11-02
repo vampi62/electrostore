@@ -781,7 +781,7 @@ useTabGuard(commandsStore, () => commandId.value, "commandEdition", "commands", 
 					{{ $t('command.AddItem') }}
 				</button>
 				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
-					:store-data="[itemCommandsStore.itemCommandsByCommand(commandId),itemsStore.items]"
+					:store-data="[itemCommandsStore.itemCommandsByCommand(commandId),itemsStore.itemsWithDraft]"
 					:store-edition="itemCommandsStore.itemCommandEditionByCommand(commandId)"
 					:store-ready="itemCommandsStore.itemCommandReadyByCommand(commandId)"
 					:schema="schemaItem"

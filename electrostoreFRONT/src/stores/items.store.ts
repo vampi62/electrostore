@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, createResource } from "@/helpers";
+import { fetchWrapper, createResource, withDraft } from "@/helpers";
 import { isNewId } from "@/utils";
 
 import { useItemsDocumentsStore, useItemsBoxsStore, useItemsTagsStore, useItemsCommandsStore, useItemsProjectsStore, useItemsHistoryStore } from "@/stores";
@@ -77,6 +77,10 @@ export const useItemsStore = defineStore("items", {
 		imagesURL: {} as Record<string, string>,
 		thumbnailsURL: {} as Record<string, string>,
 	}),
+	getters: {
+		// for lookups by id: the saved items, else the ones being created / edited
+		itemsWithDraft: (state) => withDraft(state.items, state.itemEdition),
+	},
 	actions: {
 		getItemByInterval: itemResource.single.getByInterval,
 		getItemById: itemResource.single.getById,

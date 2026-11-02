@@ -461,7 +461,7 @@ onMounted(() => {
 					:total-count="equipementCommentsStore.equipementCommentsCountByUser(userId)" :permission="!isNewId(userId)">
 					<template #append-row>
 						<Comment :meta="{ link: '/equipements/', idRessource: 'id_equipement', contenu: 'content_equipement_comment', key: 'id_equipement_comment', canEdit: false, roleRequired: false, expand: ['equipement'] }"
-							:store-data="[equipementCommentsStore.equipementCommentsByUser(userId), equipementsStore.equipements]"
+							:store-data="[equipementCommentsStore.equipementCommentsByUser(userId), equipementsStore.equipementsWithDraft]"
 							:store-user="authStore.user" :store-config="configsStore"
 							:loading="equipementCommentsStore.equipementCommentsLoading"
 							:total-count="equipementCommentsStore.equipementCommentsCountByUser(userId)"

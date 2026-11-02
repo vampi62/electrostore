@@ -261,7 +261,7 @@ useTabGuard(projectTagsStore, () => projectTagId.value, "projectTagEdition", "pr
 					{{ $t('projectTag.AddProject') }}
 				</button>
 				<Tableau :labels="labelTableauProject" :meta="{ key: 'id_project', expand: ['project'] }"
-					:store-data="[projectsTagsStore.projectProjectTagsByProjectTag(projectTagId),projectsStore.projects]"
+					:store-data="[projectsTagsStore.projectProjectTagsByProjectTag(projectTagId),projectsStore.projectsWithDraft]"
 					:store-ready="projectsTagsStore.projectProjectTagReadyByProjectTag(projectTagId)"
 					:loading="projectsTagsStore.projectProjectTagsLoading"
 					:total-count="projectsTagsStore.projectProjectTagsCountByProjectTag(projectTagId)"

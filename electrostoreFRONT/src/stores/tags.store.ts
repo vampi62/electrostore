@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { createResource } from "@/helpers";
+import { createResource, withDraft } from "@/helpers";
 import { isNewId } from "@/utils";
 
 import { useStoresTagsStore, useBoxsTagsStore, useItemsTagsStore, useEquipementsTagsStore } from "@/stores";
@@ -65,6 +65,10 @@ export const useTagsStore = defineStore("tags", {
 		tags: {} as Record<string, ReadTagDto>,
 		tagEdition: {} as Record<string, Edition<{ create: CreateTagDto, update: UpdateTagDto }>>,
 	}),
+	getters: {
+		// for lookups by id: the saved records, else the ones being created / edited
+		tagsWithDraft: (state) => withDraft(state.tags, state.tagEdition),
+	},
 	actions: {
 		getTagByInterval: tagResource.single.getByInterval,
 		getTagById: tagResource.single.getById,
