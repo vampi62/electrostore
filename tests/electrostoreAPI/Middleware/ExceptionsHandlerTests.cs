@@ -1,3 +1,4 @@
+using ElectrostoreAPI.Services.LlmChatService;
 using ElectrostoreAPI.Middleware;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -254,6 +255,7 @@ namespace ElectrostoreAPI.Tests.Middleware
         [InlineData(typeof(InvalidOperationException), StatusCodes.Status409Conflict)]
         [InlineData(typeof(NotImplementedException), StatusCodes.Status501NotImplemented)]
         [InlineData(typeof(HttpRequestException), StatusCodes.Status502BadGateway)]
+        [InlineData(typeof(LlmException), StatusCodes.Status502BadGateway)]
         public async Task InvokeAsync_WithVariousExceptions_ShouldReturnCorrectStatusCode(Type exceptionType, int expectedStatusCode)
         {
             // Arrange

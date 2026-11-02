@@ -19,7 +19,9 @@ public class AiChatService : IAiChatService
         "(creating an item, creating a tag, attaching a tag to an item, moving/adjusting stock in a box, " +
         "attaching a datasheet to an item) MUST be proposed through the corresponding tool. Proposing an " +
         "action does not apply it - never tell the user an action has been completed, only that it has " +
-        "been proposed for their review.";
+        "been proposed for their review. When several records are needed, propose all of them at once by calling " +
+        "the tools in parallel in the same turn, with sensible values instead of asking the user for each detail. " +
+        "Never guess an id: use the search and list tools to find the existing items, boxes, stores and tags.";
 
     private readonly ILlmChatService _llmChatService;
     private readonly ISttService _sttService;
@@ -71,7 +73,7 @@ public class AiChatService : IAiChatService
         if (result is null)
         {
             _logger.LogError("SendMessage tool-calling loop exceeded the maximum of {MaxIterations} iterations", MaxToolIterations);
-            throw new InvalidOperationException("The assistant tool-calling loop exceeded the maximum number of iterations");
+            throw new LlmException("The assistant tool-calling loop exceeded the maximum number of iterations");
         }
 
         _logger.LogInformation("SendMessage completed with {ProposedActionCount} proposed action(s)", proposedActions.Count);
@@ -110,7 +112,7 @@ public class AiChatService : IAiChatService
         if (!resolved)
         {
             _logger.LogError("StreamMessage tool-calling loop exceeded the maximum of {MaxIterations} iterations", MaxToolIterations);
-            throw new InvalidOperationException("The assistant tool-calling loop exceeded the maximum number of iterations");
+            throw new LlmException("The assistant tool-calling loop exceeded the maximum number of iterations");
         }
 
         httpResponse.ContentType = "text/event-stream";

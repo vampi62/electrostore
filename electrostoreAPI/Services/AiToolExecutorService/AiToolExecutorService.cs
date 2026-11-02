@@ -239,8 +239,16 @@ public class AiToolExecutorService : IAiToolExecutorService
         {
             throw new JsonException($"Missing arguments for '{typeof(T).Name}'.");
         }
-        return JsonSerializer.Deserialize<T>(argumentsJson, JsonOptions)
+        var dto = JsonSerializer.Deserialize<T>(argumentsJson, JsonOptions)
             ?? throw new JsonException($"Invalid arguments for '{typeof(T).Name}'.");
+        // The same rules as the API endpoints (lengths, ranges, ...): the error goes back to the model, which can correct its arguments
+        var errors = new List<ValidationResult>();
+        if (!Validator.TryValidateObject(dto, new ValidationContext(dto), errors, validateAllProperties: true))
+        {
+            var details = errors.Select(e => e.ErrorMessage).Where(message => !string.IsNullOrWhiteSpace(message));
+            throw new ValidationException($"Invalid arguments for '{typeof(T).Name}': {string.Join(" ", details)}");
+        }
+        return dto;
     }
 
     private static AiToolExecutionResult Result<T>(T value)

@@ -1,3 +1,4 @@
+using ElectrostoreAPI.Services.LlmChatService;
 using System.Text.Json;
 
 namespace ElectrostoreAPI.Middleware;
@@ -48,6 +49,7 @@ public class ExceptionsHandler
             InvalidOperationException _ => StatusCodes.Status409Conflict,
             NotImplementedException _ => StatusCodes.Status501NotImplemented,
             HttpRequestException _ => StatusCodes.Status502BadGateway,
+            LlmException _ => StatusCodes.Status502BadGateway,
             _ => StatusCodes.Status500InternalServerError
         };
 
