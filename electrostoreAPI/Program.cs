@@ -208,6 +208,7 @@ public partial class Program
         {
             client.BaseAddress = new Uri(EnsureTrailingSlash(
                 builder.Configuration.GetValue<string>("Llm:BaseUrl") ?? throw new InvalidOperationException("Llm:BaseUrl configuration is missing.")));
+            client.Timeout = TimeSpan.FromSeconds(builder.Configuration.GetValue<int?>("Llm:TimeoutSeconds") ?? 300);
         });
         builder.Services.AddHttpClient(SttService.HttpClientName, client =>
         {

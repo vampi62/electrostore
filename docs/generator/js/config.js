@@ -126,9 +126,12 @@ function collectConfig(formData) {
     if (config.enableLlm) {
         config.llm = {
             baseUrl: formData.get('llmBaseUrl') || 'http://ollama:11434',
-            model: formData.get('llmModel') || 'llama3.1',
+            model: formData.get('llmModel') || 'llama3.1:8b',
             endpoint: formData.get('llmEndpoint') || 'api/chat',
             apiKey: formData.get('llmApiKey') || '',
+            temperature: Number.isNaN(parseFloat(formData.get('llmTemperature'))) ? 0.2 : parseFloat(formData.get('llmTemperature')),
+            think: document.getElementById('llmThink').checked,
+            timeoutSeconds: parseInt(formData.get('llmTimeoutSeconds')) || 300,
             systemPrompt: formData.get('llmSystemPrompt') || DEFAULT_SYSTEM_PROMPT
         };
     }

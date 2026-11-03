@@ -317,6 +317,29 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.True(Parse(result.ResultJson).TryGetProperty("error", out _));
         }
 
+        [Fact]
+        public async Task ExecuteToolAsync_ProposalTools_ShouldReturnValidationError_WhenValueBreaksTheDtoRules()
+        {
+            var service = CreateService();
+
+            var result = await service.ExecuteToolAsync("create_item", """{"reference_name_item":"R-1","friendly_name_item":"R 1","threshold_min_item":-5}""");
+
+            Assert.Null(result.ProposedAction);
+            Assert.Contains("threshold_min_item", Parse(result.ResultJson).GetProperty("error").GetString());
+        }
+
+        [Fact]
+        public async Task ExecuteToolAsync_ProposalTools_ShouldReturnValidationError_WhenTextIsTooLong()
+        {
+            var service = CreateService();
+            var tooLong = new string('a', 100_000);
+
+            var result = await service.ExecuteToolAsync("create_tag", $$"""{"name_tag":"{{tooLong}}","weight_tag":1}""");
+
+            Assert.Null(result.ProposedAction);
+            Assert.Contains("name_tag", Parse(result.ResultJson).GetProperty("error").GetString());
+        }
+
         // --- ExecuteToolAsync: error handling ---
 
         [Fact]

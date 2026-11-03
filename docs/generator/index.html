@@ -432,7 +432,7 @@
                     <div class="form-group checkbox-group">
                         <label>
                             <input type="checkbox" id="enableLlm" name="enableLlm" onchange="toggleLlm()">
-                            <strong>Enable LLM chat assistant</strong> - Natural language inventory assistant backed by an OpenAI-compatible chat API (e.g. Ollama)
+                            <strong>Enable LLM chat assistant</strong> - Natural language inventory assistant backed by a chat API with tool calling (Ollama, or any OpenAI-compatible provider)
                         </label>
                     </div>
 
@@ -440,7 +440,7 @@
                         <div class="form-group">
                             <label for="llmBaseUrl">Chat API Base URL</label>
                             <input type="text" id="llmBaseUrl" name="llmBaseUrl" placeholder="http://ollama:11434" value="http://ollama:11434">
-                            <small class="help-text">OpenAI-compatible <code>/chat/completions</code> base URL. Set in the API service as <code>Llm:BaseUrl</code>.</small>
+                            <small class="help-text">Base URL of the chat API. Set in the API service as <code>Llm:BaseUrl</code>.</small>
                         </div>
                         <div class="form-group">
                             <label for="llmModel">Chat Model</label>
@@ -450,12 +450,29 @@
                         <div class="form-group">
                             <label for="llmEndpoint">Chat Endpoint</label>
                             <input type="text" id="llmEndpoint" name="llmEndpoint" placeholder="api/chat" value="api/chat">
-                            <small class="help-text">OpenAI-compatible chat endpoint. Set in the API service as <code>Llm:Endpoint</code>.</small>
+                            <small class="help-text">Ollama's native endpoint (<code>api/chat</code>) or an OpenAI-compatible one (<code>v1/chat/completions</code>); the API adapts its requests to the one chosen. Set in the API service as <code>Llm:Endpoint</code>.</small>
                         </div>
                         <div class="form-group">
                             <label for="llmApiKey">Chat API Key</label>
                             <input type="password" id="llmApiKey" name="llmApiKey" placeholder="Leave empty for a local Ollama instance">
                             <small class="help-text">Only needed for hosted OpenAI-compatible providers; a local Ollama instance usually needs none.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="llmTemperature">Temperature</label>
+                            <input type="number" id="llmTemperature" name="llmTemperature" min="0" max="2" step="0.1" value="0.2">
+                            <small class="help-text">Low values give more repeatable proposals. Set in the API service as <code>Llm:Temperature</code>.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="llmTimeoutSeconds">Timeout (seconds)</label>
+                            <input type="number" id="llmTimeoutSeconds" name="llmTimeoutSeconds" min="10" step="1" value="300">
+                            <small class="help-text">How long the API waits for the model to answer. Set in the API service as <code>Llm:TimeoutSeconds</code>.</small>
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <label>
+                                <input type="checkbox" id="llmThink" name="llmThink">
+                                <strong>Let the model think</strong> - Reasoning models (e.g. Qwen3) reason before answering: more accurate for hard requests, but much slower. Set in the API service as <code>Llm:Think</code>.
+                            </label>
                         </div>
 
                         <div class="form-group checkbox-group">

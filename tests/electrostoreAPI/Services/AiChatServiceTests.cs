@@ -146,7 +146,7 @@ namespace ElectrostoreAPI.Tests.Services
         }
 
         [Fact]
-        public async Task SendMessage_ShouldThrowInvalidOperationException_WhenToolLoopExceedsMaxIterations()
+        public async Task SendMessage_ShouldThrowLlmException_WhenToolLoopExceedsMaxIterations()
         {
             var toolCall = new LlmToolCall { id = "call-1", function = new LlmToolCallFunction { name = "noop" } };
             _llmChatService.Setup(l => l.GetChatCompletionAsync(It.IsAny<List<LlmMessage>>(), It.IsAny<List<LlmToolDefinition>>(), It.IsAny<CancellationToken>()))
@@ -156,7 +156,7 @@ namespace ElectrostoreAPI.Tests.Services
             var service = CreateService();
             var dto = new CreateAiChatMessageDto { content_ai_chat_message = "loop forever" };
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => service.SendMessage(dto));
+            await Assert.ThrowsAsync<LlmException>(() => service.SendMessage(dto));
         }
 
         // --- StreamMessage ---
@@ -194,7 +194,7 @@ namespace ElectrostoreAPI.Tests.Services
         }
 
         [Fact]
-        public async Task StreamMessage_ShouldThrowInvalidOperationException_WhenToolLoopExceedsMaxIterations()
+        public async Task StreamMessage_ShouldThrowLlmException_WhenToolLoopExceedsMaxIterations()
         {
             var toolCall = new LlmToolCall { id = "call-1", function = new LlmToolCallFunction { name = "noop" } };
             _llmChatService.Setup(l => l.GetChatCompletionAsync(It.IsAny<List<LlmMessage>>(), It.IsAny<List<LlmToolDefinition>>(), It.IsAny<CancellationToken>()))
@@ -205,7 +205,7 @@ namespace ElectrostoreAPI.Tests.Services
             var context = new DefaultHttpContext { Response = { Body = new MemoryStream() } };
             var dto = new CreateAiChatMessageDto { content_ai_chat_message = "loop forever" };
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => service.StreamMessage(dto, context.Response));
+            await Assert.ThrowsAsync<LlmException>(() => service.StreamMessage(dto, context.Response));
         }
     }
 }

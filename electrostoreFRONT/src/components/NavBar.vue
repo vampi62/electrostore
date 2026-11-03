@@ -9,13 +9,15 @@
 			{{ $t('common.VAppDemoMode') }}
 		</div>
 		<button @click="showTopBar = !showTopBar"
-			class="block sm:hidden flex-shrink-0 text-white hover:text-blue-400"><!-- for mobile -->
+			class="block sm:hidden flex-shrink-0 relative text-white hover:text-blue-400"><!-- for mobile -->
 			<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
 				xmlns="http://www.w3.org/2000/svg">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 					d="M4 6h16M4 12h16m-7 6h7">
 				</path>
 			</svg>
+			<!-- the assistant button is in this menu on mobile -->
+			<span v-if="aiAvailable && aiPendingCount > 0" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-red-500"></span>
 		</button>
 		<div class="hidden sm:flex flex-shrink-0"><!-- for desktop -->
 			<div class="flex space-x-4 justify-end">
@@ -30,8 +32,11 @@
 					</button>
 				</div>
 				<button v-if="aiAvailable" @click="$emit('showAiModal', true)"
-					class="cursor-pointer text-white hover:text-blue-400" :title="$t('common.VAppAi')">
-					<font-awesome-icon icon="fa-solid fa-wand-magic-sparkles" />
+					class="cursor-pointer text-white hover:text-blue-400" :title="aiTitle">
+					<span class="relative">
+						<font-awesome-icon icon="fa-solid fa-wand-magic-sparkles" />
+						<span v-if="aiPendingCount > 0" class="absolute -top-2 -right-3 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[10px] leading-4 text-center font-medium">{{ aiPendingLabel }}</span>
+					</span>
 					<span class="ml-2">{{ $t('common.VAppAi') }}</span>
 				</button>
 				<a :href="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400"
@@ -73,8 +78,11 @@
 				</button>
 			</div>
 			<button v-if="aiAvailable" @click="$emit('showAiModal', true); showTopBar = false"
-				class="cursor-pointer text-white hover:text-blue-400 text-left">
-				<font-awesome-icon icon="fa-solid fa-wand-magic-sparkles" />
+				class="cursor-pointer text-white hover:text-blue-400 text-left" :title="aiTitle">
+				<span class="relative">
+					<font-awesome-icon icon="fa-solid fa-wand-magic-sparkles" />
+					<span v-if="aiPendingCount > 0" class="absolute -top-2 -right-3 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[10px] leading-4 text-center font-medium">{{ aiPendingLabel }}</span>
+				</span>
 				<span class="ml-2">{{ $t('common.VAppAi') }}</span>
 			</button>
 			<a :href="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400"
@@ -159,7 +167,7 @@
 </template>
 
 <script lang="ts">
-import { useAuthStore, useConfigsStore, useTabsStore } from "@/stores";
+import { useAiStore, useAuthStore, useConfigsStore, useTabsStore } from "@/stores";
 import type { PropType } from "vue";
 import type { NavLabel } from "@/types/nav";
 import type { BeforeInstallPromptEvent } from "@/types/pwa";
@@ -175,6 +183,17 @@ export default {
 		// the assistant button is only shown when the api has an llm configured
 		aiAvailable(): boolean {
 			return this.configsStore.getStatusByKey("llm_status") === "healthy";
+		},
+		// proposals of the assistant waiting for a validation
+		aiPendingCount(): number {
+			return this.aiStore.pendingCount;
+		},
+		aiPendingLabel(): string {
+			return this.aiPendingCount > 99 ? "99+" : String(this.aiPendingCount);
+		},
+		aiTitle(): string {
+			const title = this.$t("common.VAppAi");
+			return this.aiPendingCount > 0 ? `${title} - ${this.$t("common.VAiPendingCount", { count: this.aiPendingCount })}` : title;
 		},
 		listNavShown() {
 			return this.listNav.filter((nav) => {
@@ -194,10 +213,11 @@ export default {
 		};
 	},
 	setup() {
+		const aiStore = useAiStore();
 		const authStore = useAuthStore();
 		const configsStore = useConfigsStore();
 		const tabsStore = useTabsStore();
-		return { authStore, configsStore, tabsStore };
+		return { aiStore, authStore, configsStore, tabsStore };
 	},
 	emits: ["update:reduceLeftSideBar", "showAboutModal", "showAiModal"],
 	mounted() {

@@ -5,8 +5,9 @@ import { RouterView, useRoute, useRouter } from "vue-router";
 const route = useRoute();
 const router = useRouter();
 
-import { useAuthStore, useConfigsStore, useTabsStore } from "@/stores";
+import { useAiStore, useAuthStore, useConfigsStore, useTabsStore } from "@/stores";
 
+const aiStore = useAiStore();
 const configsStore = useConfigsStore();
 const authStore = useAuthStore();
 const tabsStore = useTabsStore();
@@ -47,10 +48,11 @@ document.addEventListener("visibilitychange", () => {
 		tabsStore.saveDrafts();
 	}
 });
-// tabs are not kept from a user to another
+// tabs and proposals of the assistant are not kept from a user to another
 watch(() => authStore.user, (user) => {
 	if (!user) {
 		tabsStore.reset();
+		aiStore.reset();
 	}
 });
 

@@ -554,22 +554,29 @@ function generateApiAppsettings(config) {
         settings.Kafka = {
             "BootstrapServers": "kafka:9092"
         };
-        if (config.enableLlm) {
-            settings.Llm = {
-                "Enable": true,
-                "BaseUrl": config.llm.baseUrl,
-                "Model": config.llm.model,
-                "Endpoint": config.llm.endpoint,
-                "ApiKey": config.useVault ? "{{vault:llm_api_key}}" : (config.llm.apiKey || ""),
-                "SystemPrompt": config.llm.systemPrompt || DEFAULT_SYSTEM_PROMPT
-            };
-        } else {
+
+        if (!config.enableLlm) {
             settings.Llm = {
                 "Enable": false,
                 "BaseUrl": "http://ollama:11434",
                 "Model": "llama3.1:8b",
                 "Endpoint": "api/chat",
                 "ApiKey": "",
+                "Temperature": 0.2,
+                "Think": false,
+                "TimeoutSeconds": 300,
+                "SystemPrompt": DEFAULT_SYSTEM_PROMPT
+            };
+        } else {
+            settings.Llm = {
+                "Enable": true,
+                "BaseUrl": config.llm.baseUrl,
+                "Model": config.llm.model,
+                "Endpoint": config.llm.endpoint,
+                "ApiKey": config.useVault ? "{{vault:llm_api_key}}" : (config.llm.apiKey || ""),
+                "Temperature": config.llm.temperature,
+                "Think": config.llm.think,
+                "TimeoutSeconds": config.llm.timeoutSeconds,
                 "SystemPrompt": config.llm.systemPrompt || DEFAULT_SYSTEM_PROMPT
             };
         }
