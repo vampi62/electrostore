@@ -13,6 +13,14 @@ function isSaved(parts: Record<string, string | number>): boolean {
 	return !Object.values(parts).some((value) => String(value).startsWith(NEW_ID_PREFIX));
 }
 
+function decodePresetValue(value: string): string {
+	try {
+		return decodeURIComponent(value);
+	} catch {
+		return value;
+	}
+}
+
 // Read-only view of the records of a store, completed by what is staged for the ids the api did not return (new element, link to a record not saved yet).
 // A saved record always wins; the drafts are tried in order (e.g. ready, then edition). Meant for lookups by id, not for lists.
 // A draft only holds the fields staged so far, so what is read from it may miss some fields of R.
@@ -341,9 +349,11 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 			const stateId = toKey(key);
 			this[editionKey][stateId] ??= {};
 			for (const pair of preset.split(";")) {
-				const [field, value] = pair.split(":");
-				if (field && value) {
-					this[editionKey][stateId][field] = value;
+				const separator = pair.indexOf(":");
+				const field = pair.slice(0, separator);
+				const value = pair.slice(separator + 1);
+				if (separator > 0 && value) {
+					this[editionKey][stateId][field] = decodePresetValue(value);
 				}
 			}
 		},
