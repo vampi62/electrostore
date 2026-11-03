@@ -5,3 +5,4 @@ export * from "./buildRSQLFilter";
 export * from "./filterValue";
 export * from "./editionDraft";
 export * from "./resource";
+export * from "./tableau";
