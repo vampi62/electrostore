@@ -126,38 +126,51 @@ public class LlmChatService : ILlmChatService
             using var reader = new StreamReader(stream);
             while (!cancellationToken.IsCancellationRequested && await reader.ReadLineAsync(cancellationToken) is { } line)
             {
-                // OpenAI-compatible backends stream server-sent events ("data: {...}"), native Ollama one JSON object per line
-                var isEvent = line.StartsWith("data:", StringComparison.Ordinal);
-                if (!isEvent && !line.StartsWith('{'))
+                if (!TryParseStreamLine(line, out var delta, out var completed))
                 {
                     continue;
                 }
-                var data = isEvent ? line["data:".Length..].Trim() : line;
-                if (data == "[DONE]")
-                {
-                    yield break;
-                }
-                LlmChatCompletionChunk? chunk;
-                try
-                {
-                    chunk = JsonSerializer.Deserialize<LlmChatCompletionChunk>(data);
-                }
-                catch (JsonException ex)
-                {
-                    _logger.LogWarning(ex, "Skipping unparsable LLM stream chunk: {Data}", data);
-                    continue;
-                }
-                var delta = chunk?.choices.FirstOrDefault()?.delta?.content ?? chunk?.message?.content;
                 if (!string.IsNullOrEmpty(delta))
                 {
                     yield return delta;
                 }
-                if (chunk?.done == true)
+                if (completed)
                 {
                     yield break;
                 }
             }
         }
+    }
+
+    private bool TryParseStreamLine(string line, out string? delta, out bool completed)
+    {
+        delta = null;
+        completed = false;
+        // OpenAI-compatible backends stream server-sent events ("data: {...}"), native Ollama one JSON object per line
+        var isEvent = line.StartsWith("data:", StringComparison.Ordinal);
+        if (!isEvent && !line.StartsWith('{'))
+        {
+            return false;
+        }
+        var data = isEvent ? line["data:".Length..].Trim() : line;
+        if (data == "[DONE]")
+        {
+            completed = true;
+            return true;
+        }
+        LlmChatCompletionChunk? chunk;
+        try
+        {
+            chunk = JsonSerializer.Deserialize<LlmChatCompletionChunk>(data);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(ex, "Skipping unparsable LLM stream chunk: {Data}", data);
+            return false;
+        }
+        delta = chunk?.choices.FirstOrDefault()?.delta?.content ?? chunk?.message?.content;
+        completed = chunk?.done == true;
+        return true;
     }
 
     private HttpRequestMessage BuildRequest(List<LlmMessage> messages, List<LlmToolDefinition>? tools, bool stream, LlmChatOptions options)

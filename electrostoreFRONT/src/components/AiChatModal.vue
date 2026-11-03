@@ -391,7 +391,7 @@ export default {
 					loads.push(this.tagsStore.getTagById(id));
 				}
 			}
-			void Promise.allSettled(loads);
+			Promise.allSettled(loads);
 		},
 		refLabel(ref: { kind: AiRefKind, id: string }): string {
 			const name = ref.kind === "item" ? this.itemsStore.items[ref.id]?.friendly_name_item
