@@ -121,10 +121,12 @@ The first LED on the WS2812B strip indicates the module status:
 | Color | Status |
 |-------|--------|
 | White | Initialization |
+| Red blinking | File system error |
+| Blue | Initialization complete |
+| Cyan blinking | WiFi not found switch to AP mode |
 | Cyan | WiFi connected successfully |
-| Red | WiFi connection failed |
+| Purple blinking | MQTT connection failed |
 | Green | MQTT connected successfully |
-| Purple | MQTT connection failed |
 
 ---
 

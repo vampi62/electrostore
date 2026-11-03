@@ -23,31 +23,31 @@ void setup() {
     // Initialize StripLed ws2812b module
     stripLedManager.begin();
 
-    stripLedManager.setLed(0, 255, 0, 0, 1, 100); // LED 1 red
+    stripLedManager.setLed(0, 255, 255, 255, 1, 100); // LED 1 white
 
     // Initialize storage
     if (!StorageManager::begin()) {
         Logger::error("LittleFS initialization error");
         // LED 1 blinking red to signal the error
         while (true) {
-            stripLedManager.setLed(0, 255, 0, 0, 1, 100); // LED 1 red
+            stripLedManager.setLed(0, 255, 0, 0, 1, 100); // LED 1 red blinking
             delay(250);
             stripLedManager.setLed(0, 0, 0, 0, 1, 100); // LED off
             delay(250);
         }
     }
 
-    stripLedManager.setLed(0, 0, 0, 255, 1, 100); // LED 1 blue
+    stripLedManager.setLed(0, 0, 0, 255, 1, 100); // LED 1 blue (initialization complete)
 
     // Initialize WiFi
     if (!wifiManager.begin()) {
         Logger::warning("Starting in AP mode");
-        // LED 1 fast blue to signal AP mode
-        stripLedManager.setLed(0, 0, 0, 255, 3, 10000); // LED 1 blue
+        // LED 1 cyan blinking to signal AP mode
+        stripLedManager.setLed(0, 0, 255, 255, 3, 100); // LED 1 cyan blinking
     } else {
         Logger::info("WiFi connection established");
-        // LED 1 yellow to signal that the WiFi connection is OK
-        stripLedManager.setLed(0, 255, 255, 0, 1, 100); // LED 1 yellow
+        // LED 1 cyan to signal that the WiFi connection is OK
+        stripLedManager.setLed(0, 0, 255, 255, 1, 100); // LED 1 cyan
     }
 
     // Initialize OTA
@@ -89,8 +89,8 @@ void setup() {
     if (!mqttManager.begin()) {
         Logger::warning("MQTT initialization failed");
         if (wifiManager.getCurrentMode() == WIFI_CONN_CLIENT) {
-            // Connected as WiFi client but MQTT connection error, LED 1 yellow to signal the error
-            stripLedManager.setLed(0, 255, 255, 0, 3, 10000); // LED 1 yellow
+            // Connected as WiFi client but MQTT connection error, LED 1 purple to signal the error
+            stripLedManager.setLed(0, 255, 0, 255, 3, 10000); // LED 1 purple blinking
         }
     } else {
         Logger::info("MQTT initialized successfully");
