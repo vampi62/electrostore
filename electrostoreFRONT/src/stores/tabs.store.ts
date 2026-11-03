@@ -95,7 +95,11 @@ function createTabRouter(tabs: TabRouterStore, tabId: string, fullPath: string) 
 const resolver = createRouter({ history: createMemoryHistory(), routes: appRoutes });
 
 export function resolveTab(fullPath: string) {
-	const resolved = resolver.resolve(fullPath);
+	const parsed = resolver.resolve(fullPath);
+	// resolving a string keeps its encoding as is, while a navigation normalizes the query (":" and ";" are not encoded):
+	// resolve the parts to get the same fullPath as the one the tab ends up with, otherwise it is changed after the opening
+	// and the url of the browser looks like a page opened from outside (a second tab)
+	const resolved = resolver.resolve({ path: parsed.path, query: parsed.query, hash: parsed.hash });
 	return {
 		path: resolved.path,
 		fullPath: resolved.matched.length && resolved.path !== "/" ? resolved.fullPath : defaultPath,
