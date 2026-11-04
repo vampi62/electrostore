@@ -42,14 +42,14 @@ const tableauLabel = ref<TableauLabel[]>([
 	{ label: "items.Seuil", sortable: true, key: "threshold_min_item", valueKey: "threshold_min_item", type: "number" },
 	{ label: "items.Description", sortable: false, key: "description_item", valueKey: "description_item", type: "text", cardRole: "hidden" },
 
-	{ label: "items.Tags", sortable: false, key: "ItemsTags.Tag.name_tag", sourceKey: "id_item", type: "link-list", 
-		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_item", storeLinkKeyJoinRessource: "id_tag",
-		ressourcePrint: [{ from: "ressource", valueKey: "name_tag" }] },
-
 	{ label: "items.Img", sortable: false, key: "id_item", sourceKey: "id_item", type: "image", fieldUrl: "url_thumbnail_item", cardRole: "image",
 		storeRessourceId: 3 },
 
 	{ label: "items.Quantity", sortable: true, key: "SUM(ItemsBoxs.quantity_item_box)", valueKey: "quantity_item", type: "number" },
+
+	{ label: "items.Tags", sortable: false, key: "ItemsTags.Tag.name_tag", sourceKey: "id_item", type: "link-list", 
+		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_item", storeLinkKeyJoinRessource: "id_tag",
+		ressourcePrint: [{ from: "ressource", valueKey: "name_tag" }] },
 ]);
 const tableauMeta = ref<TableauMeta>({
 	key: "id_item",

@@ -26,11 +26,11 @@ const filter = ref<FilterLabel[]>([
 	{ key: "status_equipement", value: undefined, type: "datalist", options: equipementStatusOptions, label: "equipements.FilterStatus", compareMethod: "==" },
 ]);
 const tableauLabel = ref<TableauLabel[]>([
-	{ label: "equipements.Name", sortable: true, key: "reference_name_equipement", valueKey: "reference_name_equipement", type: "text" },
-	{ label: "equipements.FriendlyName", sortable: true, key: "friendly_name_equipement", valueKey: "friendly_name_equipement", type: "text" },
-	{ label: "equipements.Description", sortable: false, key: "description_equipement", valueKey: "description_equipement", type: "text" },
+	{ label: "equipements.Name", sortable: true, key: "reference_name_equipement", valueKey: "reference_name_equipement", type: "text", cardRole: "title" },
+	{ label: "equipements.FriendlyName", sortable: true, key: "friendly_name_equipement", valueKey: "friendly_name_equipement", type: "text", cardRole: "subtitle" },
+	{ label: "equipements.Description", sortable: false, key: "description_equipement", valueKey: "description_equipement", type: "text", cardRole: "hidden" },
 	{ label: "equipements.Status", sortable: true, key: "status_equipement", valueKey: "status_equipement", type: "enum", options: equipementStatusOptions },
-	{ label: "equipements.Img", sortable: false, key: "id_equipement", sourceKey: "id_equipement", type: "image",
+	{ label: "equipements.Img", sortable: false, key: "id_equipement", sourceKey: "id_equipement", type: "image", cardRole: "image",
 		storeRessourceId: 1 },
 ]);
 const tableauMeta = ref<TableauMeta>({
@@ -38,6 +38,7 @@ const tableauMeta = ref<TableauMeta>({
 	path: "/equipements/",
 	saveState: true,
 	stateKey: "equipementsTableState",
+	cardView: true,
 });
 const filterReady = ref(false);
 useViewScroll(false);

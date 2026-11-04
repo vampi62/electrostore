@@ -37,10 +37,10 @@ const filter = ref<FilterLabel[]>([
 	{ key: "ylength_store", value: "", type: "number", label: "stores.FilterYLength", compareMethod: "=le=" },
 	{ key: "is_mqtt_connected_store", value: undefined, type: "datalist", options: { ["false"]: t("stores.FilterConnected0"), ["true"]: t("stores.FilterConnected1") }, label: "stores.FilterMqttConnected", compareMethod: "=" },
 	{ key: "mqtt_last_seen_store", value: "", type: "date", label: "stores.FilterMqttLastSeen", compareMethod: "=le=" },
-	/* { key: "StoresTags.Tag.name_tag", value: "", type: "datalist", label: "stores.FilterTag", compareMethod: "=like=",
+	{ key: "StoresTags.Tag.name_tag", value: [], partialValues: [], type: "datalist", label: "stores.FilterTag", compareMethod: "=in=", multiple: true, mode: "permissive",
 		fetchOptions: (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear),
 		storeData: tagsStore.tags, storeKey: "name_tag",
-	}, */
+	},
 ]);
 const tableauLabel = ref<TableauLabel[]>([
 	{ label: "stores.Name", sortable: true, key: "name_store", valueKey: "name_store", type: "text" },

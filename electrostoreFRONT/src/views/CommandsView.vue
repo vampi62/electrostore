@@ -49,7 +49,10 @@ const filter = ref<FilterLabel[]>([
 	{ key: "date_delivery_command", value: "", type: "date", label: "commands.FilterDateL", compareMethod: "=ge=" },
 	{ key: "tracking_number_command", value: "", type: "text", label: "commands.FilterTrackingNumber", compareMethod: "=like=" },
 	{ key: "is_active", value: undefined, type: "datalist", typeData: "bool", options: { ["false"]: t("commands.FilterActive0"), ["true"]: t("commands.FilterActive1") }, label: "commands.FilterActive", compareMethod: "==" },
-	//{ key: "CommandsItems.Item.reference_name_item", value: "", type: "text", label: "commands.FilterItem", compareMethod: "=like=" },
+	{ key: "CommandsItems.Item.reference_name_item", value: [], partialValues: [], type: "datalist", label: "commands.FilterItem", compareMethod: "=in=", multiple: true, mode: "permissive",
+		fetchOptions: (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear),
+		storeData: itemsStore.items, storeKey: "reference_name_item",
+	},
 ]);
 const tableauLabel = ref<TableauLabel[]>([
 	{ label: "commands.Status", sortable: true, key: "status_command", valueKey: "status_command", type: "enum", options: commandStatusOptions },
@@ -58,7 +61,7 @@ const tableauLabel = ref<TableauLabel[]>([
 	{ label: "commands.Prix", sortable: true, key: "price_command", valueKey: "price_command", type: "text" },
 	{ label: "commands.TrackingNumber", sortable: true, key: "tracking_number_command", valueKey: "tracking_number_command", type: "text" },
 	{ label: "commands.IsActive", sortable: true, key: "is_active", valueKey: "is_active", type: "enum", options: { ["false"]: t("commands.FilterActive0"), ["true"]: t("commands.FilterActive1") } },
-	{ label: "commands.ItemList", sortable: false, key: "commands.ItemList", sourceKey: "id_command", type: "link-list", 
+	{ label: "commands.ItemList", sortable: false, key: "CommandsItems.Item.reference_name_item", sourceKey: "id_command", type: "link-list", 
 		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_command", storeLinkKeyJoinRessource: "id_item", valueKey: "reference_name_item",
 		ressourcePrint: [{ from: "link", valueKey: "quantity_command_item" }, { from: "text", text: " - " }, { from: "ressource", valueKey: "reference_name_item" }] },
 

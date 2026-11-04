@@ -54,21 +54,28 @@ const filter = ref<FilterLabel[]>([
 	{ key: "url_project", value: "", type: "text", label: "projects.FilterUrl", compareMethod: "=like=" },
 	{ key: "date_start_project", value: "", type: "date", label: "projects.FilterDate", compareMethod: "=ge=" },
 	{ key: "date_end_project", value: "", type: "date", label: "projects.FilterDateEnd", compareMethod: "=ge=" },
-	//{ key: "ProjectsItems.Item.reference_name_item", value: "", type: "text", label: "projects.FilterItem", compareMethod: "=like=" },
-	//{ key: "ProjectsProjectTags.ProjectTag.name_project_tag", value: "", type: "text", label: "projects.FilterTag", compareMethod: "=like=" },
+	{ key: "ProjectsItems.Item.reference_name_item", value: [], partialValues: [], type: "datalist", label: "projects.FilterItem", compareMethod: "=in=", multiple: true, mode: "permissive",
+		fetchOptions: (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear),
+		storeData: itemsStore.items, storeKey: "reference_name_item",
+	},
+	{ key: "ProjectsProjectTags.ProjectTag.name_project_tag", value: [], partialValues: [], type: "datalist", label: "projects.FilterTag", compareMethod: "=in=", multiple: true, mode: "permissive",
+		fetchOptions: (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectTagsStore.getProjectTagByInterval(limit, offset, expand, filter, sort, clear),
+		storeData: projectTagsStore.projectTags, storeKey: "name_project_tag",
+	},
 ]);
 const tableauLabel = ref<TableauLabel[]>([
-	{ label: "projects.Name", sortable: true, key: "name_project", valueKey: "name_project", type: "text" },
-	{ label: "projects.Description", sortable: false, key: "description_project", valueKey: "description_project", type: "text" },
-	{ label: "projects.Url", sortable: true, key: "url_project", valueKey: "url_project", type: "text" },
+	{ label: "projects.Name", sortable: true, key: "name_project", valueKey: "name_project", type: "text", cardRole: "title" },
+	{ label: "projects.Description", sortable: false, key: "description_project", valueKey: "description_project", type: "text", cardRole: "hidden" },
+	{ label: "projects.Url", sortable: true, key: "url_project", valueKey: "url_project", type: "text", cardRole: "hidden" },
 	{ label: "projects.Status", sortable: true, key: "status_project", valueKey: "status_project", type: "enum", options: projectTypeStatus },
 
-	{ label: "projects.Items", sortable: false, key: "", sourceKey: "id_project", type: "link-list", 
-		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_project", storeLinkKeyJoinRessource: "id_item", valueKey: "reference_name_item",
-		ressourcePrint: [{ from: "link", valueKey: "quantity_project_item" }, { from: "text", text: " - " }, { from: "ressource", valueKey: "reference_name_item" }] },
-		
-	{ label: "projects.Tags", sortable: false, key: "", sourceKey: "id_project", type: "link-list", 
-		storeLinkId: 3, storeRessourceId: 4, storeLinkKeyJoinSource: "id_project", storeLinkKeyJoinRessource: "id_project_tag", valueKey: "name_project_tag",
+	{ label: "projects.Items", sortable: false, key: "ProjectsItems.Item.reference_name_item", sourceKey: "id_project", type: "link-list", 
+		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_project", storeLinkKeyJoinRessource: "id_item", valueKey: "reference_name_item", cardRole: "hidden",
+		//ressourcePrint: [{ from: "link", valueKey: "quantity_project_item" }, { from: "text", text: " - " }, { from: "ressource", valueKey: "reference_name_item" }] },
+		ressourcePrint: [{ from: "ressource", valueKey: "reference_name_item" }] },
+
+	{ label: "projects.Tags", sortable: false, key: "ProjectsProjectTags.ProjectTag.name_project_tag", sourceKey: "id_project", type: "link-list", 
+		storeLinkId: 3, storeRessourceId: 4, storeLinkKeyJoinSource: "id_project", storeLinkKeyJoinRessource: "id_project_tag", valueKey: "name_project_tag", cardRole: "hidden",
 		ressourcePrint: [{ from: "ressource", valueKey: "name_project_tag" }] },
 
 	{ label: "projects.DateStart", sortable: true, key: "date_start_project", valueKey: "date_start_project", type: "date" },
@@ -80,6 +87,7 @@ const tableauMeta = ref<TableauMeta>({
 	expand: ["project_items", "project_tags"],
 	saveState: true,
 	stateKey: "projectsTableState",
+	cardView: true,
 });
 const filterReady = ref(false);
 useViewScroll(false);
