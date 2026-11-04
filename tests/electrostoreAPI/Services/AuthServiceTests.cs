@@ -234,6 +234,46 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.False(result);
         }
 
+        // --- password login disabled ---
+
+        private static IConfiguration BuildPasswordLoginDisabledConfiguration(bool withSsoProvider = true)
+        {
+            var values = new Dictionary<string, string?> { { "Auth:EnablePasswordLogin", "false" } };
+            if (withSsoProvider)
+            {
+                values["OAuth:Google:DisplayName"] = "Google";
+            }
+            return BuildConfiguration(values);
+        }
+
+        [Fact]
+        public async Task PasswordEndpoints_ShouldThrowUnauthorizedAccessException_WhenPasswordLoginIsDisabled()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildUser(1, "user@test.com", "Password1!"));
+            await context.SaveChangesAsync();
+            var authService = CreateService(context, BuildPasswordLoginDisabledConfiguration());
+
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => authService.LoginWithPassword(new LoginRequest { email = "user@test.com", password = "Password1!" }));
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => authService.ForgotPassword(new ForgotPasswordRequest { email = "user@test.com" }));
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => authService.ResetPassword(new ResetPasswordRequest { email = "user@test.com", token = Guid.NewGuid().ToString(), password = "NewPassword1!" }));
+        }
+
+        [Fact]
+        public async Task LoginWithPassword_ShouldStillWork_WhenPasswordLoginIsDisabledWithoutSsoProvider()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Users.Add(BuildUser(1, "user@test.com", "Password1!"));
+            await context.SaveChangesAsync();
+            _jwtService.Setup(s => s.GenerateToken(It.IsAny<ReadUserDto>(), "user_password"))
+                .ReturnsAsync(new Jwt { token = "access", refresh_token = "refresh" });
+            var authService = CreateService(context, BuildPasswordLoginDisabledConfiguration(withSsoProvider: false));
+
+            var result = await authService.LoginWithPassword(new LoginRequest { email = "user@test.com", password = "Password1!" });
+
+            Assert.Equal("access", result.token);
+        }
+
         // --- ForgotPassword ---
 
         [Fact]

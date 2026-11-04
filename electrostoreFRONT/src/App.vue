@@ -12,7 +12,7 @@ const configsStore = useConfigsStore();
 const authStore = useAuthStore();
 const tabsStore = useTabsStore();
 
-configsStore.getConfig();
+configsStore.ensureConfig();
 configsStore.getHealth();
 
 const isIframe = computed(() => route.query.iframe !== undefined);

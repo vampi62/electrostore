@@ -4,6 +4,8 @@ public record ReadConfig
 {
     public bool demo_mode { get; init; }
     public string app_language { get; init; } = "en";
+    public bool password_login_enabled { get; init; } = true;
+    public bool sign_up_enabled { get; init; } = true;
     public int max_length_url { get; init; }
     public int max_length_comment { get; init; }
     public int max_length_description { get; init; }

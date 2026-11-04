@@ -34,7 +34,7 @@ function onSubmit(values: Record<string, unknown>, { setErrors }: { setErrors: (
 	<div class="max-w-md mx-auto bg-white p-6 rounded shadow">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('common.VLoginTitle') }}</h2>
 
-		<Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
+		<Form v-if="configsStore.isPasswordLoginEnabled" @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
 			<!-- Email Field -->
 			<div class="mb-4">
 				<label class="block text-gray-700" for="email">{{ $t('common.VLoginEmail') }}</label>
@@ -77,7 +77,7 @@ function onSubmit(values: Record<string, unknown>, { setErrors }: { setErrors: (
 		</Form>
 			
 		<!-- horizontal separation-->
-		<hr class="my-4" />
+		<hr v-if="configsStore.isPasswordLoginEnabled" class="my-4" />
 
 		<!-- available SSO providers in config -->
 		<div v-if="configsStore.configs.loading" class="flex items-center justify-center my-4">
@@ -99,10 +99,10 @@ function onSubmit(values: Record<string, unknown>, { setErrors }: { setErrors: (
 		</div>
 
 		<!-- Links -->
-		<div class="mt-4 flex justify-between">
-			<RouterLink to="/register" class="text-blue-500 hover:underline">{{ $t('common.VLoginRegisterLink') }}
+		<div v-if="configsStore.isSignUpEnabled || configsStore.isPasswordLoginEnabled" class="mt-4 flex justify-between">
+			<RouterLink v-if="configsStore.isSignUpEnabled" to="/register" class="text-blue-500 hover:underline">{{ $t('common.VLoginRegisterLink') }}
 			</RouterLink>
-			<RouterLink to="/forgot-password" class="ml-4 text-blue-500 hover:underline">
+			<RouterLink v-if="configsStore.isPasswordLoginEnabled" to="/forgot-password" class="ml-4 text-blue-500 hover:underline">
 				{{ $t('common.VLoginForgotPasswordLink') }}
 			</RouterLink>
 		</div>

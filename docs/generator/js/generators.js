@@ -611,6 +611,12 @@ function generateApiAppsettings(config) {
         "HexKey": config.useVault ? "{{vault:aes_key}}" : config.aes.key
     };
 
+    settings.Auth = {
+        // the password login can't be disabled without an SSO provider (the API ignores it too)
+        "EnablePasswordLogin": config.enablePasswordLogin || config.oauthProviders.length === 0,
+        "EnableSignUp": config.enableSignUp
+    };
+
     if (config.oauthProviders.length > 0) {
         settings.OAuth = {};
         config.oauthProviders.forEach(provider => {

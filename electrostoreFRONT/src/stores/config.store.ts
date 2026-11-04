@@ -18,6 +18,9 @@ interface Status extends ReadStatusDto {
 	loading: boolean;
 }
 
+// request of the config in progress (or done), shared by the app and the router guard
+let configRequest: Promise<void> | null = null;
+
 export const useConfigsStore = defineStore("configs",{
 	state: () => ({
 		configs: {} as Configs,
@@ -126,10 +129,26 @@ export const useConfigsStore = defineStore("configs",{
 	actions: {
 		async getConfig() {
 			this.configs.loading = true;
-			const config = await fetchWrapper.get<ReadConfig>({
+			configRequest = fetchWrapper.get<ReadConfig>({
 				url: `${baseUrl}/config`,
+			}).then((config) => {
+				this.configs = { ...config, loading: false };
 			});
-			this.configs = { ...config, loading: false };
+			try {
+				await configRequest;
+			} catch (error) {
+				// the next call (guard, refresh button) will try again
+				configRequest = null;
+				throw error;
+			}
+		},
+		// waits for the config (fetched only once), the defaults apply when the api can't be reached
+		async ensureConfig() {
+			try {
+				await (configRequest ?? this.getConfig());
+			} catch {
+				// the pages use the default config
+			}
 		},
 		async getHealth() {
 			this.status.loading = true;
@@ -140,6 +159,8 @@ export const useConfigsStore = defineStore("configs",{
 		},
 	},
 	getters: {
+		isPasswordLoginEnabled: (state) => state.configs.password_login_enabled !== false,
+		isSignUpEnabled: (state) => state.configs.sign_up_enabled !== false,
 		getConfigByKey: (state) => (key: string) => {
 			const configs = state.configs as unknown as Record<string, unknown>;
 			if (configs[key]) {
