@@ -193,6 +193,40 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal(UserRole.Admin, result.role_user);
         }
 
+        [Fact]
+        public async Task CreateUser_ShouldThrowUnauthorizedAccessException_WhenSignUpIsDisabledAndCallerIsNotAdmin()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            _sessionService.Setup(s => s.GetClientRole()).Returns(UserRole.User);
+            var service = CreateService(context, new Dictionary<string, string?> { { "Auth:EnableSignUp", "false" } });
+
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.CreateUser(BuildCreateDto("new@test.com")));
+            Assert.Empty(context.Users);
+        }
+
+        [Fact]
+        public async Task CreateUser_ShouldCreateUser_WhenSignUpIsDisabledAndCallerIsAdmin()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context, new Dictionary<string, string?> { { "Auth:EnableSignUp", "false" } });
+
+            var result = await service.CreateUser(BuildCreateDto("new@test.com"));
+
+            Assert.Equal("new@test.com", result.email_user);
+        }
+
+        [Fact]
+        public async Task CreateUser_ShouldCreateUser_WhenSignUpIsEnabledAndCallerIsAnonymous()
+        {
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            _sessionService.Setup(s => s.GetClientRole()).Returns(UserRole.User);
+            var service = CreateService(context);
+
+            var result = await service.CreateUser(BuildCreateDto("new@test.com"));
+
+            Assert.Equal("new@test.com", result.email_user);
+        }
+
         // --- UpdateUser ---
 
         [Fact]

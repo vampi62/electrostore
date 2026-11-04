@@ -105,5 +105,51 @@ namespace ElectrostoreAPI.Tests.Services
                 Assert.Equal(ssoProviders[i].icon_url, result.sso_available_providers[i].icon_url);
             }
         }
+
+        private static ConfigService CreateService(Dictionary<string, string?> values) =>
+            new(new ConfigurationBuilder().AddInMemoryCollection(values).Build());
+
+        [Fact]
+        public async Task getAllConfig_shouldEnablePasswordLoginAndSignUp_ByDefault()
+        {
+            var result = await CreateService(new Dictionary<string, string?>()).getAllConfig();
+
+            Assert.True(result.password_login_enabled);
+            Assert.True(result.sign_up_enabled);
+        }
+
+        [Fact]
+        public async Task getAllConfig_shouldDisablePasswordLogin_WhenAnSsoProviderIsConfigured()
+        {
+            var result = await CreateService(new Dictionary<string, string?>
+            {
+                {"Auth:EnablePasswordLogin", "false"},
+                {"OAuth:Google:DisplayName", "Google"}
+            }).getAllConfig();
+
+            Assert.False(result.password_login_enabled);
+        }
+
+        [Fact]
+        public async Task getAllConfig_shouldKeepPasswordLoginEnabled_WhenNoSsoProviderIsConfigured()
+        {
+            var result = await CreateService(new Dictionary<string, string?>
+            {
+                {"Auth:EnablePasswordLogin", "false"}
+            }).getAllConfig();
+
+            Assert.True(result.password_login_enabled);
+        }
+
+        [Fact]
+        public async Task getAllConfig_shouldDisableSignUp_WhenConfigured()
+        {
+            var result = await CreateService(new Dictionary<string, string?>
+            {
+                {"Auth:EnableSignUp", "false"}
+            }).getAllConfig();
+
+            Assert.False(result.sign_up_enabled);
+        }
     }
 }

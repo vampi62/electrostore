@@ -669,6 +669,24 @@
                     <h2>OAuth Configuration</h2>
                     <div id="oauthProviders"></div>
                     <button type="button" class="btn-secondary" onclick="addOAuthProvider()">Add OAuth provider</button>
+
+                    <h3 style="margin: 1.5rem 0 1rem 0;">Login and sign up</h3>
+
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="enablePasswordLogin" name="enablePasswordLogin" checked>
+                            <strong>Enable password login</strong> - login, forgot and reset password with an email and a password
+                        </label>
+                        <small class="help-text">Uncheck to only allow the SSO login. Ignored (the password login stays enabled) when no OAuth provider is configured.</small>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="enableSignUp" name="enableSignUp" checked>
+                            <strong>Enable sign up</strong> - anyone can create an account from the login page
+                        </label>
+                        <small class="help-text">Uncheck to disable the public registration: only an admin can then create an account manually.</small>
+                    </div>
                 </section>
 
                 <div class="button-group">

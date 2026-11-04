@@ -70,6 +70,11 @@ public class UserService : IUserService
         {
             // if the user is not an admin, he can only create a user with the role "user"
             var User = _sessionService.GetClientRole();
+            // when the sign up is closed, only an authenticated admin can create an account (the anonymous caller has the role "user")
+            if (!_configuration.IsSignUpEnabled() && User < UserRole.Admin)
+            {
+                throw new UnauthorizedAccessException("Sign up is disabled, only an admin can create an account");
+            }
             if (User < UserRole.Admin && userDto.role_user > UserRole.User)
             {
                 throw new UnauthorizedAccessException("You are not allowed to create a user with this role");

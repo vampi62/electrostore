@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 
-import { useAuthStore } from "@/stores";
-import { publicPages, handleRouterError } from "./routes";
+import { useAuthStore, useConfigsStore } from "@/stores";
+import { publicPages, passwordPages, signUpPages, handleRouterError } from "./routes";
 
 // The global router only handles the public pages (login, register...) and the browser url.
 // Every authenticated page is displayed inside a tab, each tab owns its own router (see tabs.store.js),
@@ -25,6 +25,16 @@ router.onError(handleRouterError);
 router.beforeEach(async(to) => {
 	const authRequired = !publicPages.includes(to.path);
 	const auth = useAuthStore();
+
+	// the password pages and the sign up page can be disabled by the api config
+	if (passwordPages.includes(to.path) || signUpPages.includes(to.path)) {
+		const configs = useConfigsStore();
+		await configs.ensureConfig();
+		if ((passwordPages.includes(to.path) && !configs.isPasswordLoginEnabled)
+			|| (signUpPages.includes(to.path) && !configs.isSignUpEnabled)) {
+			return "/login";
+		}
+	}
 
 	if (authRequired && !auth.user) {
 		Reflect.set(auth, "returnUrl", to.fullPath);

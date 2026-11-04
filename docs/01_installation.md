@@ -163,6 +163,13 @@ For each provider, configure:
 - **Icon URL**: Provider logo URL
 - **Group Mapping**: Map OAuth groups to ElectroStore roles (User, Moderator, Admin)
 
+**Login and sign up** (`Auth` section of the API `appsettings.json`)
+
+- **Enable password login** (`Auth:EnablePasswordLogin`, default `true`): uncheck to only allow the SSO login. The login form and the forgot/reset password pages are then disabled, in the API and in the frontend. This option is ignored (the password login stays enabled) when no OAuth provider is configured.
+- **Enable sign up** (`Auth:EnableSignUp`, default `true`): uncheck to disable the public registration. `POST /api/user` then requires an authenticated admin, who creates accounts manually.
+
+Both states are returned by `GET /api/config` (`password_login_enabled`, `sign_up_enabled`) so the frontend can hide the matching buttons and pages.
+
 ## Generated Files
 
 The generator creates:

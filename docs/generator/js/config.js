@@ -219,6 +219,10 @@ function collectConfig(formData) {
         }
     }
     
+    // Login and sign up
+    config.enablePasswordLogin = document.getElementById('enablePasswordLogin').checked;
+    config.enableSignUp = document.getElementById('enableSignUp').checked;
+
     // OAuth Providers
     for (let i = 1; i <= oauthProvidersCount; i++) {
         const providerId = `oauth-${i}`;

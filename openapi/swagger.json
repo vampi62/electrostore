@@ -17161,6 +17161,12 @@
             "type": "string",
             "nullable": true
           },
+          "password_login_enabled": {
+            "type": "boolean"
+          },
+          "sign_up_enabled": {
+            "type": "boolean"
+          },
           "max_length_url": {
             "type": "integer",
             "format": "int32"

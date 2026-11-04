@@ -266,8 +266,17 @@ public class AuthService : IAuthService
         return userPassword.IsPasswordValid(password);
     }
 
+    private void EnsurePasswordLoginEnabled()
+    {
+        if (!_configuration.IsPasswordLoginEnabled())
+        {
+            throw new UnauthorizedAccessException("Password login is disabled");
+        }
+    }
+
     public async Task ForgotPassword(ForgotPasswordRequest request)
     {
+        EnsurePasswordLoginEnabled();
         //check if SMTP is Enabled
         if (!_configuration.IsSmtpEnabled())
         {
@@ -324,6 +333,7 @@ public class AuthService : IAuthService
 
     public async Task ResetPassword(ResetPasswordRequest request)
     {
+        EnsurePasswordLoginEnabled();
         //check if SMTP is Enabled
         if (!_configuration.IsSmtpEnabled())
         {
@@ -394,6 +404,7 @@ public class AuthService : IAuthService
 
     public async Task<LoginResponse> LoginWithPassword(LoginRequest request)
     {
+        EnsurePasswordLoginEnabled();
         // check if user exists
         var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.email) ?? throw new UnauthorizedAccessException("Invalid password"); // do not reveal if email exists
         // check if password is correct

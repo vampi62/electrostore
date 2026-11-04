@@ -68,7 +68,7 @@ function onSubmit(values: Record<string, unknown>, { setErrors }: { setErrors: (
 		<div class="mt-4">
 			<RouterLink to="/login" class="text-blue-500 hover:underline">{{ $t('common.VForgotPasswordLoginLink') }}
 			</RouterLink>
-			<RouterLink to="/register" class="ml-4 text-blue-500 hover:underline">
+			<RouterLink v-if="configsStore.isSignUpEnabled" to="/register" class="ml-4 text-blue-500 hover:underline">
 				{{ $t('common.VForgotPasswordRegisterLink') }}
 			</RouterLink>
 		</div>

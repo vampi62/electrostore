@@ -19,6 +19,8 @@ public class ConfigService : IConfigService
         {
             demo_mode = GetDemoMode(),
             app_language = GetAppLanguage(),
+            password_login_enabled = _configuration.IsPasswordLoginEnabled(),
+            sign_up_enabled = _configuration.IsSignUpEnabled(),
             // get the max length of the url
             max_length_url = FieldLengths.MaxUrlLength,
             // get the max length

@@ -10156,6 +10156,8 @@ export interface components {
         ReadConfig: {
             demo_mode?: boolean;
             app_language?: string | null;
+            password_login_enabled?: boolean;
+            sign_up_enabled?: boolean;
             /** Format: int32 */
             max_length_url?: number;
             /** Format: int32 */
