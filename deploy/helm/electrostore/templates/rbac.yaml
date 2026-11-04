@@ -1,0 +1,46 @@
+{{- if eq .Values.worker.userManagement "kubernetes" }}
+# Kubernetes equivalent of the docker.sock mount used with docker-compose: lets the WORKER run
+# `mosquitto_passwd` / `kill -HUP 1` inside the Mosquitto pod (and nothing else).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: worker
+  labels:
+    {{- include "es.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: worker-mqtt-exec
+  labels:
+    {{- include "es.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: worker-mqtt-exec
+  labels:
+    {{- include "es.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+subjects:
+  - kind: ServiceAccount
+    name: worker
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: worker-mqtt-exec
+{{- end }}

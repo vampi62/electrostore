@@ -1,0 +1,39 @@
+{{- if .Values.ingress.enabled }}
+{{- range $name, $spec := dict "front" (dict "host" (include "es.frontHost" .) "port" 80) "api" (dict "host" (include "es.apiHost" .) "port" 5000) }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "es.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+    {{- with $.Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- if $.Values.ingress.certManagerIssuer }}
+    cert-manager.io/cluster-issuer: {{ $.Values.ingress.certManagerIssuer | quote }}
+    {{- end }}
+spec:
+  ingressClassName: {{ $.Values.ingress.className }}
+  {{- if and $.Values.ingress.tls $.Values.ingress.certManagerIssuer }}
+  tls:
+    - hosts:
+        - {{ $spec.host | quote }}
+      secretName: {{ $name }}-tls
+  {{- end }}
+  rules:
+    - host: {{ $spec.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $name }}
+                port:
+                  number: {{ $spec.port }}
+{{- end }}
+{{- end }}

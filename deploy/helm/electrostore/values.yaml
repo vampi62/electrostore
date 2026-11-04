@@ -1,0 +1,149 @@
+# Default values of the ElectroStore chart.
+#
+# One release = one full, self-contained instance in its own namespace (one release per namespace:
+# the Services have fixed short names - api, front, mariadb, kafka, mqtt, garage...).
+# values-preview.yaml holds the overrides used for pull-request preview instances.
+
+instance:
+  # Short identifier of the instance, used for the default hostnames (e.g. "pr-12").
+  name: dev
+
+# Base domain of the instance hostnames. Front = <instance.name>.<baseDomain>, API = api-<instance.name>.<baseDomain>
+# (first-level subdomains, so a single wildcard certificate *.<baseDomain> covers every instance).
+baseDomain: example.com
+
+# Build identifier exposed by the API on /health ("revision"); CI waits for it to know the new build is live.
+revision: ""
+
+# Create the Namespace from the chart so that deleting the Argo CD Application also removes the
+# namespace and all its PVCs (otherwise PVCs stay behind). Used by the preview ApplicationSet.
+namespace:
+  create: false
+
+# StorageClass of the PVCs (empty = cluster default, "local-path" on k3s).
+storageClass: ""
+
+image:
+  registry: ghcr.io/vampi62/electrostore
+  tag: main
+  pullPolicy: IfNotPresent
+
+# ASPNETCORE_ENVIRONMENT of the .NET services.
+environment: Production
+
+ingress:
+  enabled: true
+  className: traefik
+  # Override the generated hostnames if needed.
+  frontHost: ""
+  apiHost: ""
+  # Serve over HTTPS (also used to build the public URLs given to the FRONT/API).
+  tls: true
+  # Optional: name of a cert-manager (Cluster)Issuer. When set, a certificate Secret is requested per Ingress.
+  certManagerIssuer: ""
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+
+secrets:
+  # Credentials are derived from this salt + the instance name (deterministic, so Argo CD sees no drift).
+  # They protect throwaway preview data only: do NOT reuse this chart as-is for a real deployment.
+  salt: electrostore-preview
+  # Hex key (64 chars) for the AES encryption of the MQTT passwords stored in the database.
+  # Leave empty to derive one. Must match the key used when the seed dataset was created.
+  aesKey: ""
+  mqttUser: electrostore_mqtt
+
+app:
+  language: en
+  jwt:
+    issuer: ElectroStoreAPI
+    audience: ElectroStoreClient
+    expireDays: 1
+
+mariadb:
+  image: mariadb:11.7.2
+  database: electrostore_db
+  user: electrostore_user
+  storage: 2Gi
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 768Mi }
+
+kafka:
+  image: apache/kafka:4.2.1
+  storage: 2Gi
+  heapOpts: "-Xms256m -Xmx512m"
+  topics:
+    - notification-requests
+    - cronjob-events
+    - mqtt-user-events
+  partitions: 3
+  resources:
+    requests: { cpu: 200m, memory: 512Mi }
+    limits: { memory: 1Gi }
+
+mqtt:
+  image: eclipse-mosquitto:2.0.20
+  resources:
+    requests: { cpu: 10m, memory: 16Mi }
+    limits: { memory: 64Mi }
+
+garage:
+  image: dxflrs/garage:v2.0.0
+  storage: 5Gi
+  # Capacity declared in the Garage layout (bytes). Only a quota hint for a single node.
+  capacity: 5000000000
+  bucket: electrostore-api
+  region: garage
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { memory: 256Mi }
+
+api:
+  image: { tag: "" }
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 1Gi }
+
+front:
+  image: { tag: "" }
+  resources:
+    requests: { cpu: 10m, memory: 32Mi }
+    limits: { memory: 128Mi }
+
+notif:
+  image: { tag: "" }
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 512Mi }
+
+cron:
+  image: { tag: "" }
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 256Mi }
+
+worker:
+  image: { tag: "" }
+  # How the WORKER manages MQTT users on the broker: "kubernetes" (pods/exec through the pod ServiceAccount),
+  # or "none" to disable it. See electrostoreWORKER MQTT:UserManagement.
+  userManagement: kubernetes
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 256Mi }
+
+# Initial dataset (MariaDB dump + S3 files) restored by a Job before the applications start.
+# The dataset is NOT stored in git: it is served by the in-cluster "seed store" (deploy/seed-store).
+seed:
+  enabled: true
+  # Dataset folder name inside the seed store.
+  dataset: default
+  # Base URL of the seed store (cluster-internal, read-only).
+  baseUrl: http://seed-store.electrostore-seed.svc.cluster.local
+  # When false, a missing dataset only logs a warning and the instance starts with an empty database
+  # (the API then creates its default admin account).
+  required: false
+  rcloneImage: rclone/rclone:1.68.2
+  scratchSize: 2Gi

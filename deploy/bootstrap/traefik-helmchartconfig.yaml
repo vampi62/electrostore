@@ -1,0 +1,31 @@
+# Customises the Traefik bundled with k3s (HelmChartConfig, applied by the k3s helm-controller):
+# a Let's Encrypt certificate resolver named "letsencrypt" (the name used by the chart/Argo CD ingresses)
+# and HTTP -> HTTPS redirection.
+#
+#   kubectl apply -f deploy/bootstrap/traefik-helmchartconfig.yaml
+#
+# HTTP-01 issues one certificate per hostname (2 per preview instance), which counts against the Let's Encrypt
+# limit of 50 certificates / registered domain / week. For many parallel previews prefer ONE wildcard certificate
+# (*.devstore.example.com) through a DNS-01 challenge of your DNS provider (certificatesresolvers.letsencrypt.acme.dnschallenge.provider=<provider>
+# + its API credentials as environment variables) - or cert-manager and ingress.certManagerIssuer in the chart.
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    ports:
+      web:
+        redirections:
+          entryPoint:
+            to: websecure
+            scheme: https
+            permanent: true
+    persistence:
+      enabled: true
+      path: /data
+    additionalArguments:
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@example.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"

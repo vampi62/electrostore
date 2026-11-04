@@ -1,0 +1,8 @@
+apiVersion: v2
+name: electrostore
+description: >-
+  ElectroStore (API, FRONT, NOTIF, CRON, WORKER) with its own MariaDB, Kafka, Mosquitto and Garage (S3).
+  Designed for ephemeral per-pull-request instances deployed by Argo CD on k3s + Traefik.
+type: application
+version: 0.1.0
+appVersion: "main"

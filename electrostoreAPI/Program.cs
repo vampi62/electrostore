@@ -305,7 +305,9 @@ public partial class Program
         app.MapGet("/health", (IConfiguration config) =>
             Results.Ok(new
             {
-                status = config.GetValue<bool>("DemoMode") ? "demo" : "healthy"
+                status = config.GetValue<bool>("DemoMode") ? "demo" : "healthy",
+                // Identifies the deployed build (e.g. the commit short sha); lets CI wait for a given version to be live.
+                revision = config["AppRevision"]
             })).AllowAnonymous();
     }
 

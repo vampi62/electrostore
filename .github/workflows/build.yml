@@ -20,6 +20,21 @@ on:
         required: false
         default: "false"
         type: string
+      tag_branch:
+        description: 'If "true" (default) and branch differs from version, also tag the image with the (sanitized) branch name.'
+        required: false
+        default: "true"
+        type: string
+      extra_tags:
+        description: 'Space separated additional tags applied to the multi-arch image (e.g. "pr-12").'
+        required: false
+        default: ""
+        type: string
+      revision:
+        description: 'Commit sha written in the org.opencontainers.image.revision label (defaults to github.sha).'
+        required: false
+        default: ""
+        type: string
 
   workflow_dispatch:
     inputs:
@@ -40,6 +55,21 @@ on:
         description: 'If "true", also tag the built image with "latest".'
         required: false
         default: "false"
+        type: string
+      tag_branch:
+        description: 'If "true" (default) and branch differs from version, also tag the image with the (sanitized) branch name.'
+        required: false
+        default: "true"
+        type: string
+      extra_tags:
+        description: 'Space separated additional tags applied to the multi-arch image (e.g. "pr-12").'
+        required: false
+        default: ""
+        type: string
+      revision:
+        description: 'Commit sha written in the org.opencontainers.image.revision label (defaults to github.sha).'
+        required: false
+        default: ""
         type: string
 
 permissions:
@@ -116,7 +146,7 @@ jobs:
         BUILDER: ${{ steps.uuid.outputs.uuid }}
         VERSION: ${{ inputs.version }}-arm64
         REPO: ${{ steps.repo.outputs.lowercase }}
-        REVISION: ${{ github.sha }}
+        REVISION: ${{ inputs.revision || github.sha }}
         CREATED: ${{ steps.meta.outputs.created }}
         BUILDX_NO_DEFAULT_ATTESTATIONS: 1
       uses: nick-fields/retry@v4
@@ -185,7 +215,7 @@ jobs:
         BUILDER: ${{ steps.uuid.outputs.uuid }}
         VERSION: ${{ inputs.version }}-amd64
         REPO: ${{ steps.repo.outputs.lowercase }}
-        REVISION: ${{ github.sha }}
+        REVISION: ${{ inputs.revision || github.sha }}
         CREATED: ${{ steps.meta.outputs.created }}
         BUILDX_NO_DEFAULT_ATTESTATIONS: 1
       uses: nick-fields/retry@v4
@@ -244,14 +274,21 @@ jobs:
     - name: Compute image tags
       id: image_tags
       shell: bash
+      env:
+        TAG_BRANCH: ${{ inputs.tag_branch }}
+        EXTRA_TAGS: ${{ inputs.extra_tags }}
       run: |
         IMAGE="ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}"
         VERSION="${{ inputs.version }}"
         BRANCH="${{ inputs.branch }}"
         TAGS="--tag ${IMAGE}:${VERSION}"
-        if [ "${BRANCH}" != "${VERSION}" ]; then
-          TAGS="${TAGS} --tag ${IMAGE}:${BRANCH}"
+        if [ "${TAG_BRANCH}" == "true" ] && [ "${BRANCH}" != "${VERSION}" ]; then
+          # Branch names may contain "/" which is not valid in an image tag.
+          TAGS="${TAGS} --tag ${IMAGE}:${BRANCH//\//-}"
         fi
+        for extra in ${EXTRA_TAGS}; do
+          TAGS="${TAGS} --tag ${IMAGE}:${extra}"
+        done
         # Release tag (vX.Y.Z): also roll the vX and vX.Y tags forward to this build.
         if [[ "${VERSION}" =~ ^v([0-9]+)\.([0-9]+)\.[0-9]+$ ]]; then
           TAGS="${TAGS} --tag ${IMAGE}:v${BASH_REMATCH[1]} --tag ${IMAGE}:v${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"

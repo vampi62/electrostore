@@ -1,7 +1,7 @@
 using Confluent.Kafka;
 using Docker.DotNet;
-using Docker.DotNet.Models;
 using ElectrostoreWORKER.Kafka.Messages;
+using ElectrostoreWORKER.Mqtt;
 using System.Text.Json;
 
 namespace ElectrostoreWORKER.Kafka.Consumers;
@@ -16,14 +16,14 @@ public class KafkaMqttUserConsumer : BackgroundService
     private readonly IConfiguration _configuration;
     private readonly ILogger<KafkaMqttUserConsumer> _logger;
 
-    private readonly IDockerClient _dockerClient;
-    private readonly string _mosquittoContainerName;
+    // null when MQTT user management is disabled (neither a Docker socket nor a Kubernetes cluster is available).
+    private readonly IMosquittoCommandRunner? _runner;
     private const string PasswdFilePath = "/mosquitto/config/mosquitto.passwd";
 
     public KafkaMqttUserConsumer(
         IConfiguration configuration,
         ILogger<KafkaMqttUserConsumer> logger)
-        : this(configuration, logger, new DockerClientConfiguration().CreateClient())
+        : this(configuration, logger, MosquittoCommandRunnerFactory.Create(configuration, logger))
     {
     }
 
@@ -33,11 +33,21 @@ public class KafkaMqttUserConsumer : BackgroundService
         IConfiguration configuration,
         ILogger<KafkaMqttUserConsumer> logger,
         IDockerClient dockerClient)
+        : this(configuration, logger, new DockerMosquittoCommandRunner(
+            dockerClient,
+            configuration.GetSection("MQTT:ContainerName").Value ?? "electrostore-mqtt",
+            logger))
+    {
+    }
+
+    internal KafkaMqttUserConsumer(
+        IConfiguration configuration,
+        ILogger<KafkaMqttUserConsumer> logger,
+        IMosquittoCommandRunner? runner)
     {
         _configuration = configuration;
         _logger        = logger;
-        _dockerClient  = dockerClient;
-        _mosquittoContainerName = configuration.GetSection("MQTT:ContainerName").Value ?? "electrostore-mqtt";
+        _runner        = runner;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -168,6 +178,11 @@ public class KafkaMqttUserConsumer : BackgroundService
 
     private async Task<bool> DispatchAsync(MqttUserMessage msg, CancellationToken ct)
     {
+        if (_runner is null)
+        {
+            _logger.LogWarning("MQTT user management is disabled: ignoring event for user {User}.", msg.user);
+            return true;
+        }
         if (msg.delete ?? false)
         {
             _logger.LogInformation("Deleting MQTT user: {User}", msg.user);
@@ -193,30 +208,8 @@ public class KafkaMqttUserConsumer : BackgroundService
         return true;
     }
 
-    private async Task<bool> ExecuteCommandInMosquittoAsync(string command, CancellationToken ct)
+    private Task<bool> ExecuteCommandInMosquittoAsync(string command, CancellationToken ct)
     {
-        var containers = await _dockerClient.Containers.ListContainersAsync(new ContainersListParameters { All = true }, ct);
-        var mosquittoContainer = containers.FirstOrDefault(c => c.Names.Any(n => n.TrimStart('/').Equals(_mosquittoContainerName, StringComparison.OrdinalIgnoreCase)));
-        if (mosquittoContainer is null)
-        {
-            _logger.LogError("Mosquitto container not found. Cannot execute command.");
-            return false;
-        }
-        try
-        {
-            var execCreateResponse = await _dockerClient.Exec.ExecCreateContainerAsync(mosquittoContainer.ID, new ContainerExecCreateParameters
-            {
-                AttachStdout = true,
-                AttachStderr = true,
-                Cmd = ["sh", "-c", command]
-            }, ct);
-            await _dockerClient.Exec.StartContainerExecAsync(execCreateResponse.ID, ct);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to execute command in Mosquitto container: {Message}", ex.Message);
-            return false;
-        }
+        return _runner!.ExecuteAsync(command, ct);
     }
 }

@@ -1,0 +1,82 @@
+# Seed store: a tiny read-only HTTP server holding the preview datasets (outside git).
+#
+#   /<dataset>/mariadb.sql.gz   MariaDB dump (no CREATE DATABASE / USE statements)
+#   /<dataset>/files.tar.gz     content of the S3 bucket
+#
+# It is only reachable inside the cluster (ClusterIP, no Ingress) at
+# http://seed-store.electrostore-seed.svc.cluster.local and has NO authentication: datasets must
+# contain test data only. Upload with deploy/scripts/seed-publish.sh, create them with deploy/scripts/seed-export.sh.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: seed-store-data
+  annotations:
+    # Keep the datasets even if the Application is deleted.
+    argocd.argoproj.io/sync-options: Delete=false
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seed-store
+  labels:
+    app.kubernetes.io/name: seed-store
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: seed-store
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: seed-store
+    spec:
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: nginx
+          image: nginxinc/nginx-unprivileged:1.27-alpine
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/nginx/html
+          readinessProbe:
+            tcpSocket: { port: http }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests: { cpu: 10m, memory: 16Mi }
+            limits: { memory: 64Mi }
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: seed-store-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: seed-store
+spec:
+  selector:
+    app.kubernetes.io/name: seed-store
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

@@ -1,0 +1,283 @@
+{{- /*
+Initialisation Jobs, run by Argo CD as Sync hooks between the infrastructure (wave 0) and the
+applications (wave 3). They are idempotent because hooks re-run on every sync:
+
+  wave 1  garage-init   - Garage layout, S3 access key and bucket (admin API v2)
+  wave 1  kafka-topics  - Kafka topics (same list as docs/generator setup scripts)
+  wave 2  seed          - restore the MariaDB dump + S3 files of the dataset (skipped if already restored)
+*/ -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: garage-init
+  labels:
+    {{- include "es.labels" . | nindent 4 }}
+    app.kubernetes.io/component: garage-init
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  backoffLimit: 4
+  template:
+    metadata:
+      labels:
+        {{- include "es.selector" (dict "root" . "component" "garage-init") | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: init
+          image: curlimages/curl:8.11.1
+          env:
+            - name: GARAGE_ADMIN_TOKEN
+              valueFrom: { secretKeyRef: { name: credentials, key: garage-admin-token } }
+            - name: S3_ACCESS_KEY
+              valueFrom: { secretKeyRef: { name: credentials, key: s3-access-key } }
+            - name: S3_SECRET_KEY
+              valueFrom: { secretKeyRef: { name: credentials, key: s3-secret-key } }
+            - name: BUCKET
+              value: {{ .Values.garage.bucket | quote }}
+            - name: CAPACITY
+              value: {{ .Values.garage.capacity | int64 | quote }}
+          command:
+            - sh
+            - -eu
+            - -c
+            - |
+              ADMIN="http://garage:3903"
+              api() { curl -fsS -H "Authorization: Bearer ${GARAGE_ADMIN_TOKEN}" -H 'Content-Type: application/json' "$@"; }
+              code() { curl -s -o /tmp/out.json -w '%{http_code}' -H "Authorization: Bearer ${GARAGE_ADMIN_TOKEN}" "$@"; }
+
+              echo "Waiting for the Garage admin API..."
+              until api "${ADMIN}/v2/GetClusterStatus" > /tmp/status.json 2>/dev/null; do sleep 3; done
+
+              LAYOUT_VERSION=$(grep -o '"layoutVersion" *: *[0-9]*' /tmp/status.json | grep -o '[0-9]*$')
+              if [ "${LAYOUT_VERSION}" = "0" ]; then
+                NODE_ID=$(grep -o '"id" *: *"[0-9a-f]*"' /tmp/status.json | head -n 1 | grep -o '[0-9a-f]\{16,\}')
+                echo "Assigning layout to node ${NODE_ID}"
+                api -X POST "${ADMIN}/v2/UpdateClusterLayout" \
+                  -d "{\"roles\":[{\"id\":\"${NODE_ID}\",\"zone\":\"dc1\",\"capacity\":${CAPACITY},\"tags\":[]}]}" > /dev/null
+                api -X POST "${ADMIN}/v2/ApplyClusterLayout" -d '{"version":1}' > /dev/null
+              else
+                echo "Layout already applied (version ${LAYOUT_VERSION})"
+              fi
+
+              # The first calls after applying the layout may fail while the node settles: retry.
+              retry() { n=0; until "$@"; do n=$((n + 1)); [ "$n" -ge 30 ] && return 1; sleep 3; done; }
+
+              ensure_key() {
+                if [ "$(code "${ADMIN}/v2/GetKeyInfo?id=${S3_ACCESS_KEY}")" = "200" ]; then return 0; fi
+                api -X POST "${ADMIN}/v2/ImportKey" \
+                  -d "{\"accessKeyId\":\"${S3_ACCESS_KEY}\",\"secretAccessKey\":\"${S3_SECRET_KEY}\",\"name\":\"electrostore-key\"}" > /dev/null
+              }
+              retry ensure_key
+              echo "S3 access key ready"
+
+              ensure_bucket() {
+                if [ "$(code "${ADMIN}/v2/GetBucketInfo?globalAlias=${BUCKET}")" != "200" ]; then
+                  api -X POST "${ADMIN}/v2/CreateBucket" -d "{\"globalAlias\":\"${BUCKET}\"}" > /tmp/out.json
+                fi
+              }
+              retry ensure_bucket
+              BUCKET_ID=$(grep -o '"id" *: *"[0-9a-f]*"' /tmp/out.json | head -n 1 | grep -o '[0-9a-f]\{16,\}')
+              [ -n "${BUCKET_ID}" ] || { echo "could not read the bucket id" >&2; exit 1; }
+
+              api -X POST "${ADMIN}/v2/AllowBucketKey" \
+                -d "{\"bucketId\":\"${BUCKET_ID}\",\"accessKeyId\":\"${S3_ACCESS_KEY}\",\"permissions\":{\"read\":true,\"write\":true,\"owner\":false}}" > /dev/null
+              echo "Bucket ${BUCKET} ready"
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kafka-topics
+  labels:
+    {{- include "es.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka-topics
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  backoffLimit: 4
+  template:
+    metadata:
+      labels:
+        {{- include "es.selector" (dict "root" . "component" "kafka-topics") | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: topics
+          image: {{ .Values.kafka.image | quote }}
+          env:
+            - name: KAFKA_HEAP_OPTS
+              value: "-Xms64m -Xmx192m"
+            - name: TOPICS
+              value: {{ join " " .Values.kafka.topics | quote }}
+            - name: PARTITIONS
+              value: {{ .Values.kafka.partitions | quote }}
+          command:
+            - sh
+            - -eu
+            - -c
+            - |
+              BIN=/opt/kafka/bin
+              until "${BIN}/kafka-broker-api-versions.sh" --bootstrap-server kafka:9092 > /dev/null 2>&1; do
+                echo "Waiting for Kafka..."; sleep 5
+              done
+              for topic in ${TOPICS}; do
+                "${BIN}/kafka-topics.sh" --create --if-not-exists --topic "${topic}" \
+                  --bootstrap-server kafka:9092 --replication-factor 1 --partitions "${PARTITIONS}"
+              done
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+{{- if .Values.seed.enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed
+  labels:
+    {{- include "es.labels" . | nindent 4 }}
+    app.kubernetes.io/component: seed
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        {{- include "es.selector" (dict "root" . "component" "seed") | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      initContainers:
+        # 1. Download the dataset from the in-cluster seed store (plain HTTP, no credentials).
+        - name: fetch-dataset
+          image: {{ .Values.seed.rcloneImage | quote }}
+          env:
+            - name: BASE_URL
+              value: {{ printf "%s/%s" (.Values.seed.baseUrl | trimSuffix "/") .Values.seed.dataset | quote }}
+            - name: REQUIRED
+              value: {{ .Values.seed.required | quote }}
+          command:
+            - sh
+            - -u
+            - -c
+            - |
+              missing=0
+              for f in mariadb.sql.gz files.tar.gz; do
+                if wget -q -T 30 -O "/work/${f}" "${BASE_URL}/${f}"; then
+                  echo "downloaded ${f}"
+                else
+                  echo "WARNING: ${BASE_URL}/${f} not available"
+                  rm -f "/work/${f}"
+                  missing=1
+                fi
+              done
+              if [ "${missing}" = "1" ] && [ "${REQUIRED}" = "true" ]; then exit 1; fi
+              exit 0
+          volumeMounts:
+            - { name: work, mountPath: /work }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+        # 2. Upload the files archive to Garage (S3) - the API only ever reads files through S3.
+        - name: seed-files
+          image: {{ .Values.seed.rcloneImage | quote }}
+          env:
+            - { name: RCLONE_CONFIG_GARAGE_TYPE, value: s3 }
+            - { name: RCLONE_CONFIG_GARAGE_PROVIDER, value: Other }
+            - { name: RCLONE_CONFIG_GARAGE_ENDPOINT, value: "http://garage:3900" }
+            - { name: RCLONE_CONFIG_GARAGE_REGION, value: {{ .Values.garage.region | quote }} }
+            - { name: RCLONE_CONFIG_GARAGE_FORCE_PATH_STYLE, value: "true" }
+            - { name: RCLONE_CONFIG_GARAGE_NO_CHECK_BUCKET, value: "true" }
+            - name: RCLONE_CONFIG_GARAGE_ACCESS_KEY_ID
+              valueFrom: { secretKeyRef: { name: credentials, key: s3-access-key } }
+            - name: RCLONE_CONFIG_GARAGE_SECRET_ACCESS_KEY
+              valueFrom: { secretKeyRef: { name: credentials, key: s3-secret-key } }
+            - name: BUCKET
+              value: {{ .Values.garage.bucket | quote }}
+          command:
+            - sh
+            - -eu
+            - -c
+            - |
+              if [ ! -f /work/files.tar.gz ]; then echo "no files archive: skipping"; exit 0; fi
+              if rclone cat "garage:${BUCKET}/.electrostore-seeded" > /dev/null 2>&1; then
+                echo "files already restored: skipping"; exit 0
+              fi
+              mkdir -p /work/files
+              tar -xzf /work/files.tar.gz -C /work/files
+              rclone copy /work/files "garage:${BUCKET}" --transfers 4 --checkers 4
+              echo seeded | rclone rcat "garage:${BUCKET}/.electrostore-seeded"
+              echo "files restored"
+          volumeMounts:
+            - { name: work, mountPath: /work }
+            - { name: rclone-config, mountPath: /config/rclone }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      containers:
+        # 3. Restore the database dump (only into an empty database; the API migrates it afterwards).
+        - name: seed-db
+          image: {{ .Values.mariadb.image | quote }}
+          env:
+            - name: MYSQL_PWD
+              valueFrom: { secretKeyRef: { name: credentials, key: mariadb-root-password } }
+            - name: DB
+              value: {{ .Values.mariadb.database | quote }}
+          command:
+            - sh
+            - -eu
+            - -c
+            - |
+              if [ ! -f /work/mariadb.sql.gz ]; then echo "no database dump: skipping"; exit 0; fi
+              until mariadb -h mariadb -uroot -e 'select 1' > /dev/null 2>&1; do echo "Waiting for MariaDB..."; sleep 3; done
+              tables=$(mariadb -h mariadb -uroot -N -B -e "select count(*) from information_schema.tables where table_schema='${DB}'")
+              if [ "${tables}" != "0" ]; then echo "database already initialised (${tables} tables): skipping"; exit 0; fi
+              zcat /work/mariadb.sql.gz | mariadb -h mariadb -uroot "${DB}"
+              echo "database restored"
+          volumeMounts:
+            - { name: work, mountPath: /work }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: work
+          emptyDir:
+            sizeLimit: {{ .Values.seed.scratchSize }}
+        - name: rclone-config
+          emptyDir: {}
+{{- end }}

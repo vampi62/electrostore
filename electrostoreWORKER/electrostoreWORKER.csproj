@@ -16,6 +16,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="KubernetesClient" Version="21.0.8" />
     <PackageReference Include="librdkafka.redist" Version="2.16.0" />
     <PackageReference Include="MQTTnet" Version="5.2.0.1603" />
     <PackageReference Include="VaultSharp" Version="1.17.5.1" />
@@ -29,6 +30,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="electrostoreWORKER.Tests" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
 
 </Project>

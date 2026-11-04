@@ -73,13 +73,14 @@ Detailed service diagram, protocols (REST/gRPC/Kafka/MQTT), and data model:
 >
 > **[Open the configurator](https://vampi62.github.io/electrostore/docs/generator/index.html)**
 
-The configurator supports three deployment types:
+The configurator supports four deployment types:
 
 | Type | Description |
 |---|---|
-| **Release** | Stable version recommended for production, uses Docker images published on GHCR |
-| **Latest** | Development version, uses Docker images published on GHCR from the `main` branch (features under development) |
-| **Dev** | Local development version, builds Docker images from source code on your machine |
+| **Release** (`vX.Y.Z`) | A specific stable version, uses the Docker images published on GHCR for that tag |
+| **Latest** | The last published release (`latest` tag on GHCR, moved on every `v*.*.*` release) - recommended for production |
+| **Main** | Development version, uses the Docker images published on GHCR from the `main` branch (`main` tag, features under development) |
+| **Local** | Local development version, builds Docker images from source code on your machine |
 
 It generates for you:
 - Complete `docker-compose.yml` with all services (can include optional services such as MariaDB, MQTT, Garage)

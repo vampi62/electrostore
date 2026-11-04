@@ -841,7 +841,8 @@ function generateWorkerAppsettings(config) {
             "Username": config.mqtt.user,
             "Password": config.useVault ? "{{vault:mqtt_password}}" : config.mqtt.password,
             "ContainerName": "electrostore-mqtt",
-            "ClientId": "electrostore-worker"
+            "ClientId": "electrostore-worker",
+            "UserManagement": "auto"
         };
     } else {
         const mqtt = config.mqttExternal;
@@ -851,7 +852,8 @@ function generateWorkerAppsettings(config) {
             "Username": mqtt.user,
             "Password": config.useVault ? "{{vault:mqtt_password}}" : mqtt.password,
             "ContainerName": mqtt.containerName || "mosquitto",
-            "ClientId": "electrostore-worker"
+            "ClientId": "electrostore-worker",
+            "UserManagement": "auto"
         };
     }
 
@@ -885,7 +887,7 @@ function generateEnvFile(config) {
     
     env += `# General configuration\n`;
     env += `PROJECT_NAME=electrostore\n`;
-    env += `ENVIRONMENT=${config.appVersion == 'latest' ? 'Development' : 'Production'}\n\n`;
+    env += `ENVIRONMENT=${config.appVersion == 'main' ? 'Development' : 'Production'}\n\n`;
     
     env += `# Docker image versions\n`;
     env += `API_VERSION=${config.appVersion}\n`;

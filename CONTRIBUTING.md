@@ -26,6 +26,12 @@ Each service also has its own PR test workflow (`.github/workflows/PRtests<SERVI
 
 There is no `CHANGELOG.md` to maintain by hand: release notes are auto-generated from commit history by `.github/workflows/release.yml` and published to [GitHub Releases](https://github.com/vampi62/electrostore/releases) — this is why commit messages should stay descriptive (see below).
 
+## Pull request preview instances
+
+For every pull request that touches a service, the `deploy`/`build.hcl`/integration files, CI builds the images (`ghcr.io/vampi62/electrostore/<service>:pr-<n>-<sha7>`), labels the PR `preview`, and Argo CD deploys a full instance (`https://pr-<n>.<domain>`) on the k3s server; the Playwright/k6 integration tests then run against it. Closing the PR removes the instance and deletes its images. Setup and details: [deploy/README.md](deploy/README.md).
+
+If you change a configuration parameter or add a service/dependency, update the Helm chart (`deploy/helm/electrostore`) as well as the generator below - it renders the same `appsettings.json` keys, topics and bucket for Kubernetes. Pull requests from forks and Dependabot don't get an instance (no registry write access).
+
 ## Keeping the generator in sync
 
 [docs/generator/](docs/generator/index.html) is the recommended way to deploy the project: it fills in a form and generates `docker-compose.yml`, `appsettings.json` per service, and the `setup.sh`/`setup.ps1` init scripts (which also create Kafka topics and the S3 bucket). It hardcodes a lot of what the services expect — topic names, the S3 bucket, env var names, container names.
@@ -34,10 +40,10 @@ If your change adds, renames, or removes any of the following, update `docs/gene
 
 | You changed... | Update in the generator |
 |---|---|
-| An `appsettings.json` key a service reads at startup | `js/generators.js` (the function building that service's `appsettings.json`) |
-| A Kafka topic name, or added a new topic | `js/generators.js`: the topic-creation block (`kafka-topics.sh --create --topic ...`, both `setup.sh` and `setup.ps1`) |
-| The S3 bucket name/default, or added a new bucket | `js/generators.js`: bucket creation step, and `js/config.js` if a new form field is needed |
-| A docker-compose service, port, volume, or env var | `js/generators.js` (compose/env generation) |
+| An `appsettings.json` key a service reads at startup | `js/generators.js` (the function building that service's `appsettings.json`), and `deploy/helm/electrostore/templates/configs.yaml` |
+| A Kafka topic name, or added a new topic | `js/generators.js`: the topic-creation block (`kafka-topics.sh --create --topic ...`, both `setup.sh` and `setup.ps1`), and `kafka.topics` in `deploy/helm/electrostore/values.yaml` |
+| The S3 bucket name/default, or added a new bucket | `js/generators.js`: bucket creation step, and `js/config.js` if a new form field is needed; `garage.bucket` in the Helm `values.yaml` and the `garage-init` Job |
+| A docker-compose service, port, volume, or env var | `js/generators.js` (compose/env generation), and `deploy/helm/electrostore/templates/` for the Kubernetes chart |
 | A new configurable option (form field) | `js/config.js` (`collectConfig`) + the corresponding input in `index.html` |
 
 If you add a Kafka topic, also update its message-shape table in [docs/reference/architecture.md](docs/reference/architecture.md#message-shapes) — that's what keeps the `NotificationMessage`-style drift (same field, different type in each service) from creeping back in.

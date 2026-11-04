@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  labels:
+    {{- include "es.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "es.selector" (dict "root" . "component" "api") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "es.labels" . | nindent 8 }}
+        {{- include "es.selector" (dict "root" . "component" "api") | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configs.yaml") . | sha256sum }}
+    spec:
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      securityContext:
+        {{- include "es.dotnetPodSecurity" . | nindent 8 }}
+      containers:
+        - name: api
+          image: {{ include "es.image" (dict "root" . "name" "api") | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            {{- include "es.dotnetEnv" . | nindent 12 }}
+            {{- with .Values.revision }}
+            - name: AppRevision
+              value: {{ . | quote }}
+            {{- end }}
+          ports:
+            - { name: http, containerPort: 5000 }
+            - { name: grpc, containerPort: 5001 }
+          volumeMounts:
+            - { name: config, mountPath: /app/config/appsettings.json, subPath: appsettings.json, readOnly: true }
+            - { name: tmp, mountPath: /tmp }
+          # Database migrations (and the seed-less first admin creation) run at startup.
+          startupProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 5
+            failureThreshold: 90
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6
+          securityContext:
+            {{- include "es.containerSecurity" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.api.resources | nindent 12 }}
+      volumes:
+        - name: config
+          secret:
+            secretName: config-api
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  labels:
+    {{- include "es.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  selector:
+    {{- include "es.selector" (dict "root" . "component" "api") | nindent 4 }}
+  ports:
+    - { name: http, port: 5000, targetPort: http }
+    - { name: grpc, port: 5001, targetPort: grpc }

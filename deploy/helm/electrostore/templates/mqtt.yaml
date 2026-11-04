@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mqtt
+  labels:
+    {{- include "es.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mqtt
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "es.selector" (dict "root" . "component" "mqtt") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "es.labels" . | nindent 8 }}
+        {{- include "es.selector" (dict "root" . "component" "mqtt") | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configs.yaml") . | sha256sum }}
+    spec:
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1883
+        runAsGroup: 1883
+        fsGroup: 1883
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        # /mosquitto/config must be writable: the WORKER adds/removes broker users in mosquitto.passwd
+        # (mosquitto_passwd through pods/exec), so the config and password file live on an emptyDir.
+        - name: init-config
+          image: {{ .Values.mqtt.image | quote }}
+          command:
+            - sh
+            - -ec
+            - |
+              cp /config-src/mosquitto.conf /mosquitto/config/mosquitto.conf
+              if [ ! -s /mosquitto/config/mosquitto.passwd ]; then
+                printf '%s:%s\n' "$MQTT_USER" "$MQTT_PASSWORD" > /mosquitto/config/mosquitto.passwd
+                mosquitto_passwd -U /mosquitto/config/mosquitto.passwd
+                chmod 0700 /mosquitto/config/mosquitto.passwd
+              fi
+          env:
+            - name: MQTT_USER
+              value: {{ .Values.secrets.mqttUser | quote }}
+            - name: MQTT_PASSWORD
+              valueFrom: { secretKeyRef: { name: credentials, key: mqtt-password } }
+          volumeMounts:
+            - { name: config-src, mountPath: /config-src, readOnly: true }
+            - { name: config, mountPath: /mosquitto/config }
+            - { name: tmp, mountPath: /tmp }
+          securityContext:
+            {{- include "es.containerSecurity" . | nindent 12 }}
+      containers:
+        - name: mosquitto
+          image: {{ .Values.mqtt.image | quote }}
+          ports:
+            - name: mqtt
+              containerPort: 1883
+          volumeMounts:
+            - { name: config, mountPath: /mosquitto/config }
+            - { name: data, mountPath: /mosquitto/data }
+            - { name: tmp, mountPath: /tmp }
+          startupProbe:
+            tcpSocket: { port: mqtt }
+            periodSeconds: 3
+            failureThreshold: 20
+          readinessProbe:
+            tcpSocket: { port: mqtt }
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: mqtt }
+            periodSeconds: 30
+          securityContext:
+            {{- include "es.containerSecurity" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.mqtt.resources | nindent 12 }}
+      volumes:
+        - name: config-src
+          configMap:
+            name: config-mqtt
+        - name: config
+          emptyDir: {}
+        - name: data
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mqtt
+  labels:
+    {{- include "es.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mqtt
+spec:
+  selector:
+    {{- include "es.selector" (dict "root" . "component" "mqtt") | nindent 4 }}
+  ports:
+    - name: mqtt
+      port: 1883
+      targetPort: mqtt

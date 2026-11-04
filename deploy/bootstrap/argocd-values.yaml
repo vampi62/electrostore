@@ -1,0 +1,22 @@
+# Values for the Argo CD Helm chart (argo/argo-cd), exposed through the k3s Traefik.
+#   helm repo add argo https://argoproj.github.io/argo-helm
+#   helm upgrade --install argocd argo/argo-cd -n argocd --create-namespace -f deploy/bootstrap/argocd-values.yaml
+# Adapt the hostname / TLS settings to your DNS and certificate setup.
+global:
+  domain: argocd.devstore.example.com
+
+configs:
+  params:
+    # TLS is terminated by Traefik; Argo CD itself speaks plain HTTP.
+    server.insecure: true
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/router.tls: "true"
+      traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+
+# The ApplicationSet controller (needed for the pull-request generator) is enabled by default.

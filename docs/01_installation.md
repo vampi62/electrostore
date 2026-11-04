@@ -40,7 +40,9 @@ Additional domains that should be allowed to access the API (one per line).
 
 Select the ElectroStore version to deploy:
 
-- **latest**: Development version using images from the `main` branch (features under development)
+- **latest**: The last published release (the `latest` image tag is moved on every `v*.*.*` release)
+- **vX.Y.Z**: A specific release
+- **main**: Development version using images from the `main` branch (features under development)
 - **local**: Build from source code on your machine (requires local repository clone)
 
 ### Reverse Proxy (Traefik)

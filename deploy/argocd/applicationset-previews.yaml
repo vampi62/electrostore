@@ -1,0 +1,76 @@
+# One ElectroStore instance per open pull request labelled "preview".
+#
+# - The "preview" label is added by CI (.github/workflows/pull-request.yml) once the images of the
+#   pull request have been built and pushed, so an instance is never created before its images exist.
+# - The chart and its values are taken from the pull request commit (targetRevision = head_sha),
+#   so chart changes are tested by the pull request that makes them.
+# - The images are tagged pr-<number>-<sha7> (immutable); a new commit changes the tag -> rolling update.
+# - Closing the pull request removes it from the generator: the Application is deleted (finalizer),
+#   which deletes the namespace and every PVC. CI deletes the GHCR images separately (pr-cleanup.yml).
+#
+# Edit before applying: owner/repo, image.registry, baseDomain (all three if you forked the repository).
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: electrostore-previews
+  namespace: argocd
+spec:
+  generators:
+    - pullRequest:
+        github:
+          owner: vampi62
+          repo: electrostore
+          # Secret in the argocd namespace holding a GitHub token (read access to pull requests),
+          # see deploy/README.md. Without a token the GitHub API rate limit (60/h) is hit quickly.
+          tokenRef:
+            secretName: github-token
+            key: token
+          labels:
+            - preview
+        # Polling interval. Add a GitHub webhook to the ApplicationSet controller for instant updates.
+        requeueAfterSeconds: 120
+  template:
+    metadata:
+      name: "electrostore-pr-{{number}}"
+      labels:
+        app.kubernetes.io/part-of: electrostore-previews
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: electrostore-previews
+      source:
+        repoURL: https://github.com/vampi62/electrostore.git
+        targetRevision: "{{head_sha}}"
+        path: deploy/helm/electrostore
+        helm:
+          releaseName: electrostore
+          valueFiles:
+            - values-preview.yaml
+          parameters:
+            - name: instance.name
+              value: "pr-{{number}}"
+            - name: image.registry
+              value: ghcr.io/vampi62/electrostore
+            - name: image.tag
+              value: "pr-{{number}}-{{head_short_sha_7}}"
+            - name: revision
+              value: "{{head_short_sha_7}}"
+            # Front = pr-<n>.<baseDomain>, API = api-pr-<n>.<baseDomain> (needs a wildcard DNS record
+            # and, ideally, a wildcard certificate for *.<baseDomain>).
+            - name: baseDomain
+              value: devstore.example.com
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "electrostore-pr-{{number}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - ServerSideApply=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 30s
+            factor: 2
+            maxDuration: 5m

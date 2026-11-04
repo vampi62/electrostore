@@ -1,0 +1,22 @@
+# Argo CD project for the per-pull-request preview instances.
+# Restricts what the preview Applications may deploy and where.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: electrostore-previews
+  namespace: argocd
+spec:
+  description: ElectroStore pull-request preview instances
+  sourceRepos:
+    - https://github.com/vampi62/electrostore.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: electrostore-pr-*
+  # The chart creates its own Namespace (namespace.create) so that deleting an Application
+  # also deletes the namespace and its PVCs. Nothing else cluster-scoped is allowed.
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"

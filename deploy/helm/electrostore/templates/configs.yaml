@@ -1,0 +1,130 @@
+{{- /*
+appsettings.json of each service (same keys as docs/generator/js/generators.js), rendered as JSON so
+values are always correctly escaped. They contain credentials, hence Secrets.
+Service hostnames are the short Service names of this chart (api, kafka, mariadb, mqtt, garage...).
+*/ -}}
+{{- $vault := dict "Enable" false -}}
+{{- $startup := dict "MaxRetryAttempts" 10 "RetryDelaySeconds" 5 -}}
+{{- $httpOnly := dict "Endpoints" (dict "Http" (dict "Url" "http://0.0.0.0:5000" "Protocols" "Http1")) -}}
+{{- $grpcUrl := "http://api:5001" -}}
+
+{{- $api := dict
+  "Logging" (dict "LogLevel" (dict "Default" "Information" "Microsoft.AspNetCore" "Warning"))
+  "Kestrel" (dict "Endpoints" (dict
+    "Grpc" (dict "Url" "http://0.0.0.0:5001" "Protocols" "Http2")
+    "Http" (dict "Url" "http://0.0.0.0:5000" "Protocols" "Http1")))
+  "AllowedHosts" "*"
+  "Startup" $startup
+  "ConnectionStrings" (dict "DefaultConnection" (printf "Server=mariadb;Port=3306;Database=%s;User=%s;Password=%s;" .Values.mariadb.database .Values.mariadb.user (include "es.mariadbPassword" .)))
+  "MQTT" (dict "Server" "mqtt" "Port" 1883 "Username" .Values.secrets.mqttUser "Password" (include "es.mqttPassword" .) "ContainerName" "mqtt" "ClientId" "electrostore-api")
+  "S3" (dict "Enable" true "Endpoint" "garage:3900" "AccessKey" (include "es.s3AccessKey" .) "SecretKey" (include "es.s3SecretKey" .) "BucketName" .Values.garage.bucket "Region" .Values.garage.region "Secure" false)
+  "Kafka" (dict "BootstrapServers" "kafka:9092")
+  "Llm" (dict "Enable" false "BaseUrl" "http://ollama:11434" "Model" "llama3.1:8b" "Endpoint" "api/chat" "ApiKey" "" "Temperature" 0.2 "Think" false "TimeoutSeconds" 300)
+  "Stt" (dict "Enable" false "BaseUrl" "http://whisper:9000" "Endpoint" "audio/transcriptions" "Model" "whisper-1" "ApiKey" "")
+  "Jwt" (dict "Key" (include "es.jwtKey" .) "Issuer" .Values.app.jwt.issuer "Audience" .Values.app.jwt.audience "ExpireDays" .Values.app.jwt.expireDays)
+  "Encryption" (dict "HexKey" (include "es.aesKey" .))
+  "Vault" $vault
+  "NotifServiceHealthUrl" "http://notif:5000/health"
+  "CRONServiceHealthUrl" "http://cron:5000/health"
+  "WORKERServiceHealthUrl" "http://worker:5000/health"
+  "DemoMode" false
+  "FrontendUrl" (include "es.frontUrl" .)
+  "AllowedOrigins" (list (include "es.frontUrl" .))
+  "AppLanguage" .Values.app.language
+-}}
+
+{{- $notif := dict
+  "Logging" (dict "LogLevel" (dict "Default" "Information" "Microsoft" "Warning"))
+  "Kestrel" $httpOnly
+  "Startup" $startup
+  "Kafka" (dict "BootstrapServers" "kafka:9092" "ConsumerGroupId" "notif-service")
+  "ApiServiceGrpcUrl" $grpcUrl
+  "Vault" $vault
+  "SMTP" (dict "Enable" false)
+  "VAPID" (dict "Enable" false "Subject" "mailto:admin@electrostore.local" "PublicKey" "" "PrivateKey" "")
+-}}
+
+{{- $cron := dict
+  "Logging" (dict "LogLevel" (dict "Default" "Information" "Microsoft.AspNetCore" "Warning" "Quartz" "Warning"))
+  "Kestrel" $httpOnly
+  "Startup" $startup
+  "Kafka" (dict "BootstrapServers" "kafka:9092" "CronConsumerGroupId" "cron-service-events")
+  "ApiServiceGrpcUrl" $grpcUrl
+  "CronRefreshIntervalMinutes" 60
+  "AppLanguage" .Values.app.language
+  "Vault" $vault
+-}}
+
+{{- $worker := dict
+  "Logging" (dict "LogLevel" (dict "Default" "Information" "Microsoft.AspNetCore" "Warning"))
+  "Kestrel" $httpOnly
+  "Startup" $startup
+  "Kafka" (dict "BootstrapServers" "kafka:9092" "ConsumerGroupId" "worker-service")
+  "MQTT" (dict "Host" "mqtt" "Port" "1883" "Username" .Values.secrets.mqttUser "Password" (include "es.mqttPassword" .) "ContainerName" "mqtt" "ClientId" "electrostore-worker" "UserManagement" .Values.worker.userManagement "KubernetesPodSelector" "app.kubernetes.io/component=mqtt")
+  "ApiServiceGrpcUrl" $grpcUrl
+  "Vault" $vault
+-}}
+
+{{- range $name, $settings := dict "api" $api "notif" $notif "cron" $cron "worker" $worker }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: config-{{ $name }}
+  labels:
+    {{- include "es.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+type: Opaque
+stringData:
+  appsettings.json: |
+    {{- $settings | toPrettyJson | nindent 4 }}
+{{- end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: config-garage
+  labels:
+    {{- include "es.labels" . | nindent 4 }}
+    app.kubernetes.io/component: garage
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+type: Opaque
+stringData:
+  garage.toml: |
+    metadata_dir = "/meta"
+    data_dir = "/data"
+    db_engine = "sqlite"
+    replication_factor = 1
+
+    rpc_bind_addr = "[::]:3901"
+    rpc_public_addr = "127.0.0.1:3901"
+    rpc_secret = "{{ include "es.garageRpcSecret" . }}"
+
+    [s3_api]
+    s3_region = "{{ .Values.garage.region }}"
+    api_bind_addr = "[::]:3900"
+    root_domain = ".s3.garage.localhost"
+
+    [admin]
+    api_bind_addr = "[::]:3903"
+    admin_token = "{{ include "es.garageAdminToken" . }}"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-mqtt
+  labels:
+    {{- include "es.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mqtt
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+data:
+  mosquitto.conf: |
+    listener 1883
+    persistence true
+    persistence_location /mosquitto/data/
+    password_file /mosquitto/config/mosquitto.passwd
+    allow_anonymous false

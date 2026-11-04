@@ -12,7 +12,7 @@
 | `electrostoreFRONT` | Vue.js | Web interface | REST calls to `electrostoreAPI` |
 | `electrostoreCRON` | ASP.NET Core | Executes scheduled jobs (stock threshold alerts, item movement reports) | Kafka producer/consumer, gRPC client to `electrostoreAPI` |
 | `electrostoreNOTIF` | ASP.NET Core | Sends web push and email notifications | Kafka consumer, gRPC client to `electrostoreAPI` |
-| `electrostoreWORKER` | ASP.NET Core | Backend execution service: tracks ESP MQTT connection status and manages MQTT broker (mosquitto) logins; reports results back to `electrostoreAPI` for persistence | MQTT client (status only), Kafka consumer, gRPC client to `electrostoreAPI`, Docker API |
+| `electrostoreWORKER` | ASP.NET Core | Backend execution service: tracks ESP MQTT connection status and manages MQTT broker (mosquitto) logins; reports results back to `electrostoreAPI` for persistence | MQTT client (status only), Kafka consumer, gRPC client to `electrostoreAPI`, Docker API or Kubernetes API (MQTT user management, see [MQTT](#mqtt)) |
 
 ## Data access boundary
 
@@ -52,6 +52,7 @@ Kafka topics are created with 3 partitions / replication factor 1 by the generat
 - **Commands to ESP modules always go through `electrostoreAPI`, never `electrostoreWORKER`.** E.g. `LedService` publishes directly to the broker on `electrostore/<store_mqtt_name>/leds` to drive the LedStorage LEDs.
 - **`electrostoreWORKER` only reads connection status.** `Mqtt/MqttClientService` subscribes to `electrostore/+/status` and, on each message, calls `electrostoreAPI` over gRPC (`StoresMqttGrpc.UpdateStoreMqttStatusAsync`) to persist `is_mqtt_connected_store`/`mqtt_last_seen_store` — it does not talk to ESP modules on their command topics.
 - ESP modules (`ledstore/`) are MQTT clients using credentials provisioned through the `mqtt-user-events` flow above.
+- **How `electrostoreWORKER` reaches the broker to apply `mqtt-user-events`** (`Mqtt/MosquittoCommandRunnerFactory.cs`, setting `MQTT:UserManagement`): it runs `mosquitto_passwd` / `kill -HUP 1` inside the Mosquitto container/pod. `auto` (default) picks the Docker API when a Docker socket is available (docker-compose mounts `/var/run/docker.sock`), else the Kubernetes API when running in a cluster (`pods/exec` through the pod ServiceAccount, selector `MQTT:KubernetesPodSelector`, default `app.kubernetes.io/component=mqtt` - RBAC in `deploy/helm/electrostore/templates/rbac.yaml`), else MQTT user management is **disabled**: the events are acknowledged and ignored, and broker users must be managed by hand. Force a mode with `docker`, `kubernetes` or `none`.
 
 ## Message shapes
 

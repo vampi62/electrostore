@@ -1,0 +1,84 @@
+{{- /* NOTIF, CRON and WORKER: identical .NET background services exposing /health on :5000. */ -}}
+{{- range $name := list "notif" "cron" "worker" }}
+{{- $svc := index $.Values $name }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "es.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "es.selector" (dict "root" $ "component" $name) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "es.labels" $ | nindent 8 }}
+        {{- include "es.selector" (dict "root" $ "component" $name) | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configs.yaml") $ | sha256sum }}
+    spec:
+      enableServiceLinks: false
+      {{- if and (eq $name "worker") (eq $.Values.worker.userManagement "kubernetes") }}
+      # Used to exec into the Mosquitto pod (MQTT user management), see rbac.yaml.
+      serviceAccountName: worker
+      automountServiceAccountToken: true
+      {{- else }}
+      automountServiceAccountToken: false
+      {{- end }}
+      securityContext:
+        {{- include "es.dotnetPodSecurity" $ | nindent 8 }}
+      containers:
+        - name: {{ $name }}
+          image: {{ include "es.image" (dict "root" $ "name" $name) | quote }}
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          env:
+            {{- include "es.dotnetEnv" $ | nindent 12 }}
+          ports:
+            - { name: http, containerPort: 5000 }
+          volumeMounts:
+            - { name: config, mountPath: /app/config/appsettings.json, subPath: appsettings.json, readOnly: true }
+            - { name: tmp, mountPath: /tmp }
+          startupProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6
+          securityContext:
+            {{- include "es.containerSecurity" $ | nindent 12 }}
+          resources:
+            {{- toYaml $svc.resources | nindent 12 }}
+      volumes:
+        - name: config
+          secret:
+            secretName: config-{{ $name }}
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "es.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}
+spec:
+  selector:
+    {{- include "es.selector" (dict "root" $ "component" $name) | nindent 4 }}
+  ports:
+    - { name: http, port: 5000, targetPort: http }
+{{- end }}

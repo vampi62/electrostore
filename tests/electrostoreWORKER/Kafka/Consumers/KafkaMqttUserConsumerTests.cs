@@ -4,6 +4,7 @@ using Docker.DotNet;
 using Docker.DotNet.Models;
 using ElectrostoreWORKER.Kafka.Consumers;
 using ElectrostoreWORKER.Kafka.Messages;
+using ElectrostoreWORKER.Mqtt;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -282,6 +283,41 @@ public class KafkaMqttUserConsumerTests
 
         // Assert
         kafkaConsumer.Verify(c => c.Commit(It.IsAny<ConsumeResult<string, string>>()), Times.Never);
+    }
+
+    // ---- DispatchAsync (runner abstraction) ----
+
+    [Fact]
+    public async Task DispatchAsync_ShouldAcknowledgeWithoutExecuting_WhenUserManagementIsDisabled()
+    {
+        // Arrange
+        var consumer = new KafkaMqttUserConsumer(new ConfigurationBuilder().Build(), _logger.Object, (IMosquittoCommandRunner?)null);
+        var message = new MqttUserMessage { user = "alice", password = "secret", delete = false };
+
+        // Act
+        var dispatched = await DispatchAsync(consumer, message);
+
+        // Assert
+        Assert.True(dispatched);
+        _containerOperations.Verify(c => c.ListContainersAsync(It.IsAny<ContainersListParameters>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DispatchAsync_ShouldUseInjectedRunner_ForAddAndReload()
+    {
+        // Arrange
+        var runner = new Mock<IMosquittoCommandRunner>();
+        runner.Setup(r => r.ExecuteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        var consumer = new KafkaMqttUserConsumer(new ConfigurationBuilder().Build(), _logger.Object, runner.Object);
+        var message = new MqttUserMessage { user = "alice", password = "secret", delete = false };
+
+        // Act
+        var dispatched = await DispatchAsync(consumer, message);
+
+        // Assert
+        Assert.True(dispatched);
+        runner.Verify(r => r.ExecuteAsync(It.Is<string>(c => c.StartsWith("mosquitto_passwd -b ") && c.Contains("alice")), It.IsAny<CancellationToken>()), Times.Once);
+        runner.Verify(r => r.ExecuteAsync("kill -HUP 1", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // ---- DispatchAsync (Docker interactions, via mocked IDockerClient) ----

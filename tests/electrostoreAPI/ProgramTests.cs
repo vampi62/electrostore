@@ -371,6 +371,43 @@ namespace ElectrostoreAPI.Tests
                 await app.StopAsync();
             }
         }
+
+        [Theory]
+        [InlineData("abc1234", "abc1234")]
+        [InlineData(null, null)]
+        public async Task HealthEndpoint_ShouldExposeConfiguredRevision(string? configuredRevision, string? expectedRevision)
+        {
+            var builder = WebApplication.CreateBuilder();
+            builder.WebHost.UseTestServer();
+            if (configuredRevision is not null)
+            {
+                builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["AppRevision"] = configuredRevision
+                });
+            }
+
+            var app = builder.Build();
+
+            InvokePrivateStatic("MapHealthEndpoint", app);
+
+            await app.StartAsync();
+            try
+            {
+                using var client = app.GetTestClient();
+                var response = await client.GetAsync("/health");
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+                var revision = json.GetProperty("revision");
+                Assert.Equal(expectedRevision, revision.ValueKind == JsonValueKind.Null ? null : revision.GetString());
+            }
+            finally
+            {
+                await app.StopAsync();
+            }
+        }
     }
 
     // Custom WebApplicationFactory for testing

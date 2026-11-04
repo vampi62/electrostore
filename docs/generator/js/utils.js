@@ -128,7 +128,7 @@ async function downloadAllAsZip() {
 
 // Check if version is legacy (1.0.0 to 1.2.x)
 function isLegacyVersion(version) {
-    if (!version || version === 'latest' || version === 'local') {
+    if (!version || version === 'latest' || version === 'main' || version === 'local') {
         return false;
     }
     

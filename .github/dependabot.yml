@@ -31,6 +31,7 @@ updates:
     directories:
       - /electrostoreFRONT
       - /tests/electrostoreFRONT
+      - /tests/integration
     schedule:
       interval: weekly
     commit-message:

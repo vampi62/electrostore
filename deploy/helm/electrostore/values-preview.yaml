@@ -1,0 +1,18 @@
+# Overrides for pull-request preview instances (used by deploy/argocd/applicationset-previews.yaml).
+# instance.name, image.tag, revision and baseDomain are injected by the ApplicationSet.
+
+namespace:
+  create: true
+
+ingress:
+  tls: true
+
+# Fixed TEST key (never use it for real data). A seed dataset must be created from an instance that
+# uses this same key, because the database stores MQTT passwords encrypted with it.
+secrets:
+  aesKey: "7c1f0a5e93b84d26a1e0c4f7b8d93a52e6f01c7a4b98d03e5a2c6f81b7d4e930"
+
+seed:
+  enabled: true
+  dataset: default
+  required: false

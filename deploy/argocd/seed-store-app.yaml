@@ -1,0 +1,22 @@
+# Long-lived Application deploying the seed store (deploy/seed-store) from the main branch.
+# Applied once by hand (see deploy/README.md); it is not part of the preview ApplicationSet.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: electrostore-seed-store
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/vampi62/electrostore.git
+    targetRevision: main
+    path: deploy/seed-store
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: electrostore-seed
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

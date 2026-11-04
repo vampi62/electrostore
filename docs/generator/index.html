@@ -60,10 +60,11 @@
                     <div class="form-group">
                         <label for="appVersion">ElectroStore Version</label>
                         <select id="appVersion" name="appVersion">
-                            <option value="latest">latest (development)</option>
+                            <option value="latest">latest (last published release)</option>
+                            <option value="main">main (development)</option>
                             <option value="local">local (build from source)</option>
                         </select>
-                        <small class="help-text">Select version for all services (API, Frontend, Cron, Worker, Notif)</small>
+                        <small class="help-text">Select version for all services (API, Frontend, Cron, Worker, Notif). <strong>latest</strong> is the last published release (<code>v*.*.*</code> tag), <strong>main</strong> is the development build of the <code>main</code> branch.</small>
                     </div>
                 </section>
 

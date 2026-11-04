@@ -324,7 +324,6 @@ function handleVersionChange() {
     const maxAudioSizeField = document.getElementById('section-maxAudioSizeMB');
     const allowedAudioMimeTypesField = document.getElementById('section-allowedAudioMimeTypes');
     const vapidSubSection = document.querySelector('.sub-section:has(#enableVapid)');
-    const iaBucketNameField = document.getElementById('s3IaBucket').closest('.form-group');
 
     if (parcelSection) {
         parcelSection.style.display = isLegacy ? 'none' : 'block';
@@ -358,10 +357,6 @@ function handleVersionChange() {
             document.getElementById('enableVapid').checked = false;
             toggleVapid();
         }
-    }
-
-    if (iaBucketNameField) {
-        iaBucketNameField.style.display = isLegacy ? 'none' : '';
     }
 }
 

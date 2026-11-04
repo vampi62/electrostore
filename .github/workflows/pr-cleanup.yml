@@ -1,0 +1,86 @@
+name: PR cleanup
+
+# Deletes the pull request images (ghcr.io/<repo>/<service>:pr-<n>*) from the container registry.
+#   - when a pull request is closed (merged or not): that pull request's images;
+#   - weekly / on demand: the images of every pull request that is no longer open (orphans, e.g. a
+#     closed PR whose images were still being pushed, or a cleanup run that failed).
+# The Argo CD side needs nothing: closing the PR removes it from the ApplicationSet, which deletes the
+# instance (and its namespace). The shared "buildcache-*" and release/main tags are never touched.
+#
+# If the deletion is refused (HTTP 403), either give this repository the "Admin" role on each package
+# (Package settings > Manage Actions access) or add a PAT with the delete:packages scope as the
+# secret PACKAGES_DELETE_TOKEN.
+
+on:
+  pull_request:
+    types: [closed]
+  schedule:
+    - cron: '17 3 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  pull-requests: read
+
+concurrency:
+  group: pr-cleanup-${{ github.event.pull_request.number || 'sweep' }}
+
+env:
+  SERVICES: api front notif cron worker
+
+jobs:
+  cleanup:
+    name: delete pull request images
+    # Forked pull requests never push images (and only get a read-only token).
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete images
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.PACKAGES_DELETE_TOKEN || github.token }}
+          OWNER_TYPE: ${{ github.event.repository.owner.type }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          owner="${GITHUB_REPOSITORY_OWNER}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          repo="${repo,,}"
+          if [ "${OWNER_TYPE}" == "Organization" ]; then base="/orgs/${owner}"; else base="/users/${owner}"; fi
+
+          # Sweep mode (no PR number): everything that belongs to a PR which is not open any more.
+          open_prs="$(gh pr list --repo "${GITHUB_REPOSITORY}" --state open --limit 1000 --json number --jq '[.[].number | tostring]')"
+          echo "Open pull requests: ${open_prs}"
+
+          failures=0
+          for service in ${SERVICES}; do
+            package="${repo}%2F${service}"
+            echo "::group::${repo}/${service}"
+            ids="$(gh api --paginate "${base}/packages/container/${package}/versions?per_page=100" \
+                     --jq '.[] | {id: .id, tags: (.metadata.container.tags // [])}' \
+                   | jq -r --argjson open "${open_prs}" --arg pr "${PR_NUMBER:-}" '
+                       . as $v
+                       | [ $v.tags[] | capture("^pr-(?<n>[0-9]+)(-|$)")? | .n ] as $prs
+                       | select(($prs | length) > 0)
+                       | select(
+                           if $pr != "" then ($prs | index($pr)) != null
+                           else ([ $prs[] | . as $n | (($open | index($n)) != null) ] | any | not)
+                           end)
+                       | .id' || true)"
+            if [ -z "${ids}" ]; then
+              echo "nothing to delete"
+            fi
+            for id in ${ids}; do
+              if gh api -X DELETE "${base}/packages/container/${package}/versions/${id}" >/dev/null 2>&1; then
+                echo "deleted version ${id}"
+              else
+                echo "::warning::could not delete ${service} version ${id} (permissions, or already removed)"
+                failures=$((failures + 1))
+              fi
+            done
+            echo "::endgroup::"
+          done
+          if [ "${failures}" -gt 0 ]; then
+            echo "::warning::${failures} version(s) could not be deleted. See the notes at the top of pr-cleanup.yml."
+          fi

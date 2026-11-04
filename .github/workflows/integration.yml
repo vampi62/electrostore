@@ -1,0 +1,173 @@
+name: integration
+
+# Integration tests against a deployed pull request instance (see deploy/README.md).
+# Argo CD deploys the instance from the images built by the pull request; this workflow only waits
+# for the expected build to answer, then runs the Playwright suite and a k6 smoke test (nothing mocked).
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Commit to take the tests from.'
+        required: true
+        type: string
+      pr_number:
+        description: 'Pull request number (instance name: pr-<number>).'
+        required: true
+        type: string
+      revision:
+        description: 'Short sha (7 chars) the instance must report on /health before the tests start.'
+        required: true
+        type: string
+      domain:
+        description: 'Base domain of the preview instances (front = pr-<n>.<domain>, API = api-pr-<n>.<domain>).'
+        required: true
+        type: string
+      scheme:
+        description: 'http or https.'
+        required: false
+        default: 'https'
+        type: string
+      wait_timeout_minutes:
+        description: 'How long to wait for the instance to be deployed.'
+        required: false
+        default: 20
+        type: number
+      run_k6:
+        description: 'Also run the k6 smoke test.'
+        required: false
+        default: true
+        type: boolean
+
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Commit to take the tests from.'
+        required: true
+        type: string
+      pr_number:
+        description: 'Pull request number (instance name: pr-<number>).'
+        required: true
+        type: string
+      revision:
+        description: 'Short sha (7 chars) the instance must report on /health before the tests start.'
+        required: true
+        type: string
+      domain:
+        description: 'Base domain of the preview instances.'
+        required: true
+        type: string
+      scheme:
+        description: 'http or https.'
+        required: false
+        default: 'https'
+        type: string
+      wait_timeout_minutes:
+        description: 'How long to wait for the instance to be deployed.'
+        required: false
+        default: 20
+        type: number
+      run_k6:
+        description: 'Also run the k6 smoke test.'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    name: integration - pr-${{ inputs.pr_number }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      FRONT_URL: ${{ inputs.scheme }}://pr-${{ inputs.pr_number }}.${{ inputs.domain }}
+      API_URL: ${{ inputs.scheme }}://api-pr-${{ inputs.pr_number }}.${{ inputs.domain }}
+      REVISION: ${{ inputs.revision }}
+      # Account of the seeded dataset; falls back to the one the API creates on an empty database.
+      ADMIN_EMAIL: ${{ vars.PREVIEW_ADMIN_EMAIL || 'admin@localhost.local' }}
+      ADMIN_PASSWORD: ${{ secrets.PREVIEW_ADMIN_PASSWORD || 'Admin@1234' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Wait for the instance to run this build
+        shell: bash
+        env:
+          TIMEOUT_MINUTES: ${{ inputs.wait_timeout_minutes }}
+        run: |
+          echo "Waiting for ${API_URL}/health to report revision ${REVISION} (max ${TIMEOUT_MINUTES} min)..."
+          deadline=$((SECONDS + TIMEOUT_MINUTES * 60))
+          while true; do
+            revision="$(curl -fsS --max-time 10 "${API_URL}/health" 2>/dev/null | jq -r '.revision // empty' 2>/dev/null || true)"
+            if [ "${revision}" == "${REVISION}" ] && curl -fsS --max-time 10 -o /dev/null "${FRONT_URL}/"; then
+              echo "Instance is up on revision ${revision}."
+              break
+            fi
+            if [ "${SECONDS}" -ge "${deadline}" ]; then
+              echo "::error::${API_URL} did not report revision ${REVISION} within ${TIMEOUT_MINUTES} minutes (last seen: '${revision}')."
+              exit 1
+            fi
+            sleep 15
+          done
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: tests/integration/package-lock.json
+
+      - name: Install dependencies
+        working-directory: tests/integration
+        run: npm ci --ignore-scripts
+
+      - name: Install Playwright browser
+        working-directory: tests/integration
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        working-directory: tests/integration
+        env:
+          E2E_BASE_URL: ${{ env.FRONT_URL }}
+          E2E_API_URL: ${{ env.API_URL }}
+          E2E_ADMIN_EMAIL: ${{ env.ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ env.ADMIN_PASSWORD }}
+          E2E_EXPECTED_REVISION: ${{ inputs.revision }}
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-pr-${{ inputs.pr_number }}
+          path: |
+            tests/integration/playwright-report
+            tests/integration/test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Set up k6
+        if: ${{ inputs.run_k6 }}
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run k6 smoke test
+        if: ${{ inputs.run_k6 }}
+        run: k6 run tests/integration/k6/smoke.js
+        env:
+          API_URL: ${{ env.API_URL }}
+          ADMIN_EMAIL: ${{ env.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ env.ADMIN_PASSWORD }}
+
+      - name: Summary
+        if: ${{ !cancelled() }}
+        run: |
+          {
+            echo "### Integration tests - pr-${{ inputs.pr_number }}"
+            echo "- Front: ${FRONT_URL}"
+            echo "- API: ${API_URL}"
+            echo "- Revision: \`${REVISION}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

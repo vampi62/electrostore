@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: front
+  labels:
+    {{- include "es.labels" . | nindent 4 }}
+    app.kubernetes.io/component: front
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "es.selector" (dict "root" . "component" "front") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "es.labels" . | nindent 8 }}
+        {{- include "es.selector" (dict "root" . "component" "front") | nindent 8 }}
+    spec:
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      securityContext:
+        # The image runs as uid 3216 (see electrostoreFRONT/Dockerfile) and listens on :80.
+        runAsNonRoot: true
+        runAsUser: 3216
+        runAsGroup: 3216
+        seccompProfile:
+          type: RuntimeDefault
+        sysctls:
+          - name: net.ipv4.ip_unprivileged_port_start
+            value: "0"
+      containers:
+        - name: front
+          image: {{ include "es.image" (dict "root" . "name" "front") | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            # Replaces the build-time placeholder in the JS bundle (entrypoint.sh); must end with /api.
+            - name: VUE_API_URL
+              value: {{ printf "%s/api" (include "es.apiUrl" .) | quote }}
+            - name: APP_DEMO_MODE
+              value: "false"
+          ports:
+            - { name: http, containerPort: 80 }
+          readinessProbe:
+            httpGet: { path: /, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /, port: http }
+            periodSeconds: 30
+          # entrypoint.sh rewrites the bundle in place at startup, so the root filesystem stays writable.
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            {{- toYaml .Values.front.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: front
+  labels:
+    {{- include "es.labels" . | nindent 4 }}
+    app.kubernetes.io/component: front
+spec:
+  selector:
+    {{- include "es.selector" (dict "root" . "component" "front") | nindent 4 }}
+  ports:
+    - { name: http, port: 80, targetPort: http }

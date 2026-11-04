@@ -3,6 +3,11 @@ name: Pull Request
 on:
   pull_request:
 
+# A new push cancels the previous run of the same pull request (quality, tests, image build, integration).
+concurrency:
+  group: pull-request-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -21,6 +26,7 @@ jobs:
       testFRONT: ${{ steps.filter.outputs.testFRONT }}
       testNOTIF: ${{ steps.filter.outputs.testNOTIF }}
       testWORKER: ${{ steps.filter.outputs.testWORKER }}
+      images: ${{ steps.filter.outputs.images }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -42,7 +48,19 @@ jobs:
             testFRONT: 'tests/electrostoreFRONT/**'
             testNOTIF: 'tests/electrostoreNOTIF/**'
             testWORKER: 'tests/electrostoreWORKER/**'
-  
+            images:
+              - 'electrostoreAPI/**'
+              - 'electrostoreCRON/**'
+              - 'electrostoreFRONT/**'
+              - 'electrostoreNOTIF/**'
+              - 'electrostoreWORKER/**'
+              - 'build.hcl'
+              - 'deploy/**'
+              - 'tests/integration/**'
+              - '.github/workflows/build.yml'
+              - '.github/workflows/integration.yml'
+              - '.github/workflows/pull-request.yml'
+
   quality:
     name: quality
     needs: detect-changes
@@ -91,4 +109,115 @@ jobs:
     permissions:
       packages: write
       contents: read
+    secrets: inherit
+
+  # ---------------------------------------------------------------------------
+  # Preview instance: build the images of the pull request, then let Argo CD deploy
+  # them (deploy/argocd/applicationset-previews.yaml) and run the integration tests.
+  # The images are deleted when the pull request is closed (pr-cleanup.yml).
+  # ---------------------------------------------------------------------------
+  prepare-preview:
+    name: prepare preview
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    outputs:
+      eligible: ${{ steps.prepare.outputs.eligible }}
+      version: ${{ steps.prepare.outputs.version }}
+      sha7: ${{ steps.prepare.outputs.sha7 }}
+    steps:
+      - name: Compute preview identifiers
+        id: prepare
+        shell: bash
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          SAME_REPO: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+          IS_DEPENDABOT: ${{ github.actor == 'dependabot[bot]' }}
+          IMAGES_CHANGED: ${{ needs.detect-changes.outputs.images }}
+        run: |
+          sha7="${HEAD_SHA::7}"
+          # Fork and Dependabot pull requests get a read-only token and no secrets: they can't push images.
+          if [ "${SAME_REPO}" == "true" ] && [ "${IS_DEPENDABOT}" != "true" ] && [ "${IMAGES_CHANGED}" == "true" ]; then
+            eligible=true
+          else
+            eligible=false
+          fi
+          {
+            echo "eligible=${eligible}"
+            echo "sha7=${sha7}"
+            echo "version=pr-${PR_NUMBER}-${sha7}"
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    name: build images
+    needs:
+      - prepare-preview
+      - tests
+    if: needs.prepare-preview.outputs.eligible == 'true'
+    uses: ./.github/workflows/build.yml
+    permissions:
+      packages: write
+      contents: read
+    with:
+      # Set the repository variable PR_BUILD_ARCH (e.g. "linux/arm64/v8") to build only the architecture of the cluster.
+      architecture: ${{ vars.PR_BUILD_ARCH || 'linux/amd64,linux/arm64/v8' }}
+      version: ${{ needs.prepare-preview.outputs.version }}
+      # Build the exact commit of the pull request (not the branch tip, not the merge commit).
+      branch: ${{ github.event.pull_request.head.sha }}
+      revision: ${{ github.event.pull_request.head.sha }}
+      latest: 'false'
+      tag_branch: 'false'
+      extra_tags: pr-${{ github.event.pull_request.number }}
+    secrets: inherit
+
+  # Opt the pull request into the preview ApplicationSet once its images exist.
+  preview:
+    name: preview instance
+    needs:
+      - prepare-preview
+      - build
+    if: needs.prepare-preview.outputs.eligible == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Label the pull request "preview"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh label create preview --repo "$GITHUB_REPOSITORY" --color 1d76db \
+            --description "Deploy a preview instance of this pull request with Argo CD" 2>/dev/null || true
+          gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --add-label preview
+      - name: Summary
+        env:
+          DOMAIN: ${{ vars.PREVIEW_DOMAIN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          VERSION: ${{ needs.prepare-preview.outputs.version }}
+        run: |
+          {
+            echo "### Preview instance"
+            echo "- Images: \`ghcr.io/${GITHUB_REPOSITORY,,}/<service>:${VERSION}\`"
+            if [ -n "${DOMAIN}" ]; then
+              echo "- Front: https://pr-${PR_NUMBER}.${DOMAIN}"
+              echo "- API: https://api-pr-${PR_NUMBER}.${DOMAIN}"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  integration:
+    name: integration tests
+    needs:
+      - prepare-preview
+      - preview
+    # Needs the repository variable PREVIEW_DOMAIN (base domain of the preview instances).
+    if: needs.prepare-preview.outputs.eligible == 'true' && vars.PREVIEW_DOMAIN != ''
+    uses: ./.github/workflows/integration.yml
+    permissions:
+      contents: read
+    with:
+      ref: ${{ github.event.pull_request.head.sha }}
+      pr_number: ${{ github.event.pull_request.number }}
+      revision: ${{ needs.prepare-preview.outputs.sha7 }}
+      domain: ${{ vars.PREVIEW_DOMAIN }}
     secrets: inherit

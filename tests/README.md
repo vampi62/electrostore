@@ -37,4 +37,21 @@ npm run test:unit
 npm run cypress:run # before start the serveur with `npm run dev` in the electrostoreFRONT directory
 ```
 
+## Integration tests (deployed instance, nothing mocked)
+
+`tests/integration/` holds the tests run by CI against the preview instance of each pull request (see [deploy/README.md](../deploy/README.md)):
+
+- **Playwright** (`tests/*.spec.ts`): API checks (health + build revision, login, protected endpoints, dependency status) and real-browser login flows against the real front and API.
+- **k6** (`k6/smoke.js`): light concurrency smoke test of the API with generous thresholds (error rate, p95 latency). It is a regression gate, not a capacity benchmark: a preview runs on a small shared cluster.
+
+```bash
+cd tests/integration
+npm ci && npx playwright install chromium
+E2E_BASE_URL=https://pr-12.devstore.example.com E2E_API_URL=https://api-pr-12.devstore.example.com npx playwright test
+k6 run -e API_URL=https://api-pr-12.devstore.example.com k6/smoke.js
+```
+
+Credentials default to the admin the API creates on an empty database (`admin@localhost.local` / `Admin@1234`); override with `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` when the instance was seeded with another account.
+The Cypress tests in `tests/electrostoreFRONT` stay mock-based (fast, no backend); the Playwright suite is the one that talks to a real stack.
+
 For functional/end-to-end scenarios (as opposed to the unit tests here), see [recette/](../recette/README.md).
