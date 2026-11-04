@@ -37,16 +37,16 @@ const filter = ref<FilterLabel[]>([
 	},
 ]);
 const tableauLabel = ref<TableauLabel[]>([
-	{ label: "items.Name", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
-	{ label: "items.FriendlyName", sortable: true, key: "friendly_name_item", valueKey: "friendly_name_item", type: "text" },
+	{ label: "items.Name", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text", cardRole: "title" },
+	{ label: "items.FriendlyName", sortable: true, key: "friendly_name_item", valueKey: "friendly_name_item", type: "text", cardRole: "subtitle" },
 	{ label: "items.Seuil", sortable: true, key: "threshold_min_item", valueKey: "threshold_min_item", type: "number" },
-	{ label: "items.Description", sortable: false, key: "description_item", valueKey: "description_item", type: "text" },
+	{ label: "items.Description", sortable: false, key: "description_item", valueKey: "description_item", type: "text", cardRole: "hidden" },
 
 	{ label: "items.Tags", sortable: false, key: "ItemsTags.Tag.name_tag", sourceKey: "id_item", type: "link-list", 
 		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_item", storeLinkKeyJoinRessource: "id_tag",
 		ressourcePrint: [{ from: "ressource", valueKey: "name_tag" }] },
 
-	{ label: "items.Img", sortable: false, key: "id_item", sourceKey: "id_item", type: "image", fieldUrl: "url_thumbnail_item",
+	{ label: "items.Img", sortable: false, key: "id_item", sourceKey: "id_item", type: "image", fieldUrl: "url_thumbnail_item", cardRole: "image",
 		storeRessourceId: 3 },
 
 	{ label: "items.Quantity", sortable: true, key: "SUM(ItemsBoxs.quantity_item_box)", valueKey: "quantity_item", type: "number" },
@@ -57,6 +57,7 @@ const tableauMeta = ref<TableauMeta>({
 	expand: ["item_boxs", "item_tags"],
 	saveState: true,
 	stateKey: "inventoryTableState",
+	cardView: true,
 });
 const filterReady = ref(false);
 useViewScroll(false);

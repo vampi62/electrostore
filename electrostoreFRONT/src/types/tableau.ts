@@ -38,6 +38,9 @@ export interface TableauLabel {
 	canEdit?: boolean;
 	fieldUrl?: string;
 	placeholder?: string;
+	// card view only: where the column is printed in the card, defaults to the first "image" column
+	// as image and the first "text" column as title, the other columns are printed as "label: value"
+	cardRole?: "image" | "title" | "subtitle" | "hidden";
 }
 
 export interface TableauMeta {
@@ -52,7 +55,11 @@ export interface TableauMeta {
 	saveState?: boolean;
 	stateKey?: string;
 	linkEditionKey?: string;
+	// show the table/card switch (read only cards, canEdit is ignored in card view)
+	cardView?: boolean;
 }
+
+export type TableauViewMode = "table" | "card";
 
 export interface TableauCss {
 	component?: string;

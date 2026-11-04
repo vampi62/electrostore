@@ -164,5 +164,8 @@
 	"VAppTabDraftRestored": "Vos modifications non enregistrées ont été restaurées.",
 	"VAppTabDraftLostFiles": "{count} fichier(s) sélectionné(s) n'ont pas pu être restaurés, veuillez les ajouter à nouveau.",
 	"VAllCaracters": "caractères",
-	"VALLMissingTranslateLink": "Traduction manquante"
+	"VALLMissingTranslateLink": "Traduction manquante",
+	"VTableauSortBy": "Trier par",
+	"VTableauViewTable": "Vue tableau",
+	"VTableauViewCard": "Vue cartes"
 }

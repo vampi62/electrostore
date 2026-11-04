@@ -164,5 +164,8 @@
 	"VAppTabDraftRestored": "Your unsaved changes have been restored.",
 	"VAppTabDraftLostFiles": "{count} selected file(s) could not be restored, please add them again.",
 	"VAllCaracters": "characters",
-	"VALLMissingTranslateLink": "Missing translation"
+	"VALLMissingTranslateLink": "Missing translation",
+	"VTableauSortBy": "Sort by",
+	"VTableauViewTable": "Table view",
+	"VTableauViewCard": "Card view"
 }

@@ -1,47 +1,80 @@
 <template>
-	<div class="overflow-x-auto overflow-y-auto" :class="mergedCss.component" @scroll="loadNext">
-		<table :class="mergedCss.table">
-			<thead :class="mergedCss.thead">
-				<tr>
-					<th v-for="(column,index) in labelsShown"
-						:key="index"
-						:class="[mergedCss.th, column.sortable ? 'cursor-pointer' : '']"
-						@click="column.sortable && changeSort(column.key)">
-						<div class="flex justify-between items-center">
-							<span class="flex-1">{{ $t(column.label) }}</span>
-							<template v-if="column.sortable">
-								<template v-if="sort.key === column.key">
-									<template v-if="sort.order === 'asc'">
-										<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
+	<div class="flex flex-col" :class="mergedCss.component">
+		<div v-if="meta.cardView" class="flex items-center gap-2 mb-2">
+			<div v-if="isCardView" class="flex items-center gap-1 text-sm">
+				<label for="tableau-sort" class="text-gray-600">{{ $t('common.VTableauSortBy') }}</label>
+				<select id="tableau-sort" :value="sort.key ?? ''" class="border rounded px-2 py-1" @change="onSortSelect">
+					<option value="" disabled>-</option>
+					<option v-for="column in sortableLabels" :key="column.key" :value="column.key">{{ $t(column.label) }}</option>
+				</select>
+				<button type="button" class="border rounded px-2 py-1 hover:bg-gray-100" :disabled="!sort.key" @click="sort.key && changeSort(sort.key)">
+					<font-awesome-icon :icon="sort.order === 'asc' ? 'fa-solid fa-sort-up' : 'fa-solid fa-sort-down'" />
+				</button>
+			</div>
+			<div class="ml-auto inline-flex rounded border overflow-hidden">
+				<button type="button" :title="$t('common.VTableauViewTable')" :aria-pressed="!isCardView"
+					class="px-2 py-1" :class="isCardView ? 'hover:bg-gray-100' : 'bg-blue-500 text-white'" @click="setViewMode('table')">
+					<font-awesome-icon icon="fa-solid fa-table-list" />
+				</button>
+				<button type="button" :title="$t('common.VTableauViewCard')" :aria-pressed="isCardView"
+					class="px-2 py-1 border-l" :class="isCardView ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'" @click="setViewMode('card')">
+					<font-awesome-icon icon="fa-solid fa-table-cells-large" />
+				</button>
+			</div>
+		</div>
+		<div ref="scroller" class="min-h-0 overflow-x-auto overflow-y-auto" @scroll="loadNext">
+			<div v-if="isCardView" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 p-1">
+				<TableauCard v-for="row in sortedData" :key="row[meta.key]" v-memo="[row, storeEdition[row[meta.key]], storeReady[row[meta.key]]]"
+					:labels="labelsShown" :row="row" :store-data="storeData" :store-edition="storeEdition[row[meta.key]]" :store-ready="storeReady[row[meta.key]]"
+					:status-class="rowStatusClass(row)" :clickable="Boolean(meta.path)"
+					@click="openRow(row)" />
+				<div v-if="loading" class="col-span-full text-center py-4">
+					<font-awesome-icon icon="fa-solid fa-spinner" spin class="text-gray-500" />
+				</div>
+			</div>
+			<table v-else :class="mergedCss.table">
+				<thead :class="mergedCss.thead">
+					<tr>
+						<th v-for="(column,index) in labelsShown"
+							:key="index"
+							:class="[mergedCss.th, column.sortable ? 'cursor-pointer' : '']"
+							@click="column.sortable && changeSort(column.key)">
+							<div class="flex justify-between items-center">
+								<span class="flex-1">{{ $t(column.label) }}</span>
+								<template v-if="column.sortable">
+									<template v-if="sort.key === column.key">
+										<template v-if="sort.order === 'asc'">
+											<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
+										</template>
+										<template v-else>
+											<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
+										</template>
 									</template>
 									<template v-else>
-										<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
+										<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
 									</template>
 								</template>
-								<template v-else>
-									<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-								</template>
-							</template>
-						</div>
-					</th>
-				</tr>
-			</thead>
-			<tbody :class="mergedCss.tbody">
-				<tr v-for="row in sortedData" :key="row[meta.key]" v-memo="[row, storeEdition[row[meta.key]], storeReady[row[meta.key]]]"
-					:class="trClass(row)"
-					@click="openRow(row)">
-					<TableauRow :labels="labelsShown" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" :store-edition="storeEdition[row[meta.key]]" :store-ready="storeReady[row[meta.key]]" />
-				</tr>
-				<slot name="append-row"></slot>
-				<template v-if="loading">
-					<tr>
-						<td :colspan="labelsShown.length" class="text-center py-4">
-							<font-awesome-icon icon="fa-solid fa-spinner" spin class="text-gray-500" />
-						</td>
+							</div>
+						</th>
 					</tr>
-				</template>
-			</tbody>
-		</table>
+				</thead>
+				<tbody :class="mergedCss.tbody">
+					<tr v-for="row in sortedData" :key="row[meta.key]" v-memo="[row, storeEdition[row[meta.key]], storeReady[row[meta.key]]]"
+						:class="trClass(row)"
+						@click="openRow(row)">
+						<TableauRow :labels="labelsShown" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" :store-edition="storeEdition[row[meta.key]]" :store-ready="storeReady[row[meta.key]]" />
+					</tr>
+					<slot name="append-row"></slot>
+					<template v-if="loading">
+						<tr>
+							<td :colspan="labelsShown.length" class="text-center py-4">
+								<font-awesome-icon icon="fa-solid fa-spinner" spin class="text-gray-500" />
+							</td>
+						</tr>
+					</template>
+				</tbody>
+			</table>
+		</div>
 	</div>
 </template>
 
@@ -52,7 +85,7 @@ import { useRouter } from "vue-router";
 import { debounce } from "lodash-es";
 import { matchFilter } from "@/helpers";
 import { useTabsStore } from "@/stores";
-import type { TableauLabel, TableauMeta, TableauCss, TableauRowData } from "@/types/tableau";
+import type { TableauLabel, TableauMeta, TableauCss, TableauRowData, TableauViewMode } from "@/types/tableau";
 import type { FetchFunction, FetchPage, ListFetchFunction } from "@/types/fetch";
 import type { FilterLabel } from "@/types/filter";
 import type { FormSchema } from "@/types/form";
@@ -164,8 +197,15 @@ export default {
 	},
 	components: {
 		TableauRow: defineAsyncComponent(() => import("@/components/TableauRow.vue")),
+		TableauCard: defineAsyncComponent(() => import("@/components/TableauCard.vue")),
 	},
 	computed: {
+		isCardView() {
+			return Boolean(this.meta?.cardView) && this.viewMode === "card";
+		},
+		sortableLabels() {
+			return this.labelsShown.filter((label) => label.sortable);
+		},
 		labelsShown() {
 			return this.labels.filter((label) => {
 				if (label.showCondition === undefined) {
@@ -254,10 +294,18 @@ export default {
 			hasMore: true,
 			isInitializing: true,
 			debouncedRefetchData: null as (() => void) | null,
+			viewMode: "table" as TableauViewMode,
 		};
 	},
 	created() {
 		this.debouncedRefetchData = debounce(this.refetchData, 500);
+		if (this.meta?.cardView) {
+			try {
+				this.viewMode = localStorage.getItem(this._viewModeKey()) === "card" ? "card" : "table";
+			} catch {
+				// localStorage unavailable, keep the table view
+			}
+		}
 	},
 	async mounted() {
 		if (this.meta?.sort) {
@@ -282,7 +330,7 @@ export default {
 		this.isInitializing = false;
 		if (this.meta?.saveState && savedScrollTop > 0) {
 			await this.$nextTick();
-			this.$el.scrollTop = savedScrollTop;
+			(this.$refs.scroller as HTMLElement).scrollTop = savedScrollTop;
 		}
 	},
 	watch: {
@@ -316,6 +364,23 @@ export default {
 		},
 		_sessionStateKey() {
 			return `tableau_state_${this.$route?.path}_${this.meta?.stateKey || this.meta?.path + this.meta?.key || "default"}`;
+		},
+		_viewModeKey() {
+			return `tableau_view_${this.meta?.stateKey || this.meta?.path + this.meta?.key || "default"}`;
+		},
+		setViewMode(mode: TableauViewMode) {
+			this.viewMode = mode;
+			try {
+				localStorage.setItem(this._viewModeKey(), mode);
+			} catch {
+				// localStorage unavailable, the choice is only kept for this page
+			}
+		},
+		onSortSelect(e: Event) {
+			const key = (e.target as HTMLSelectElement).value;
+			if (key) {
+				this.changeSort(key);
+			}
 		},
 		_saveState(updates: Record<string, unknown>) {
 			const current = JSON.parse(sessionStorage.getItem(this._sessionStateKey()) || "{}");
