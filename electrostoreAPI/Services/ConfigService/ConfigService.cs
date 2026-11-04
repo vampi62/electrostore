@@ -49,7 +49,9 @@ public class ConfigService : IConfigService
             allowed_document_extensions = GetAllowedDocumentExtensions(),
             max_size_audio_in_mb = FieldLengths.MaxAudioSizeMB,
             allowed_audio_mime_types = GetAllowedAudioMimeTypes(),
-            allowed_audio_extensions = GetAllowedAudioExtensions()
+            allowed_audio_extensions = GetAllowedAudioExtensions(),
+            max_count_ai_files = FieldLengths.MaxAiChatFileCount,
+            allowed_ai_text_extensions = [.. FieldLengths.AllowedAiTextExtensions]
         };
     }
 

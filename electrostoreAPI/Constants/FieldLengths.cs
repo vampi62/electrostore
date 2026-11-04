@@ -25,6 +25,8 @@ public static class FieldLengths
     public const int MaxCoordinateLength = 50;
     public const int MaxPostalCodeLength = 20;
     public const int MaxChatMessageLength = 4000;
+    public const int MaxAiChatFileCount = 5;
+    public static readonly ImmutableArray<string> AllowedAiTextExtensions = [".txt", ".md", ".csv", ".tsv", ".json", ".xml", ".yaml", ".yml", ".log", ".ini", ".toml"];
     public static int MaxDocumentSizeMB { get; private set; } = 5; // in MB
     public static int MaxImageSizeMB { get; private set; } = 5; // in MB
     public static int MaxAudioSizeMB { get; private set; } = 25; // in MB

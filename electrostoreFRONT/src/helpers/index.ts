@@ -7,3 +7,5 @@ export * from "./filterValue";
 export * from "./editionDraft";
 export * from "./resource";
 export * from "./tableau";
+export * from "./speechRecognition";
+export * from "./aiAttachments";

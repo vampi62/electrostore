@@ -33,6 +33,8 @@ public record ReadConfig
     public int max_size_audio_in_mb { get; init; }
     public string[]? allowed_audio_mime_types { get; init; }
     public string[]? allowed_audio_extensions { get; init; }
+    public int max_count_ai_files { get; init; }
+    public string[]? allowed_ai_text_extensions { get; init; }
 }
 
 public record SsoAvailableProvider

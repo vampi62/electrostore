@@ -57,6 +57,13 @@
                     "type": "string",
                     "format": "binary"
                   },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
                   "history": {
                     "type": "array",
                     "items": {
@@ -70,6 +77,9 @@
                   "style": "form"
                 },
                 "audio": {
+                  "style": "form"
+                },
+                "files": {
                   "style": "form"
                 },
                 "history": {
@@ -17282,6 +17292,17 @@
             "nullable": true
           },
           "allowed_audio_extensions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "max_count_ai_files": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "allowed_ai_text_extensions": {
             "type": "array",
             "items": {
               "type": "string"

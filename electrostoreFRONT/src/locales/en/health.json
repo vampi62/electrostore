@@ -17,6 +17,8 @@
 	"ServiceStt": "Speech recognition (STT)",
 	"ConfigAudioExt": "Allowed audio extensions (STT)",
 	"ConfigMaxAudioSize": "Max audio size",
+	"ConfigAiTextExt": "Text file extensions readable by the AI assistant",
+	"ConfigMaxAiFiles": "Max files per message (AI assistant)",
 	"ServiceNotif": "Notifications",
 	"ServiceNotifSmtp": "SMTP Notifications",
 	"ServiceNotifWebPush": "Web Push Notifications",

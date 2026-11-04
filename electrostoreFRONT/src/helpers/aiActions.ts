@@ -111,7 +111,7 @@ export function aiActionDetails(action: AiProposedAction): AiActionDetail[] {
 // the tab of a created element has left the "new" form for the saved record
 export function isAiActionSaved(action: AiProposedAction, tabPath: string): boolean {
 	const base = aiActionDefinition(action)?.createdIn;
-	return !!base && new RegExp(`^${base}/\\d+(\\?|$)`).test(tabPath);
+	return !!base && new RegExp(String.raw`^${base}/\d+(\?|$)`).test(tabPath);
 }
 
 // ids of the existing records an action refers to, to display their names

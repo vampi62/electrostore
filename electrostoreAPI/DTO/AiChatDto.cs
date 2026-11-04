@@ -25,6 +25,9 @@ public record CreateAiChatMessageDto
         ErrorMessage = "{0} has an invalid file type, allowed types are: [{1}], and extensions are: [{2}].")]
     public IFormFile? audio { get; init; }
 
+    [AiChatFiles]
+    public List<IFormFile>? files { get; init; }
+
     public List<AiChatHistoryMessageDto>? history { get; init; }
 }
 

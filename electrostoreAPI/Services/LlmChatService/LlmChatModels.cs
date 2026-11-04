@@ -16,6 +16,15 @@ public class LlmMessage
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? name { get; set; }
+
+    [JsonIgnore]
+    public List<LlmImage>? images { get; set; }
+}
+
+public class LlmImage
+{
+    public required string mime_type { get; set; }
+    public required string base64 { get; set; }
 }
 
 public class LlmToolCall
