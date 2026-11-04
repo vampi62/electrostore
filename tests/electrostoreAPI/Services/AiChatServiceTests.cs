@@ -119,6 +119,133 @@ namespace ElectrostoreAPI.Tests.Services
             await Assert.ThrowsAsync<InvalidOperationException>(() => service.SendMessage(dto));
         }
 
+        // --- SendMessage: attached files ---
+
+        private static IFormFile BuildFile(string fileName, string contentType, byte[] content)
+        {
+            var file = new Mock<IFormFile>();
+            file.Setup(f => f.FileName).Returns(fileName);
+            file.Setup(f => f.ContentType).Returns(contentType);
+            file.Setup(f => f.Length).Returns(content.Length);
+            file.Setup(f => f.OpenReadStream()).Returns(() => new MemoryStream(content));
+            return file.Object;
+        }
+
+        private List<LlmMessage> CaptureConversation()
+        {
+            var captured = new List<LlmMessage>();
+            _llmChatService.Setup(l => l.GetChatCompletionAsync(It.IsAny<List<LlmMessage>>(), It.IsAny<List<LlmToolDefinition>>(), It.IsAny<CancellationToken>()))
+                .Callback<List<LlmMessage>, List<LlmToolDefinition>?, CancellationToken>((messages, _, _) => captured.AddRange(messages))
+                .ReturnsAsync(new LlmChatResult { content = "ok" });
+            return captured;
+        }
+
+        [Fact]
+        public async Task SendMessage_ShouldWriteTextFileInUserMessage()
+        {
+            var captured = CaptureConversation();
+            var file = BuildFile("bom.csv", "application/vnd.ms-excel", Encoding.UTF8.GetBytes("ref;qty\nR1;10"));
+            var dto = new CreateAiChatMessageDto { content_ai_chat_message = "create these items", files = [file] };
+
+            await CreateService().SendMessage(dto);
+
+            var user = captured.Single(m => m.role == "user");
+            Assert.StartsWith("create these items", user.content);
+            Assert.Contains("<attached_file name=\"bom.csv\">", user.content);
+            Assert.Contains("ref;qty\nR1;10", user.content);
+            Assert.Null(user.images);
+        }
+
+        [Fact]
+        public async Task SendMessage_ShouldAttachImageAsBase64()
+        {
+            var captured = CaptureConversation();
+            var file = BuildFile("board.png", "image/png", [1, 2, 3]);
+            var dto = new CreateAiChatMessageDto { content_ai_chat_message = "what is it?", files = [file] };
+
+            await CreateService().SendMessage(dto);
+
+            var image = Assert.Single(captured.Single(m => m.role == "user").images!);
+            Assert.Equal("image/png", image.mime_type);
+            Assert.Equal(Convert.ToBase64String([1, 2, 3]), image.base64);
+        }
+
+        [Fact]
+        public async Task SendMessage_ShouldAskToReadTheFiles_WhenThereIsOnlyFiles()
+        {
+            var captured = CaptureConversation();
+            var dto = new CreateAiChatMessageDto { files = [BuildFile("note.txt", "text/plain", Encoding.UTF8.GetBytes("hello"))] };
+
+            await CreateService().SendMessage(dto);
+
+            Assert.StartsWith("Look at the attached file(s)", captured.Single(m => m.role == "user").content);
+        }
+
+        [Fact]
+        public async Task SendMessage_ShouldKeepTheTextOfAudio_WhenFilesAreAttached()
+        {
+            _sttService.Setup(s => s.IsEnabled).Returns(true);
+            _sttService.Setup(s => s.TranscribeAsync(It.IsAny<IFormFile>(), It.IsAny<CancellationToken>())).ReturnsAsync("transcribed text");
+            var captured = CaptureConversation();
+            var dto = new CreateAiChatMessageDto
+            {
+                audio = new Mock<IFormFile>().Object,
+                files = [BuildFile("note.txt", "text/plain", Encoding.UTF8.GetBytes("hello"))]
+            };
+
+            await CreateService().SendMessage(dto);
+
+            Assert.StartsWith("transcribed text", captured.Single(m => m.role == "user").content);
+        }
+
+        [Fact]
+        public async Task SendMessage_ShouldTruncateAHugeTextFile()
+        {
+            var captured = CaptureConversation();
+            var file = BuildFile("big.txt", "text/plain", Encoding.UTF8.GetBytes(new string('a', 60_000)));
+            var dto = new CreateAiChatMessageDto { content_ai_chat_message = "read", files = [file] };
+
+            await CreateService().SendMessage(dto);
+
+            var content = captured.Single(m => m.role == "user").content!;
+            Assert.Contains("[truncated]", content);
+            Assert.True(content.Length < 55_000);
+        }
+
+        [Fact]
+        public async Task SendMessage_ShouldThrowArgumentException_WhenTextFileIsBinary()
+        {
+            CaptureConversation();
+            var file = BuildFile("fake.txt", "text/plain", [0x50, 0x4B, 0x00, 0x04]);
+            var dto = new CreateAiChatMessageDto { content_ai_chat_message = "read", files = [file] };
+
+            await Assert.ThrowsAsync<ArgumentException>(() => CreateService().SendMessage(dto));
+        }
+
+        [Fact]
+        public async Task SendMessage_ShouldNotLetTheFileNameBreakThePrompt()
+        {
+            var captured = CaptureConversation();
+            var file = BuildFile("x\"><evil>.txt", "text/plain", Encoding.UTF8.GetBytes("hello"));
+            var dto = new CreateAiChatMessageDto { content_ai_chat_message = "read", files = [file] };
+
+            await CreateService().SendMessage(dto);
+
+            var content = captured.Single(m => m.role == "user").content!;
+            Assert.Contains("<attached_file name=\"xevil.txt\">", content);
+            Assert.DoesNotContain("<evil>", content);
+        }
+
+        [Fact]
+        public async Task SendMessage_ShouldThrowArgumentException_WhenFileTypeIsUnsupported()
+        {
+            CaptureConversation();
+            var file = BuildFile("program.exe", "application/octet-stream", [1, 2, 3]);
+            var dto = new CreateAiChatMessageDto { content_ai_chat_message = "read", files = [file] };
+
+            await Assert.ThrowsAsync<ArgumentException>(() => CreateService().SendMessage(dto));
+        }
+
         [Fact]
         public async Task SendMessage_ShouldExecuteToolsAndAccumulateProposedActions()
         {

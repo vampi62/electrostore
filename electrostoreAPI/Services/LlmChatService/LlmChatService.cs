@@ -189,7 +189,7 @@ public class LlmChatService : ILlmChatService
         var payload = new Dictionary<string, object?>
         {
             ["model"] = model,
-            ["messages"] = native ? messages.Select(ToNativeMessage).ToList() : messages,
+            ["messages"] = native ? messages.Select(ToNativeMessage).ToList() : messages.Select(ToOpenAiMessage).ToList(),
             ["stream"] = stream
         };
         if (tools is { Count: > 0 })
@@ -215,7 +215,11 @@ public class LlmChatService : ILlmChatService
         {
             payload["think"] = think;
         }
-        _logger.LogDebug("LLM chat completion request body: {Body}", JsonSerializer.Serialize(payload));
+        // the images are base64 encoded: the body is only built for the log when the log is read
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug("LLM chat completion request body: {Body}", JsonSerializer.Serialize(payload));
+        }
         request.Content = JsonContent.Create(payload);
         return request;
     }
@@ -241,7 +245,26 @@ public class LlmChatService : ILlmChatService
         {
             native["tool_name"] = message.name;
         }
+        if (message.images is { Count: > 0 })
+        {
+            native["images"] = message.images.Select(image => image.base64).ToList();
+        }
         return native;
+    }
+
+    private static object ToOpenAiMessage(LlmMessage message)
+    {
+        if (message.images is not { Count: > 0 })
+        {
+            return message;
+        }
+        var parts = new List<object> { new { type = "text", text = message.content ?? "" } };
+        parts.AddRange(message.images.Select(image => new
+        {
+            type = "image_url",
+            image_url = new { url = $"data:{image.mime_type};base64,{image.base64}" }
+        }));
+        return new Dictionary<string, object?> { ["role"] = message.role, ["content"] = parts };
     }
 
     private static JsonElement ParseArguments(string arguments)

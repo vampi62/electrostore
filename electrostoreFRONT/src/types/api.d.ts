@@ -29,6 +29,7 @@ export interface paths {
                         content_ai_chat_message?: string;
                         /** Format: binary */
                         audio?: string;
+                        files?: string[];
                         history?: components["schemas"]["AiChatHistoryMessageDto"][];
                     };
                 };
@@ -10206,6 +10207,9 @@ export interface components {
             max_size_audio_in_mb?: number;
             allowed_audio_mime_types?: string[] | null;
             allowed_audio_extensions?: string[] | null;
+            /** Format: int32 */
+            max_count_ai_files?: number;
+            allowed_ai_text_extensions?: string[] | null;
         };
         ReadCronJobDto: {
             /** Format: int32 */

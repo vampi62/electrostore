@@ -59,6 +59,8 @@ const configGroups = computed(() => [
 			{ key: "allowed_image_extensions", label: t("health.ConfigImgExt"), type: "list" },
 			{ key: "allowed_document_extensions", label: t("health.ConfigDocExt"), type: "list" },
 			{ key: "allowed_audio_extensions", label: t("health.ConfigAudioExt"), type: "list" },
+			{ key: "allowed_ai_text_extensions", label: t("health.ConfigAiTextExt"), type: "list" },
+			{ key: "max_count_ai_files", label: t("health.ConfigMaxAiFiles"), type: "value" },
 		],
 	},
 	{

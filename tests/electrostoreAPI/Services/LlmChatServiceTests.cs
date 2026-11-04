@@ -387,6 +387,57 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal(JsonValueKind.Object, arguments.ValueKind);
         }
 
+        // --- GetChatCompletionAsync: images ---
+
+        private static List<LlmMessage> BuildImageConversation() =>
+        [
+            new() { role = "user", content = "what is this?", images = [new LlmImage { mime_type = "image/png", base64 = "QUJD" }] }
+        ];
+
+        [Fact]
+        public async Task GetChatCompletionAsync_ShouldSendImagesAsContentParts_ForOpenAiEndpoint()
+        {
+            SetupResponse(HttpStatusCode.OK, """{"choices":[{"message":{"role":"assistant","content":"ok"}}]}""");
+            var service = CreateService(BuildConfiguration());
+
+            await service.GetChatCompletionAsync(BuildImageConversation());
+
+            using var body = JsonDocument.Parse(_lastRequestBody!);
+            var content = body.RootElement.GetProperty("messages")[0].GetProperty("content");
+            Assert.Equal("text", content[0].GetProperty("type").GetString());
+            Assert.Equal("what is this?", content[0].GetProperty("text").GetString());
+            Assert.Equal("image_url", content[1].GetProperty("type").GetString());
+            Assert.Equal("data:image/png;base64,QUJD", content[1].GetProperty("image_url").GetProperty("url").GetString());
+        }
+
+        [Fact]
+        public async Task GetChatCompletionAsync_ShouldSendImagesAsBase64List_ForNativeEndpoint()
+        {
+            SetupResponse(HttpStatusCode.OK, """{"message":{"role":"assistant","content":"ok"}}""");
+            var service = CreateService(BuildConfiguration(endpoint: NativeEndpoint));
+
+            await service.GetChatCompletionAsync(BuildImageConversation());
+
+            using var body = JsonDocument.Parse(_lastRequestBody!);
+            var message = body.RootElement.GetProperty("messages")[0];
+            Assert.Equal("what is this?", message.GetProperty("content").GetString());
+            Assert.Equal("QUJD", message.GetProperty("images")[0].GetString());
+        }
+
+        [Fact]
+        public async Task GetChatCompletionAsync_ShouldKeepContentAsString_WhenMessageHasNoImage()
+        {
+            SetupResponse(HttpStatusCode.OK, """{"choices":[{"message":{"role":"assistant","content":"ok"}}]}""");
+            var service = CreateService(BuildConfiguration());
+
+            await service.GetChatCompletionAsync(BuildMessages());
+
+            using var body = JsonDocument.Parse(_lastRequestBody!);
+            var message = body.RootElement.GetProperty("messages")[0];
+            Assert.Equal(JsonValueKind.String, message.GetProperty("content").ValueKind);
+            Assert.False(message.TryGetProperty("images", out _));
+        }
+
         // --- GetChatCompletionAsync: think and temperature ---
 
         [Fact]
