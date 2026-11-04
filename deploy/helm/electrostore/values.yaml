@@ -57,6 +57,11 @@ secrets:
 
 app:
   language: en
+  auth:
+    # false = SSO login only (ignored by the API when no OAuth provider is configured, which is the case here)
+    enablePasswordLogin: true
+    # false = only an admin can create an account (POST /api/user)
+    enableSignUp: true
   jwt:
     issuer: ElectroStoreAPI
     audience: ElectroStoreClient

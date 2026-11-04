@@ -31,6 +31,7 @@ Service hostnames are the short Service names of this chart (api, kafka, mariadb
   "FrontendUrl" (include "es.frontUrl" .)
   "AllowedOrigins" (list (include "es.frontUrl" .))
   "AppLanguage" .Values.app.language
+  "Auth" (dict "EnablePasswordLogin" .Values.app.auth.enablePasswordLogin "EnableSignUp" .Values.app.auth.enableSignUp)
 -}}
 
 {{- $notif := dict
