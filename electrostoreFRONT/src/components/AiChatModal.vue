@@ -184,7 +184,7 @@
 <script lang="ts">
 import {
 	fetchWrapper, aiActionDefinition, aiActionDetails, aiActionPath, aiActionRefs, isAiActionSaved,
-	checkAiFile, formatFileSize, getSpeechRecognition, localSpeechStatus, installLocalSpeech, recognitionLang, transcriptOf, joinSpeechText,
+	checkAiFile, formatFileSize, getSpeechRecognition, hasAudioInput, micErrorKey, localSpeechStatus, installLocalSpeech, recognitionLang, transcriptOf, joinSpeechText,
 } from "@/helpers";
 import type { AiProposedAction, AiRefKind, AiFileLimits, SpeechRecognitionLike } from "@/helpers";
 import { i18n } from "@/plugins";
@@ -209,14 +209,11 @@ const statusKeys: Record<RowStatus, string> = {
 	error: "common.VAiStatusError",
 };
 
-// why the speech recognition of the browser cannot be used, and what is proposed to the user instead
 type SttReason = "unsupported" | "error" | "language";
 
 interface SttProposal {
 	reason: SttReason;
-	// the language pack of the browser can be downloaded
 	canInstall: boolean;
-	// the stt of the server is active
 	canApi: boolean;
 }
 
@@ -226,14 +223,11 @@ const sttReasonKeys: Record<SttReason, string> = {
 	language: "common.VAiSttReasonLanguage",
 };
 
-// the api limits the size of a message
 const MAX_HISTORY_MESSAGE = 4000;
 const MAX_HISTORY_MESSAGES = 10;
-// appended to a rework request: the proposals not applied are replaced by the new ones
 const REWORK_INSTRUCTION = "\n\n(Rework request: the proposed actions that are not applied are discarded and replaced by your new proposals, so propose again every action that is still needed. Do not propose again the actions already applied.)";
 
 const asRecord = (payload: unknown) => (payload && typeof payload === "object" ? payload as Record<string, unknown> : {});
-// optional fields are left out: a FormData would send "undefined"
 const optional = (value: unknown) => (value === undefined || value === null || value === "" ? undefined : String(value));
 
 export default {
@@ -706,6 +700,10 @@ export default {
 			}
 			this.micError = "";
 			this.sttProposal = null;
+			if (!await hasAudioInput()) {
+				this.micError = this.$t(micErrorKey("NotFoundError"));
+				return;
+			}
 			if (this.preferApiStt && this.apiRecordAvailable) {
 				await this.startRecording();
 			} else if (getSpeechRecognition() && !this.browserSttBroken) {
@@ -739,9 +737,9 @@ export default {
 			try {
 				recognition.start();
 				this.listening = true;
-			} catch {
+			} catch (error) {
 				this.finishListening();
-				this.micError = this.$t("common.VAiMicDenied");
+				this.micError = this.$t(micErrorKey(error instanceof Error ? error.name : ""));
 			}
 		},
 		stopListening() {
@@ -754,7 +752,7 @@ export default {
 				this.speechWanted = false;
 			} else if (error === "not-allowed" || error === "audio-capture") {
 				this.speechWanted = false;
-				this.micError = this.$t(error === "not-allowed" ? "common.VAiMicDenied" : "common.VAiMicMissing");
+				this.micError = this.$t(micErrorKey(error));
 			} else {
 				// the service of the browser is not reachable, or does not know the language
 				this.speechWanted = false;
@@ -818,7 +816,6 @@ export default {
 			this.sttProposal = null;
 			await this.startRecording();
 		},
-		// the voice is recorded and sent to the stt of the server with the message
 		async startRecording() {
 			try {
 				const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -842,8 +839,8 @@ export default {
 				this.recorder = recorder;
 				recorder.start();
 				this.recording = true;
-			} catch {
-				this.micError = this.$t("common.VAiMicDenied");
+			} catch (error) {
+				this.micError = this.$t(micErrorKey(error instanceof Error ? error.name : ""));
 			}
 		},
 		setAudio(blob: Blob, name = "") {
@@ -863,7 +860,6 @@ export default {
 				URL.revokeObjectURL(this.audioUrl);
 			}
 		},
-		// close the modal while recording: release the microphone and drop the partial recording
 		stopStream() {
 			if (this.speech && this.listening) {
 				this.speechWanted = false;
@@ -874,7 +870,6 @@ export default {
 				this.recorder.stop();
 			}
 		},
-		// MediaRecorder cannot produce mp3, it gives webm/ogg/mp4 which are accepted by the api
 		audioExtension(mimeType: string): string {
 			const base = mimeType.split(";")[0];
 			const map: Record<string, string> = {

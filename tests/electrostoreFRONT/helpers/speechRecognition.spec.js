@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { getSpeechRecognition, localSpeechStatus, installLocalSpeech, recognitionLang, transcriptOf, joinSpeechText } from '@/helpers/speechRecognition'
+import { getSpeechRecognition, hasAudioInput, micErrorKey, localSpeechStatus, installLocalSpeech, recognitionLang, transcriptOf, joinSpeechText } from '@/helpers/speechRecognition'
 
 const result = (transcript, isFinal) => Object.assign([{ transcript }], { isFinal })
 
@@ -97,5 +97,46 @@ describe('joinSpeechText', () => {
 
   it('uses the spoken words alone when nothing is typed', () => {
     expect(joinSpeechText('', 'hello')).toBe('hello')
+  })
+})
+
+describe('micErrorKey', () => {
+  it('tells a missing microphone from a refused access', () => {
+    expect(micErrorKey('NotFoundError')).toBe('common.VAiMicMissing')
+    expect(micErrorKey('audio-capture')).toBe('common.VAiMicMissing')
+    expect(micErrorKey('NotAllowedError')).toBe('common.VAiMicDenied')
+    expect(micErrorKey('not-allowed')).toBe('common.VAiMicDenied')
+  })
+
+  it('tells a busy microphone and any other failure', () => {
+    expect(micErrorKey('NotReadableError')).toBe('common.VAiMicBusy')
+    expect(micErrorKey('InvalidStateError')).toBe('common.VAiMicError')
+    expect(micErrorKey('')).toBe('common.VAiMicError')
+  })
+})
+
+describe('hasAudioInput', () => {
+  const setDevices = (value) => Object.defineProperty(navigator, 'mediaDevices', { value, configurable: true })
+
+  afterEach(() => setDevices(undefined))
+
+  it('is true when the browser cannot list the devices', async () => {
+    setDevices(undefined)
+    expect(await hasAudioInput()).toBe(true)
+  })
+
+  it('is false without any audio input', async () => {
+    setDevices({ enumerateDevices: async () => [{ kind: 'videoinput' }, { kind: 'audiooutput' }] })
+    expect(await hasAudioInput()).toBe(false)
+  })
+
+  it('is true with an audio input', async () => {
+    setDevices({ enumerateDevices: async () => [{ kind: 'audioinput' }] })
+    expect(await hasAudioInput()).toBe(true)
+  })
+
+  it('is true when the listing fails', async () => {
+    setDevices({ enumerateDevices: async () => { throw new Error('boom') } })
+    expect(await hasAudioInput()).toBe(true)
   })
 })

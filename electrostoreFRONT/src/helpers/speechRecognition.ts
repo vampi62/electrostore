@@ -39,7 +39,6 @@ export interface SpeechRecognitionStatic {
 	install?: (options: { langs: string[]; processLocally: boolean }) => Promise<boolean>;
 }
 
-// "unknown": the browser cannot tell (no on-device recognition API)
 export type LocalSpeechStatus = "available" | "downloadable" | "downloading" | "unavailable" | "unknown";
 
 export function getSpeechRecognition(): SpeechRecognitionStatic | null {
@@ -50,7 +49,6 @@ export function getSpeechRecognition(): SpeechRecognitionStatic | null {
 	return scope.SpeechRecognition ?? scope.webkitSpeechRecognition ?? null;
 }
 
-// Whether the on-device recognition of a language is ready, can be downloaded or is not offered by the browser
 export async function localSpeechStatus(lang: string, recognition: SpeechRecognitionStatic | null = getSpeechRecognition()): Promise<LocalSpeechStatus> {
 	if (!recognition || typeof recognition.available !== "function") {
 		return "unknown";
@@ -63,7 +61,6 @@ export async function localSpeechStatus(lang: string, recognition: SpeechRecogni
 	}
 }
 
-// Download the language pack of the on-device recognition
 export async function installLocalSpeech(lang: string, recognition: SpeechRecognitionStatic | null = getSpeechRecognition()): Promise<boolean> {
 	if (!recognition || typeof recognition.install !== "function") {
 		return false;
@@ -75,22 +72,51 @@ export async function installLocalSpeech(lang: string, recognition: SpeechRecogn
 	}
 }
 
-// BCP 47 tag asked to the recognition: the region of the browser when it speaks the language of the application
+export async function hasAudioInput(): Promise<boolean> {
+	if (typeof navigator === "undefined" || typeof navigator.mediaDevices?.enumerateDevices !== "function") {
+		return true;
+	}
+	try {
+		const devices = await navigator.mediaDevices.enumerateDevices();
+		return devices.some((device) => device.kind === "audioinput");
+	} catch {
+		return true;
+	}
+}
+
+export function micErrorKey(error: string): string {
+	switch (error) {
+	case "NotFoundError":
+	case "OverconstrainedError":
+	case "DevicesNotFoundError":
+	case "audio-capture":
+		return "common.VAiMicMissing";
+	case "NotReadableError":
+	case "TrackStartError":
+		return "common.VAiMicBusy";
+	case "NotAllowedError":
+	case "SecurityError":
+	case "PermissionDeniedError":
+	case "not-allowed":
+		return "common.VAiMicDenied";
+	default:
+		return "common.VAiMicError";
+	}
+}
+
 export function recognitionLang(locale: string, navigatorLang = typeof navigator === "undefined" ? "" : navigator.language): string {
 	const language = locale.split("-")[0].toLowerCase();
-	if (navigatorLang && navigatorLang.split("-")[0].toLowerCase() === language) {
+	if (navigatorLang?.split("-")[0].toLowerCase() === language) {
 		return navigatorLang;
 	}
 	const defaults: Record<string, string> = { fr: "fr-FR", en: "en-US" };
 	return defaults[language] ?? locale;
 }
 
-// What has been understood since the start of the recognition: the final words and the ones still being guessed
 export function transcriptOf(results: ArrayLike<SpeechRecognitionResultLike>): { final: string, interim: string } {
 	let final = "";
 	let interim = "";
-	for (let index = 0; index < results.length; index++) {
-		const result = results[index];
+	for (const result of Array.from(results)) {
 		const text = result[0]?.transcript ?? "";
 		if (result.isFinal) {
 			final += text;
@@ -101,7 +127,6 @@ export function transcriptOf(results: ArrayLike<SpeechRecognitionResultLike>): {
 	return { final, interim };
 }
 
-// The spoken words are added to what the user already typed
 export function joinSpeechText(base: string, spoken: string): string {
 	const text = spoken.trim();
 	if (text === "") {

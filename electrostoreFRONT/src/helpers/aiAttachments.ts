@@ -10,7 +10,6 @@ export interface AiFileLimits {
 	maxImageSizeMb: number;
 	textExtensions: string[];
 	maxTextSizeMb: number;
-	// null: the transcription of audio files is not available
 	audio: { mimeTypes: string[], extensions: string[], maxSizeMb: number } | null;
 }
 
@@ -30,7 +29,6 @@ export function fileExtension(name: string): string {
 	return name.includes(".") ? "." + name.split(".").pop()!.toLowerCase() : "";
 }
 
-// A browser gives a text file any mime type (a csv is "application/vnd.ms-excel" on Windows): the extension decides
 export function checkAiFile(file: AiFileLike, limits: AiFileLimits): AiFileCheck {
 	const extension = fileExtension(file.name);
 	const mime = file.type.split(";")[0].toLowerCase();
