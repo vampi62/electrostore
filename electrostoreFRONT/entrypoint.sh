@@ -1,11 +1,17 @@
 #!/bin/sh
-# search and replace the placeholder with the actual API URL
-for file in /usr/share/nginx/html/assets/js/*.js; do
-    sed -i "s|http://localhost/vite_api_url_placeholder/api|"${VUE_API_URL}"|g" $file
-    sed -i "s|demo_mode_placeholder|"${APP_DEMO_MODE}"|g" $file
-done
-for file in /usr/share/nginx/html/assets/*.js; do
-    sed -i "s|http://localhost/vite_api_url_placeholder/api|"${VUE_API_URL}"|g" $file
-    sed -i "s|demo_mode_placeholder|"${APP_DEMO_MODE}"|g" $file
-done
+# Generate the runtime configuration served as /config.js (see nginx.conf).
+set -eu
+
+js_escape() {
+    printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+}
+
+cat > /tmp/config.js <<EOF
+window.__APP_CONFIG__ = {
+  API_URL: "$(js_escape "${VUE_API_URL:-}")",
+  DEMO_MODE: "$(js_escape "${APP_DEMO_MODE:-false}")",
+  VAPID_PUBLIC_KEY: "$(js_escape "${VUE_VAPID_PUBLIC_KEY:-}")"
+};
+EOF
+
 exec "$@"

@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { fetchWrapper, createResource, withDraft } from "@/helpers";
+import { API_URL } from "@/helpers/appConfig";
 import { isNewId } from "@/utils";
 
 import { useItemsDocumentsStore, useItemsBoxsStore, useItemsTagsStore, useItemsCommandsStore, useItemsProjectsStore, useItemsHistoryStore } from "@/stores";
@@ -13,7 +14,7 @@ type ReadExtendedItemDto = components["schemas"]["ReadExtendedItemDto"];
 type CreateItemDto = WithFile<NonNullable<paths["/api/item"]["post"]["requestBody"]>["content"]["multipart/form-data"], "img_file">;
 type UpdateItemDto = WithFile<NonNullable<paths["/api/item/{id_item}"]["put"]["requestBody"]>["content"]["multipart/form-data"], "img_file">;
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const baseUrl = `${API_URL}`;
 
 // What an expanded item brings along is handed to the store of each nested resource
 const EXPAND_HANDLERS: Record<string, (idItem: string, data: ReadExtendedItemDto) => void> = {

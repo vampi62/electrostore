@@ -9,6 +9,7 @@ import type { useNotification } from "@/composables";
 import type FormContainer from "@/components/FormContainer.vue";
 import { isNewId, loadLedPreferences, saveLedPreferences, LED_ANIMATIONS } from "@/utils";
 import { UserRole } from "@/enums";
+import { VAPID_PUBLIC_KEY } from "@/helpers/appConfig";
 import { useConfigsStore, useUsersStore, useCommandsCommentsStore, useProjectsCommentsStore, useEquipementsCommentsStore, useUsersSessionsStore, useUsersPushStore, useCommandsStore, useProjectsStore, useEquipementsStore, useAuthStore } from "@/stores";
 
 import type { FilterLabel } from "@/types/filter";
@@ -309,7 +310,7 @@ async function subscribePush() {
 			addNotification({ message: t("user.PushPermissionDenied"), type: "error" });
 			return;
 		}
-		const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+		const vapidKey = VAPID_PUBLIC_KEY;
 		if (!vapidKey) {
 			addNotification({ message: t("user.PushSubscribeError"), type: "error" });
 			return;

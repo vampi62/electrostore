@@ -191,8 +191,9 @@ import { i18n } from "@/plugins";
 import { useAiStore, useConfigsStore, useTabsStore, useItemsStore, useTagsStore, useStoresBoxsStore, useItemsTagsStore, useItemsBoxsStore } from "@/stores";
 import type { PlanRow, AiHistoryMessage } from "@/stores";
 import { ApiError, getMessage } from "@/utils";
+import { API_URL } from "@/helpers/appConfig";
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const baseUrl = `${API_URL}`;
 
 type RowStatus = "pending" | "opened" | "applying" | "done" | "error";
 

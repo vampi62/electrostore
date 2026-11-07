@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { fetchWrapper, createResource } from "@/helpers";
+import { API_URL } from "@/helpers/appConfig";
 import { isNewId } from "@/utils";
 
 import { useStoresStore } from "@/stores";
@@ -13,7 +14,7 @@ type ReadExtendedZoneDto = components["schemas"]["ReadExtendedZoneDto"];
 type CreateZoneDto = WithFile<NonNullable<paths["/api/zone"]["post"]["requestBody"]>["content"]["multipart/form-data"], "img_file">;
 type UpdateZoneDto = WithFile<NonNullable<paths["/api/zone/{id_zone}"]["put"]["requestBody"]>["content"]["multipart/form-data"], "img_file">;
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const baseUrl = `${API_URL}`;
 
 function hydrateZone(store: StoreGeneric, idZone: string, zone: ReadExtendedZoneDto, expand: string[] = []) {
 	if (zone.url_thumbnail_zone && !store.thumbnailsURL[idZone]) {

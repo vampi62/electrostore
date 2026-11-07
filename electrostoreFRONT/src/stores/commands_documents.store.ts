@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { fetchWrapper, createResource } from "@/helpers";
+import { API_URL } from "@/helpers/appConfig";
 
 import type { Edition, Ready, WithFile } from "@/types/resource";
 import type { components, paths } from "@/types/api";
@@ -9,7 +10,7 @@ type ReadCommandDocumentDto = components["schemas"]["ReadCommandDocumentDto"];
 type CreateCommandDocumentByCommandDto = WithFile<NonNullable<paths["/api/command/{id_command}/document"]["post"]["requestBody"]>["content"]["multipart/form-data"], "document">;
 type UpdateCommandDocumentDto = components["schemas"]["UpdateCommandDocumentDto"];
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const baseUrl = `${API_URL}`;
 
 const commandDocumentResource = createResource<{ readBasic: ReadCommandDocumentDto, create: CreateCommandDocumentByCommandDto, update: UpdateCommandDocumentDto }>({
 	compositeKey: ["id_command", "id_command_document"],

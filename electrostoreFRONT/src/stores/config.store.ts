@@ -1,10 +1,11 @@
 import { defineStore } from "pinia";
 
 import { fetchWrapper } from "@/helpers";
+import { API_URL, DEMO_MODE } from "@/helpers/appConfig";
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const baseUrl = `${API_URL}`;
 
-const demoMode = `${import.meta.env.VITE_APP_DEMO_MODE}` === "true";
+const demoMode = DEMO_MODE;
 
 import type { components } from "@/types/api";
 type ReadConfig = components["schemas"]["ReadConfig"];

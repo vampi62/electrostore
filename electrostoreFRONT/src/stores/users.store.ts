@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { fetchWrapper, createResource, withDraft } from "@/helpers";
+import { API_URL } from "@/helpers/appConfig";
 import { isNewId } from "@/utils";
 
 import { useCommandsCommentsStore, useProjectsCommentsStore, useUsersSessionsStore, useUsersPushStore } from "@/stores";
@@ -26,7 +27,7 @@ type ExpandedUserDto = ReadExtendedUserDto & {
 // is_verified is only displayed, it can't be edited
 type UserEdition = Edition<{ create: CreateUserDto, update: UpdateUserDto }> & { confirm_password_user?: string; unset_check?: boolean; is_verified?: boolean };
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const baseUrl = `${API_URL}`;
 
 // What an expanded user brings along is handed to the store of each nested resource
 const EXPAND_HANDLERS: Record<string, (idUser: string, data: ExpandedUserDto) => void> = {

@@ -1,6 +1,7 @@
 import { useAuthStore } from "@/stores";
 import { ApiError, extractApiMessage } from "@/utils/messages";
 import type { TokenType, RequestParams } from "@/types/fetch";
+import { API_URL } from "@/helpers/appConfig";
 import type { StoreGeneric } from "pinia";
 
 const LOGOUT_MESSAGE = "Unable to renew token. Logging out.";
@@ -162,7 +163,7 @@ function authHeader(url: string, useToken: TokenType = null): Record<string, str
 	const authStore = useAuthStore();
 	const header: Record<string, string> = {};
 	const isLoggedIn = !!authStore.user;
-	const isApiUrl = url.startsWith(import.meta.env.VITE_API_URL);
+	const isApiUrl = url.startsWith(API_URL);
 
 	if (isLoggedIn && isApiUrl && useToken) {
 		const token = useToken === "access" ? authStore.accessToken.token : authStore.refreshToken.token;
