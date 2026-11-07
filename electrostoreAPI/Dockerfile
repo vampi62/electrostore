@@ -29,7 +29,7 @@ RUN apk add --no-cache curl libc6-compat librdkafka
 
 COPY --from=build /app/out .
 
-RUN RUN mkdir -p /app/wwwroot && chown -R 3216:3216 /app
+RUN mkdir -p /app/wwwroot && chown -R 3216:3216 /app
 
 USER 3216:3216
 
