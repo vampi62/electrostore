@@ -18,15 +18,13 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
 
 WORKDIR /app
 
-#RUN apt-get update && apt-get --no-install-recommends install -y curl && rm -rf /var/lib/apt/lists/*
 RUN apk add --no-cache curl libc6-compat librdkafka
 
 COPY --from=build /app/out .
 
-#COPY entrypoint.sh /entrypoint.sh
-#RUN chmod +x /entrypoint.sh && chown -R 3216:3216 /app
+RUN chown -R 3216:3216 /app
 
-#USER 3216:3216
+USER 3216:3216
 
 EXPOSE 5000
 
