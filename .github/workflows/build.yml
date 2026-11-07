@@ -263,8 +263,24 @@ jobs:
     - name: Push multiarch image to Github (ghcr.io)
       if: contains(inputs.architecture, 'linux/amd64,linux/arm64/v8')
       shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        REPO: ${{ steps.repo.outputs.lowercase }}
+        REVISION: ${{ github.sha }}
       run: |
-        docker buildx imagetools create ${{ steps.image_tags.outputs.tags }} \
+        # ghcr.io reads the package description/source/licenses of a multi-arch
+        # image from the annotations of the manifest index, not from the labels
+        # of the per-arch images. imagetools create does not copy those labels,
+        # so re-emit the labels defined in build.hcl as index annotations
+        # (single source of truth: build.hcl).
+        export CREATED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        mapfile -t ANNOTATIONS < <(
+          docker buildx bake -f "${{ env.HCL_FILE }}" --print "${{ matrix.target }}" \
+            | jq -r --arg t "${{ matrix.target }}" \
+              '.target[$t].labels | to_entries[] | select(.value != "") | "--annotation=index:\(.key)=\(.value)"'
+        )
+        printf '%s\n' "${ANNOTATIONS[@]}"
+        docker buildx imagetools create "${ANNOTATIONS[@]}" ${{ steps.image_tags.outputs.tags }} \
           ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }}-amd64 \
           ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }}-arm64
     - name: Push amd64 image to Github (ghcr.io)
