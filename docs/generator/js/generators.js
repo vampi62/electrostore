@@ -127,8 +127,11 @@ services:`;
     container_name: electrostore-frontend
     cap_drop:
       - ALL
+    read_only: true
     security_opt:
       - no-new-privileges:true
+    tmpfs:
+      - /tmp:uid=3216,gid=3216
     deploy:
       resources:
         limits:

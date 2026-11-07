@@ -1,9 +1,10 @@
 import { defineStore } from "pinia";
 
 import { fetchWrapper } from "@/helpers";
+import { API_URL } from "@/helpers/appConfig";
 import router from "@/router";
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const baseUrl = `${API_URL}`;
 import type { components } from "@/types/api";
 type CreateUserDto = components["schemas"]["CreateUserDto"];
 type LoginRequest = components["schemas"]["LoginRequest"];

@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { fetchWrapper, createResource } from "@/helpers";
+import { API_URL } from "@/helpers/appConfig";
 import { isNewId } from "@/utils";
 
 import type { Edition } from "@/types/resource";
@@ -10,7 +11,7 @@ type CreateCronJobDto = components["schemas"]["CreateCronJobDto"];
 type UpdateCronJobDto = components["schemas"]["UpdateCronJobDto"];
 type ReadCronJobStatusDto = components["schemas"]["ReadCronJobStatusDto"];
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const baseUrl = `${API_URL}`;
 
 const cronJobResource = createResource<{ readExtended: ReadCronJobDto, create: CreateCronJobDto, update: UpdateCronJobDto }>({
 	compositeKey: ["id_cronjob"],

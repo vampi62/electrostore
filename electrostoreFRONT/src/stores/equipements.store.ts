@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { fetchWrapper, createResource, withDraft } from "@/helpers";
+import { API_URL } from "@/helpers/appConfig";
 import { isNewId } from "@/utils";
 
 import { useEquipementsTagsStore, useEquipementsBoxsStore, useEquipementsDocumentsStore, useEquipementsMaintenancesStore, useEquipementsCommentsStore, useEquipementsStatusStore } from "@/stores";
@@ -13,7 +14,7 @@ type ReadExtendedEquipementDto = components["schemas"]["ReadExtendedEquipementDt
 type CreateEquipementDto = WithFile<NonNullable<paths["/api/equipement"]["post"]["requestBody"]>["content"]["multipart/form-data"], "img_file">;
 type UpdateEquipementDto = WithFile<NonNullable<paths["/api/equipement/{id_equipement}"]["put"]["requestBody"]>["content"]["multipart/form-data"], "img_file">;
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const baseUrl = `${API_URL}`;
 
 // What an expanded equipement brings along is handed to the store of each nested resource
 const EXPAND_HANDLERS: Record<string, (idEquipement: string, data: ReadExtendedEquipementDto) => void> = {

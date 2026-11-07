@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { fetchWrapper, createResource } from "@/helpers";
+import { API_URL } from "@/helpers/appConfig";
 
 import type { Edition, Ready, WithFile } from "@/types/resource";
 import type { components, paths } from "@/types/api";
@@ -9,7 +10,7 @@ type ReadEquipementDocumentDto = components["schemas"]["ReadEquipementDocumentDt
 type CreateEquipementDocumentByEquipementDto = WithFile<NonNullable<paths["/api/equipement/{id_equipement}/document"]["post"]["requestBody"]>["content"]["multipart/form-data"], "document">;
 type UpdateEquipementDocumentDto = components["schemas"]["UpdateEquipementDocumentDto"];
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const baseUrl = `${API_URL}`;
 
 const equipementDocumentResource = createResource<{ readBasic: ReadEquipementDocumentDto, create: CreateEquipementDocumentByEquipementDto, update: UpdateEquipementDocumentDto }>({
 	compositeKey: ["id_equipement", "id_equipement_document"],

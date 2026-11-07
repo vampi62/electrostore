@@ -22,13 +22,7 @@ COPY nginx.conf /etc/nginx/nginx.conf
 
 COPY entrypoint.sh /entrypoint.sh
 
-RUN chmod +x /entrypoint.sh && \
-    chown -R 3216:3216 /usr/share/nginx/html && \
-    chown -R 3216:3216 /var/cache/nginx && \
-    chown -R 3216:3216 /var/log/nginx && \
-    chown -R 3216:3216 /etc/nginx/conf.d && \
-    touch /var/run/nginx.pid && \
-    chown 3216:3216 /var/run/nginx.pid
+RUN chmod 755 /entrypoint.sh
 
 USER 3216:3216
 

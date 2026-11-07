@@ -1,11 +1,12 @@
 import { buildFormData, fetchWrapper, buildQuery } from "@/helpers";
+import { API_URL } from "@/helpers/appConfig";
 
 import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 import type { Body, EntityTypes, IdKey, KeyParts, ResourceOptions, ResourceRoute, Ready } from "@/types/resource";
 import type { StoreGeneric } from "pinia";
 import type { FetchPage, PaginatedResponseDto, ReadBulkDto } from "@/types/fetch";
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const baseUrl = `${API_URL}`;
 const KEY_SEPARATOR = ":";
 const NEW_ID_PREFIX = "new-";
 

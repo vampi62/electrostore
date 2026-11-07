@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { fetchWrapper, createResource, withDraft } from "@/helpers";
+import { API_URL } from "@/helpers/appConfig";
 import { isNewId } from "@/utils";
 import { StorePositionMode } from "@/enums";
 
@@ -22,7 +23,7 @@ type UpdateBulkBoxByStoreDto = components["schemas"]["UpdateBulkBoxByStoreDto"];
 type CreateLedByStoreDto = components["schemas"]["CreateLedByStoreDto"];
 type UpdateBulkLedByStoreDto = components["schemas"]["UpdateBulkLedByStoreDto"];
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const baseUrl = `${API_URL}`;
 
 // What an expanded store brings along is handed to the store of each nested resource
 const EXPAND_HANDLERS: Record<string, (idStore: string, data: ReadExtendedStoreDto) => void> = {
