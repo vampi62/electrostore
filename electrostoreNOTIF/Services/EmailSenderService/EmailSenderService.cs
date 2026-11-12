@@ -1,3 +1,4 @@
+using MailKit;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
@@ -67,7 +68,7 @@ public class EmailSenderService : IEmailSenderService
             {
                 await client.AuthenticateAsync(username, password);
             }
-            await client.SendAsync(message);
+            await client.SendAsync(new SendRequest(message));
             await client.DisconnectAsync(quit: true);
             _logger.LogInformation("E-mail sent to {To} with subject {Subject}", to, subject);
         }
