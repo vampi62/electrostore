@@ -16,13 +16,11 @@ const commandHistoryResource = createResource<{ readBasic: ReadCommandHistoryDto
 	],
 	stateKey: "commandHistory",
 	countKey: "commandHistoryTotalCount",
-	loadingKey: "commandHistoryLoading",
 });
 
 // Records are indexed by the composite key "<id_command>:<id_command_history>"
 export const useCommandsHistoryStore = defineStore("commandsHistory", {
 	state: () => ({
-		commandHistoryLoading: false,
 		// indexed by scope: "id_command=3"
 		commandHistoryTotalCount: {} as Record<string, number>,
 		commandHistory: {} as Record<string, ReadCommandHistoryDto>,

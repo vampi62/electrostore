@@ -16,13 +16,11 @@ const itemHistoryResource = createResource<{ readBasic: ReadItemHistoryDto }>({
 	],
 	stateKey: "itemHistory",
 	countKey: "itemHistoryTotalCount",
-	loadingKey: "itemHistoryLoading",
 });
 
 // Records are indexed by the composite key "<id_item>:<id_item_history>"
 export const useItemsHistoryStore = defineStore("itemsHistory", {
 	state: () => ({
-		itemHistoryLoading: false,
 		// indexed by scope: "id_item=3"
 		itemHistoryTotalCount: {} as Record<string, number>,
 		itemHistory: {} as Record<string, ReadItemHistoryDto>,

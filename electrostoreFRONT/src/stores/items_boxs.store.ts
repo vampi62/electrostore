@@ -26,7 +26,6 @@ const itemBoxResource = createResource<{ readExtended: ReadExtendedItemBoxDto, r
 	],
 	stateKey: "itemBoxs",
 	countKey: "itemBoxsTotalCount",
-	loadingKey: "itemBoxsLoading",
 	editionKey: "itemBoxEdition",
 	readyKey: "itemBoxReady",
 	onHydrate: (store, entity: ReadExtendedItemBoxDto, expand) => {
@@ -42,7 +41,6 @@ const itemBoxResource = createResource<{ readExtended: ReadExtendedItemBoxDto, r
 // Records are indexed by the composite key "<id_item>:<id_box>"
 export const useItemsBoxsStore = defineStore("itemsBoxs", {
 	state: () => ({
-		itemBoxsLoading: false,
 		// indexed by scope: "id_item=3"
 		itemBoxsTotalCount: {} as Record<string, number>,
 		itemBoxs: {} as Record<string, ReadExtendedItemBoxDto>,

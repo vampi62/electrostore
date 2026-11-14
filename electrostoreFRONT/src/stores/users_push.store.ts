@@ -17,13 +17,11 @@ const userPushSubscriptionResource = createResource<{ readBasic: ReadUserPushSub
 	],
 	stateKey: "userPushSubscriptions",
 	countKey: "userPushSubscriptionsTotalCount",
-	loadingKey: "userPushSubscriptionsLoading",
 });
 
 // Records are indexed by the composite key "<id_user>:<id_user_push_subscription>"
 export const useUsersPushStore = defineStore("usersPush", {
 	state: () => ({
-		userPushSubscriptionsLoading: false,
 		// indexed by scope: "id_user=3"
 		userPushSubscriptionsTotalCount: {} as Record<string, number>,
 		userPushSubscriptions: {} as Record<string, ReadUserPushSubscriptionDto>,

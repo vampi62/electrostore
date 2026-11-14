@@ -23,7 +23,6 @@ const commandDocumentResource = createResource<{ readBasic: ReadCommandDocumentD
 	],
 	stateKey: "commandDocuments",
 	countKey: "commandDocumentsTotalCount",
-	loadingKey: "commandDocumentsLoading",
 	editionKey: "commandDocumentEdition",
 	readyKey: "commandDocumentReady",
 });
@@ -31,7 +30,6 @@ const commandDocumentResource = createResource<{ readBasic: ReadCommandDocumentD
 // Records are indexed by the composite key "<id_command>:<id_command_document>"
 export const useCommandsDocumentsStore = defineStore("commandsDocuments", {
 	state: () => ({
-		commandDocumentsLoading: false,
 		// indexed by scope: "id_command=3"
 		commandDocumentsTotalCount: {} as Record<string, number>,
 		commandDocuments: {} as Record<string, ReadCommandDocumentDto>,

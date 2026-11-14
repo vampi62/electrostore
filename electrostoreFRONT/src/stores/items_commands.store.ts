@@ -25,7 +25,6 @@ const itemCommandResource = createResource<{ readExtended: ReadExtendedCommandIt
 	],
 	stateKey: "itemCommands",
 	countKey: "itemCommandsTotalCount",
-	loadingKey: "itemCommandsLoading",
 	editionKey: "itemCommandEdition",
 	readyKey: "itemCommandReady",
 	onHydrate: (store, entity: ReadExtendedCommandItemDto, expand) => {
@@ -41,7 +40,6 @@ const itemCommandResource = createResource<{ readExtended: ReadExtendedCommandIt
 // Records are indexed by the composite key "<id_item>:<id_command>"
 export const useItemsCommandsStore = defineStore("itemsCommands", {
 	state: () => ({
-		itemCommandsLoading: false,
 		// indexed by scope: "id_item=3"
 		itemCommandsTotalCount: {} as Record<string, number>,
 		itemCommands: {} as Record<string, ReadCommandItemDto>,

@@ -53,7 +53,6 @@ const userResource = createResource<{ readExtended: ExpandedUserDto, readBasic: 
 	entityPath: [{ keys: ["id_user"], url: ({ id_user }) => `/user/${id_user}` }],
 	stateKey: "users",
 	countKey: "usersTotalCount",
-	loadingKey: "usersLoading",
 	editionKey: "userEdition",
 	onHydrate: (store: StoreGeneric, entity: ExpandedUserDto, expand) => {
 		if (entity.id_user === undefined) {
@@ -65,7 +64,6 @@ const userResource = createResource<{ readExtended: ExpandedUserDto, readBasic: 
 
 export const useUsersStore = defineStore("users", {
 	state: () => ({
-		usersLoading: false,
 		usersTotalCount: 0,
 		users: {} as Record<string, ReadUserDto>,
 		userEdition: {} as Record<string, UserEdition>,

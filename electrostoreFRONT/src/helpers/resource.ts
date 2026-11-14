@@ -36,7 +36,7 @@ export function withDraft<R>(records: Record<string, R> | undefined, ...drafts: 
 	});
 }
 
-export function createResource<T extends EntityTypes>({ compositeKey, generatedField, routeOnlyFields = [], path, entityPath, countKey, stateKey, loadingKey, editionKey, readyKey, onHydrate }: ResourceOptions<T>) {
+export function createResource<T extends EntityTypes>({ compositeKey, generatedField, routeOnlyFields = [], path, entityPath, countKey, stateKey, editionKey, readyKey, onHydrate }: ResourceOptions<T>) {
 	type ReadExtended = "readExtended" extends keyof T ? T["readExtended"] : T["readBasic"];
 	type Read = "readBasic" extends keyof T ? T["readBasic"] : T["readExtended"];
 	type Parts = KeyParts<T>;
@@ -225,19 +225,14 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 					delete this[stateKey][key];
 				}
 			}
-			this[loadingKey] = true;
-			try {
-				const query = buildQuery({ offset, limit, expand, filter, sort });
-				const res = await fetchWrapper.get<PaginatedResponseDto<ReadExtended>>({ url: `${baseUrl}${collectionUrl(scope)}?${query}`, useToken: "access" });
-				for (const entity of res.data) {
-					this[stateKey][toKey(entity as Parts)] = entity;
-					onHydrate?.(this, entity, expand);
-				}
-				setCount(this, scope, res.pagination?.total ?? 0);
-				return [res.pagination?.next_offset ?? 0, res.pagination?.has_more ?? false];
-			} finally {
-				this[loadingKey] = false;
+			const query = buildQuery({ offset, limit, expand, filter, sort });
+			const res = await fetchWrapper.get<PaginatedResponseDto<ReadExtended>>({ url: `${baseUrl}${collectionUrl(scope)}?${query}`, useToken: "access" });
+			for (const entity of res.data) {
+				this[stateKey][toKey(entity as Parts)] = entity;
+				onHydrate?.(this, entity, expand);
 			}
+			setCount(this, scope, res.pagination?.total ?? 0);
+			return [res.pagination?.next_offset ?? 0, res.pagination?.has_more ?? false];
 		},
 		async getById(this: StoreGeneric, key: Parts, expand: string[] = []) {
 			this[stateKey] ??= {};

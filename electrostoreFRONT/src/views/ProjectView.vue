@@ -632,7 +632,7 @@ useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects", 
 						update: (id: string, data: Record<string, string>) => projectCommentsStore.updateProjectComment({ id_project: projectId, id_project_comment: id }, { content_project_comment: data.content_project_comment }),
 						delete: (id: string) => projectCommentsStore.deleteProjectComment({ id_project: projectId, id_project_comment: id }),
 					}"
-					:loading="projectCommentsStore.projectCommentsLoading" :texte-modal-delete="{ textTitle: 'project.CommentDeleteTitle', textP: 'project.CommentDeleteText' }"
+					:texte-modal-delete="{ textTitle: 'project.CommentDeleteTitle', textP: 'project.CommentDeleteText' }"
 					:total-count="projectCommentsStore.projectCommentsCountByProject(projectId)"
 					:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectCommentsStore.getProjectCommentByInterval({ id_project: projectId }, limit, offset, expand, filter, sort, clear) : undefined"
 				/>

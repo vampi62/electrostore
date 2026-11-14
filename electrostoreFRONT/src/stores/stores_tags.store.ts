@@ -24,7 +24,6 @@ const storeTagResource = createResource<{ readExtended: ReadExtendedStoreTagDto,
 	],
 	stateKey: "storeTags",
 	countKey: "storeTagsTotalCount",
-	loadingKey: "storeTagsLoading",
 	editionKey: "storeTagEdition",
 	readyKey: "storeTagReady",
 	onHydrate: (store, entity: ReadExtendedStoreTagDto, expand) => {
@@ -40,7 +39,6 @@ const storeTagResource = createResource<{ readExtended: ReadExtendedStoreTagDto,
 // Records are indexed by the composite key "<id_store>:<id_tag>"
 export const useStoresTagsStore = defineStore("storesTags", {
 	state: () => ({
-		storeTagsLoading: false,
 		// indexed by scope: "id_store=3"
 		storeTagsTotalCount: {} as Record<string, number>,
 		storeTags: {} as Record<string, ReadStoreTagDto>,

@@ -12,13 +12,11 @@ const carrierResource = createResource<{ readExtended: ReadCarrierDto }>({
 	entityPath: [{ keys: ["id_carrier"], url: ({ id_carrier }) => `/carrier/${id_carrier}` }],
 	stateKey: "carriers",
 	countKey: "carriersTotalCount",
-	loadingKey: "carriersLoading",
 	editionKey: "carrierEdition",
 });
 
 export const useCarriersStore = defineStore("carriers", {
 	state: () => ({
-		carriersLoading: false,
 		carriersTotalCount: 0,
 		carriers: {} as Record<string, ReadCarrierDto>,
 		carrierEdition: {} as Record<string, Partial<ReadCarrierDto> & { loading?: boolean }>,

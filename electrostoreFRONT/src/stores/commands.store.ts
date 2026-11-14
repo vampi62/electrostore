@@ -43,7 +43,6 @@ const commandResource = createResource<{ readExtended: ReadExtendedCommandDto, r
 	entityPath: [{ keys: ["id_command"], url: ({ id_command }) => `/command/${id_command}` }],
 	stateKey: "commands",
 	countKey: "commandsTotalCount",
-	loadingKey: "commandsLoading",
 	editionKey: "commandEdition",
 	onHydrate: (store: StoreGeneric, entity: ReadExtendedCommandDto, expand) => {
 		if (!entity?.id_command) {
@@ -62,7 +61,6 @@ function clearNestedEdition(idCommand: string) {
 
 export const useCommandsStore = defineStore("commands", {
 	state: () => ({
-		commandsLoading: false,
 		commandsTotalCount: 0,
 		commands: {} as Record<string, ReadCommandDto>,
 		commandEdition: {} as Record<string, Edition<{ create: CreateCommandDto, update: UpdateCommandDto }>>,

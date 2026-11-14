@@ -24,7 +24,6 @@ const projectCommentResource = createResource<{ readExtended: ReadExtendedProjec
 	],
 	stateKey: "projectComments",
 	countKey: "projectCommentsTotalCount",
-	loadingKey: "projectCommentsLoading",
 	editionKey: "projectCommentEdition",
 	onHydrate: (store, entity: ReadExtendedProjectCommentDto, expand) => {
 		if (expand.includes("user") && entity.user && entity.id_user) {
@@ -39,7 +38,6 @@ const projectCommentResource = createResource<{ readExtended: ReadExtendedProjec
 // Records are indexed by the composite key "<id_project>:<id_project_comment>"
 export const useProjectsCommentsStore = defineStore("projectsComments", {
 	state: () => ({
-		projectCommentsLoading: false,
 		// indexed by scope: "id_project=3"
 		projectCommentsTotalCount: {} as Record<string, number>,
 		projectComments: {} as Record<string, ReadProjectCommentDto>,

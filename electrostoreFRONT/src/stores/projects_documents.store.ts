@@ -23,7 +23,6 @@ const projectDocumentResource = createResource<{ readBasic: ReadProjectDocumentD
 	],
 	stateKey: "projectDocuments",
 	countKey: "projectDocumentsTotalCount",
-	loadingKey: "projectDocumentsLoading",
 	editionKey: "projectDocumentEdition",
 	readyKey: "projectDocumentReady",
 });
@@ -31,7 +30,6 @@ const projectDocumentResource = createResource<{ readBasic: ReadProjectDocumentD
 // Records are indexed by the composite key "<id_project>:<id_project_document>"
 export const useProjectsDocumentsStore = defineStore("projectsDocuments", {
 	state: () => ({
-		projectDocumentsLoading: false,
 		// indexed by scope: "id_project=3"
 		projectDocumentsTotalCount: {} as Record<string, number>,
 		projectDocuments: {} as Record<string, ReadProjectDocumentDto>,

@@ -39,7 +39,6 @@ const tagResource = createResource<{ readExtended: ReadExtendedTagDto, readBasic
 	entityPath: [{ keys: ["id_tag"], url: ({ id_tag }) => `/tag/${id_tag}` }],
 	stateKey: "tags",
 	countKey: "tagsTotalCount",
-	loadingKey: "tagsLoading",
 	editionKey: "tagEdition",
 	onHydrate: (store: StoreGeneric, entity: ReadExtendedTagDto, expand) => {
 		if (entity.id_tag === undefined) {
@@ -60,7 +59,6 @@ function clearNestedEdition(idTag: string) {
 
 export const useTagsStore = defineStore("tags", {
 	state: () => ({
-		tagsLoading: false,
 		tagsTotalCount: 0,
 		tags: {} as Record<string, ReadTagDto>,
 		tagEdition: {} as Record<string, Edition<{ create: CreateTagDto, update: UpdateTagDto }>>,

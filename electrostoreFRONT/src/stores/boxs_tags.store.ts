@@ -25,7 +25,6 @@ const boxTagResource = createResource<{ readExtended: ReadExtendedBoxTagDto, rea
 	],
 	stateKey: "boxTags",
 	countKey: "boxTagsTotalCount",
-	loadingKey: "boxTagsLoading",
 	editionKey: "boxTagEdition",
 	readyKey: "boxTagReady",
 	onHydrate: (store, entity: ReadExtendedBoxTagDto, expand) => {
@@ -41,7 +40,6 @@ const boxTagResource = createResource<{ readExtended: ReadExtendedBoxTagDto, rea
 // Records are indexed by the composite key "<id_box>:<id_tag>"
 export const useBoxsTagsStore = defineStore("boxsTags", {
 	state: () => ({
-		boxTagsLoading: false,
 		// indexed by scope: "id_box=3"
 		boxTagsTotalCount: {} as Record<string, number>,
 		boxTags: {} as Record<string, ReadBoxTagDto>,

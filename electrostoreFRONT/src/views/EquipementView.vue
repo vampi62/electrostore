@@ -654,7 +654,6 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 						update: (id: string, data: Record<string, string>) => equipementCommentsStore.updateEquipementComment({ id_equipement: equipementId, id_equipement_comment: id }, { content_equipement_comment: data.content_equipement_comment }),
 						delete: (id: string) => equipementCommentsStore.deleteEquipementComment({ id_equipement: equipementId, id_equipement_comment: id }),
 					}"
-					:loading="equipementCommentsStore.equipementCommentsLoading"
 					:total-count="equipementCommentsStore.equipementCommentsCountByEquipement(equipementId)"
 					:fetch-function="!isNewId(equipementId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementCommentsStore.getEquipementCommentByInterval({ id_equipement: equipementId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:texte-modal-delete="{ textTitle: 'equipement.CommentDeleteTitle', textP: 'equipement.CommentDeleteText' }"

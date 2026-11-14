@@ -21,14 +21,12 @@ const ledResource = createResource<{ readBasic: ReadLedDto, create: CreateLedByS
 	],
 	stateKey: "leds",
 	countKey: "ledsTotalCount",
-	loadingKey: "ledsLoading",
 	editionKey: "ledEdition",
 });
 
 // Records are indexed by the composite key "<id_store>:<id_led>"
 export const useStoresLedsStore = defineStore("storesLeds", {
 	state: () => ({
-		ledsLoading: false,
 		// indexed by scope: "id_store=3"
 		ledsTotalCount: {} as Record<string, number>,
 		leds: {} as Record<string, ReadLedDto>,

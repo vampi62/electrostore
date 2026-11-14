@@ -38,7 +38,6 @@ const zoneResource = createResource<{ readExtended: ReadExtendedZoneDto, readBas
 	entityPath: [{ keys: ["id_zone"], url: ({ id_zone }) => `/zone/${id_zone}` }],
 	stateKey: "zones",
 	countKey: "zonesTotalCount",
-	loadingKey: "zonesLoading",
 	editionKey: "zoneEdition",
 	onHydrate: (store, entity: ReadExtendedZoneDto, expand) => {
 		if (entity.id_zone === undefined) {
@@ -50,7 +49,6 @@ const zoneResource = createResource<{ readExtended: ReadExtendedZoneDto, readBas
 
 export const useZonesStore = defineStore("zones", {
 	state: () => ({
-		zonesLoading: false,
 		zonesTotalCount: 0,
 		zones: {} as Record<string, ReadZoneDto>,
 		zoneEdition: {} as Record<string, Edition<{ create: CreateZoneDto, update: UpdateZoneDto }>>,

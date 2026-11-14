@@ -804,7 +804,7 @@ useTabGuard(commandsStore, () => commandId.value, "commandEdition", "commands", 
 						update: (id: string, data: Record<string, string>) => commandCommentsStore.updateCommandComment({ id_command: commandId, id_command_comment: id }, { content_command_comment: data.content_command_comment }),
 						delete: (id: string) => commandCommentsStore.deleteCommandComment({ id_command: commandId, id_command_comment: id }),
 					}"
-					:loading="commandCommentsStore.commandCommentsLoading" :texte-modal-delete="{ textTitle: 'command.CommentDeleteTitle', textP: 'command.CommentDeleteText' }"
+					:texte-modal-delete="{ textTitle: 'command.CommentDeleteTitle', textP: 'command.CommentDeleteText' }"
 					:total-count="commandCommentsStore.commandCommentsCountByCommand(commandId)"
 					:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => commandCommentsStore.getCommandCommentByInterval({ id_command: commandId }, limit, offset, expand, filter, sort, clear) : undefined"
 				/>
