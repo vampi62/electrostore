@@ -535,7 +535,7 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores", [
 				:restore-function="(value: string) => tagRestore(value)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
-								, 'loading': tagsStore.tagsLoading, 'fetchFunction': (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)
+								, 'fetchFunction': (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)
 								, 'totalCount': Number(tagsStore.tagsTotalCount || 0) }"
 				:meta ="{ 'keyPoids': 'weight_tag', 'keyName': 'name_tag' }"
 				/>
@@ -560,7 +560,6 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores", [
 				<div v-if="boxId != ''">
 					<Tableau :labels="labelTableauBoxItem" :meta="metaTableauBoxItem"
 						:store-data="[itemBoxsStore.itemBoxsByBox(boxId),itemsStore.itemsWithDraft,itemsStore.thumbnailsURL]"
-						:loading="itemBoxsStore.itemBoxsLoading"
 						:total-count="itemBoxsStore.itemBoxsCountByBox(boxId)"
 						:fetch-function="!isNewId(storeId) && boxId != null ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemBoxsStore.getItemBoxByInterval({ id_store: storeId, id_box: boxId }, limit, offset, expand, filter, sort, clear) : undefined"
 						:tableau-css="{ component: 'max-h-80', tr: 'transition duration-150 ease-in-out cursor-pointer hover:bg-gray-300 even:bg-gray-100' }"
@@ -576,7 +575,6 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores", [
 					</Tableau>
 					<Tableau :labels="labelTableauBoxEquipement" :meta="metaTableauBoxEquipement"
 						:store-data="[equipementBoxsStore.equipementBoxsByBox(boxId),equipementsStore.equipementsWithDraft, equipementsStore.thumbnailsURL]"
-						:loading="equipementBoxsStore.equipementBoxsLoading"
 						:total-count="equipementBoxsStore.equipementBoxsCountByBox(boxId)"
 						:fetch-function="!isNewId(storeId) && boxId != null ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementBoxsStore.getEquipementBoxByInterval({ id_store: storeId, id_box: boxId }, limit, offset, expand, filter, sort, clear) : undefined"
 						:tableau-css="{ component: 'max-h-80', tr: 'transition duration-150 ease-in-out cursor-pointer hover:bg-gray-300 even:bg-gray-100' }"
@@ -617,7 +615,7 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores", [
 				:store-data="[itemsStore.items, itemBoxsStore.itemBoxsByBox(boxId), itemsStore.thumbnailsURL]"
 				:store-edition="itemBoxsStore.itemBoxEditionByBox(boxId)"
 				:filters="filterItem"
-				:loading="itemsStore.itemsLoading" :schema="schemaItem"
+ :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
 				:fetch-function="!isNewId(storeId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
@@ -639,7 +637,6 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores", [
 			<Tableau :labels="labelTableauModalEquipement" :meta="{ key: 'id_equipement' }"
 				:store-data="[equipementsStore.equipements, equipementBoxsStore.equipementBoxsByBox(boxId), equipementsStore.thumbnailsURL]"
 				:filters="filterEquipement"
-				:loading="equipementsStore.equipementsLoading"
 				:total-count="Number(equipementsStore.equipementsTotalCount || 0)"
 				:fetch-function="!isNewId(storeId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"

@@ -109,7 +109,6 @@ useViewScroll(false);
 	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[projectsStore.projects,itemProjectsStore.itemProjectsGroupedByProject,itemsStore.items,projectsTagsStore.projectProjectTagsGroupedByProject,projectTagsStore.projectTags]"
 		:filters="filter"
-		:loading="projectsStore.projectsLoading"
 		:total-count="Number(projectsStore.projectsTotalCount) || 0"
 		:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectsStore.getProjectByInterval(limit, offset, expand, filter, sort, clear)"
 		:list-fetch-function="[(minOffset: number, maxOffset: number) => fetchTagData(minOffset, maxOffset), (minOffset: number, maxOffset: number) => fetchItemData(minOffset, maxOffset)]"

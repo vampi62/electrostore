@@ -568,7 +568,7 @@ useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects", 
 				:restore-function="(value: string) => tagRestore(value)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_project_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
-								, 'loading': projectTagsStore.projectTagsLoading, 'fetchFunction': (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectTagsStore.getProjectTagByInterval(limit, offset, expand, filter, sort, clear)
+								, 'fetchFunction': (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectTagsStore.getProjectTagByInterval(limit, offset, expand, filter, sort, clear)
 								, 'totalCount': Number(projectTagsStore.projectTagsTotalCount || 0) }"
 				:meta ="{ 'keyPoids': 'weight_project_tag', 'keyName': 'name_project_tag' }"
 				/>
@@ -578,7 +578,6 @@ useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects", 
 			<template #append-row>
 				<Tableau :labels="labelTableauHistoryStatus" :meta="{ key: 'id_project_status' }"
 					:store-data="[projectStatusStore.projectStatusByProject(projectId)]"
-					:loading="projectStatusStore.projectStatusLoading"
 					:total-count="projectStatusStore.projectStatusCountByProject(projectId)"
 					:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectStatusStore.getProjectStatusByInterval({ id_project: projectId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
@@ -597,7 +596,6 @@ useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects", 
 					:store-edition="projectDocumentsStore.projectDocumentEditionByProject(projectId)"
 					:store-ready="projectDocumentsStore.projectDocumentReadyByProject(projectId)"
 					:schema="schemaEditDocument"
-					:loading="projectDocumentsStore.projectDocumentsLoading"
 					:total-count="projectDocumentsStore.projectDocumentsCountByProject(projectId)"
 					:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectDocumentsStore.getProjectDocumentByInterval({ id_project: projectId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
@@ -615,7 +613,6 @@ useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects", 
 					:store-data="[itemProjectsStore.itemProjectsByProject(projectId), itemsStore.itemsWithDraft]"
 					:store-edition="itemProjectsStore.itemProjectEditionByProject(projectId)"
 					:store-ready="itemProjectsStore.itemProjectReadyByProject(projectId)"
-					:loading="itemProjectsStore.itemProjectsLoading"
 					:schema="schemaItem"
 					:total-count="itemProjectsStore.itemProjectsCountByProject(projectId)"
 					:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemProjectsStore.getItemProjectByInterval({ id_project: projectId }, limit, offset, expand, filter, sort, clear) : undefined"
@@ -673,7 +670,7 @@ useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects", 
 				:store-edition="itemProjectsStore.itemProjectEditionByProject(projectId)"
 				:store-ready="itemProjectsStore.itemProjectReadyByProject(projectId)"
 				:filters="filterItem"
-				:loading="itemProjectsStore.itemProjectsLoading" :schema="schemaItem"
+ :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
 				:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"

@@ -14,7 +14,6 @@ export interface TagsTableauModal {
 	label: TableauLabel[];
 	meta: TableauMeta;
 	css?: TableauCss;
-	loading: boolean;
 	fetchFunction: FetchFunction;
 	totalCount: number;
 }

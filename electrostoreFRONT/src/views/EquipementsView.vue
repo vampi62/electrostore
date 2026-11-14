@@ -60,7 +60,6 @@ useViewScroll(false);
 	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[equipementsStore.equipements,equipementsStore.thumbnailsURL]"
 		:filters="filter"
-		:loading="equipementsStore.equipementsLoading"
 		:total-count="Number(equipementsStore.equipementsTotalCount) || 0"
 		:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"

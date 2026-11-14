@@ -610,7 +610,7 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items", [
 				:restore-function="(value: string) => tagRestore(value)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
-								, 'loading': tagsStore.tagsLoading, 'fetchFunction': (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)
+								, 'fetchFunction': (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)
 								, 'totalCount': Number(tagsStore.tagsTotalCount || 0) }"
 				:meta ="{ 'keyPoids': 'weight_tag', 'keyName': 'name_tag' }"
 				/>
@@ -622,7 +622,6 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items", [
 					:store-data="[itemBoxsStore.itemBoxsByItem(itemId)]"
 					:store-edition="itemBoxsStore.itemBoxEditionByItem(itemId)"
 					:store-ready="itemBoxsStore.itemBoxReadyByItem(itemId)"
-					:loading="itemBoxsStore.itemBoxsLoading"
 					:schema="schemaBox"
 					:total-count="itemBoxsStore.itemBoxsCountByItem(itemId)"
 					:fetch-function="!isNewId(itemId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemBoxsStore.getItemBoxByInterval({ id_item: itemId }, limit, offset, expand, filter, sort, clear) : undefined"
@@ -642,7 +641,6 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items", [
 					:store-edition="itemDocumentsStore.itemDocumentEditionByItem(itemId)"
 					:store-ready="itemDocumentsStore.itemDocumentReadyByItem(itemId)"
 					:schema="schemaEditDocument"
-					:loading="itemDocumentsStore.itemDocumentsLoading"
 					:total-count="itemDocumentsStore.itemDocumentsCountByItem(itemId)"
 					:fetch-function="!isNewId(itemId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemDocumentsStore.getItemDocumentByInterval({ id_item: itemId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
@@ -654,7 +652,6 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items", [
 			<template #append-row>
 				<Tableau :labels="labelTableauCommand" :meta="{ key: 'id_item', path: '/commands/', expand: ['command'] }"
 					:store-data="[itemCommandsStore.itemCommandsByItem(itemId),commandsStore.commandsWithDraft]"
-					:loading="itemCommandsStore.itemCommandsLoading"
 					:total-count="itemCommandsStore.itemCommandsCountByItem(itemId)"
 					:fetch-function="!isNewId(itemId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemCommandsStore.getItemCommandByInterval({ id_item: itemId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
@@ -666,7 +663,6 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items", [
 			<template #append-row>
 				<Tableau :labels="labelTableauProject" :meta="{ key: 'id_project', path: '/projects/', expand: ['project'] }"
 					:store-data="[itemProjectsStore.itemProjectsByItem(itemId),projectsStore.projectsWithDraft]"
-					:loading="itemProjectsStore.itemProjectsLoading"
 					:total-count="itemProjectsStore.itemProjectsCountByItem(itemId)"
 					:fetch-function="!isNewId(itemId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemProjectsStore.getItemProjectByInterval({ id_item: itemId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
@@ -678,7 +674,6 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items", [
 			<template #append-row>
 				<Tableau :labels="labelTableauHistory" :meta="{ key: 'id_item_history', expand: ['user'], sort: 'created_at', sortOrder: 'desc' }"
 					:store-data="[itemHistoryStore.itemHistoryByItem(itemId), usersStore.users]"
-					:loading="itemHistoryStore.itemHistoryLoading"
 					:total-count="itemHistoryStore.itemHistoryCountByItem(itemId)"
 					:fetch-function="!isNewId(itemId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemHistoryStore.getItemHistoryByInterval({ id_item: itemId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"

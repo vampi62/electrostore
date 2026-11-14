@@ -70,7 +70,6 @@ useViewScroll(false);
 	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[usersStore.users]"
 		:filters="filter"
-		:loading="usersStore.usersLoading"
 		:total-count="Number(usersStore.usersTotalCount) || 0"
 		:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => usersStore.getUserByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"

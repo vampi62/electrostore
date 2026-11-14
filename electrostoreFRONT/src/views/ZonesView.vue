@@ -47,7 +47,6 @@ useViewScroll(false);
 	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[zonesStore.zones,zonesStore.thumbnailsURL]"
 		:filters="filter"
-		:loading="zonesStore.zonesLoading"
 		:total-count="Number(zonesStore.zonesTotalCount) || 0"
 		:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => zonesStore.getZoneByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"

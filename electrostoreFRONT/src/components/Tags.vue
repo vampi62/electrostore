@@ -37,7 +37,6 @@
 					:store-data="[tagsStore, currentTags, ...otherStore]"
 					:store-ready="effectiveTags"
 					:filters="filterModal"
-					:loading="tableauModal['loading']"
 					:fetch-function="tableauModal['fetchFunction']"
 					:total-count="tableauModal['totalCount']"
 					:tableau-css="tableauModal['css']"
