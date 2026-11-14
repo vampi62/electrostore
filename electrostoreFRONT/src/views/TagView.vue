@@ -519,11 +519,13 @@ useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags", [
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('tag.Title') }}</h2>
 		<TopButtonEditElement
-			:main-config="{ path: '/tags',
-				create: { showCondition: isNewId(tagId) && authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition[tagId]?.loading },
-				update: { showCondition: !isNewId(tagId) && authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition[tagId]?.loading },
-				delete: { showCondition: !isNewId(tagId) && authStore.hasPermission([0, 1, 2]) }
-			}"
+			path="/tags"
+			:buttons="[
+				{ type: 'create', showCondition: isNewId(tagId) && authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition[tagId]?.loading },
+				{ type: 'update', showCondition: !isNewId(tagId) && authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition[tagId]?.loading },
+				{ type: 'delete', showCondition: !isNewId(tagId) && authStore.hasPermission([0, 1, 2]) },
+				{ type: 'back' }
+			]"
 			@button-create="tagSave" @button-update="tagSave" @button-delete="tagDeleteModalShow = true"/>
 	</div>
 	<div v-if="tagsStore.tags[tagId] || isNewId(tagId)" class="w-full">

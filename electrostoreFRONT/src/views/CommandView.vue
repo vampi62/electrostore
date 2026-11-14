@@ -728,12 +728,14 @@ useTabGuard(commandsStore, () => commandId.value, "commandEdition", "commands", 
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('command.Title') }}</h2>
 		<TopButtonEditElement
-			:main-config="{ path: '/commands',
-				create: { showCondition: isNewId(commandId) && authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition[commandId]?.loading },
-				update: { showCondition: !isNewId(commandId) && authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition[commandId]?.loading },
-				delete: { showCondition: !isNewId(commandId) && authStore.hasPermission([0, 1, 2]) }
-			}"
-			:optional-config="trackingOptionalConfig"
+			path="/commands"
+			:buttons="[
+				...trackingOptionalConfig,
+				{ type: 'create', showCondition: isNewId(commandId) && authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition[commandId]?.loading },
+				{ type: 'update', showCondition: !isNewId(commandId) && authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition[commandId]?.loading },
+				{ type: 'delete', showCondition: !isNewId(commandId) && authStore.hasPermission([0, 1, 2]) },
+				{ type: 'back' }
+			]"
 			@button-create="commandSave" @button-update="commandSave" @button-delete="commandDeleteModalShow = true"/>
 	</div>
 	<div v-if="commandsStore.commands[commandId] || isNewId(commandId)" class="w-full">

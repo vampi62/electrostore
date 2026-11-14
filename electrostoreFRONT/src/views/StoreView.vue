@@ -517,11 +517,13 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores", [
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('store.Title') }}</h2>
 		<TopButtonEditElement
-			:main-config="{ path: '/stores',
-				create: { showCondition: isNewId(storeId) && authStore.hasPermission([2]), loading: storesStore.storeEdition[storeId]?.loading },
-				update: { showCondition: !isNewId(storeId) && authStore.hasPermission([2]), loading: storesStore.storeEdition[storeId]?.loading },
-				delete: { showCondition: !isNewId(storeId) && authStore.hasPermission([2]) }
-			}"
+			path="/stores"
+			:buttons="[
+				{ type: 'create', showCondition: isNewId(storeId) && authStore.hasPermission([2]), loading: storesStore.storeEdition[storeId]?.loading },
+				{ type: 'update', showCondition: !isNewId(storeId) && authStore.hasPermission([2]), loading: storesStore.storeEdition[storeId]?.loading },
+				{ type: 'delete', showCondition: !isNewId(storeId) && authStore.hasPermission([2]) },
+				{ type: 'back' }
+			]"
 			@button-create="storeSave" @button-update="storeSave" @button-delete="storeDeleteModalShow = true"/>
 	</div>
 	<div v-if="storesStore.stores[storeId] || isNewId(storeId)" class="w-full">

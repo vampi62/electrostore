@@ -60,7 +60,7 @@ export const useStoresBoxsStore = defineStore("storesBoxs", {
 		boxsById: (state) => Object.fromEntries(Object.values(state.boxs).map((box) => [String(box.id_box), box])),
 		// same, completed by the boxes being created / edited
 		boxsByIdWithDraft(state) {
-			return withDraft(this.boxsById, Object.fromEntries(Object.entries(state.boxEdition).map(([key, edition]) => [boxResource.toParts(key).id_box, edition])));
+			return withDraft(Object.fromEntries(Object.values(state.boxs).map((box) => [String(box.id_box), box])), Object.fromEntries(Object.entries(state.boxEdition).map(([key, edition]) => [boxResource.toParts(key).id_box, edition])));
 		},
 	},
 	actions: {

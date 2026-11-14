@@ -242,11 +242,13 @@ useTabGuard(projectTagsStore, () => projectTagId.value, "projectTagEdition", "pr
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('projectTag.Title') }}</h2>
 		<TopButtonEditElement
-			:main-config="{ path: '/project-tags',
-				create: { showCondition: isNewId(projectTagId) && authStore.hasPermission([0, 1, 2]), loading: projectTagsStore.projectTagEdition[projectTagId]?.loading },
-				update: { showCondition: !isNewId(projectTagId) && authStore.hasPermission([0, 1, 2]), loading: projectTagsStore.projectTagEdition[projectTagId]?.loading },
-				delete: { showCondition: !isNewId(projectTagId) && authStore.hasPermission([0, 1, 2]) }
-			}"
+			path="/project-tags"
+			:buttons="[
+				{ type: 'create', showCondition: isNewId(projectTagId) && authStore.hasPermission([0, 1, 2]), loading: projectTagsStore.projectTagEdition[projectTagId]?.loading },
+				{ type: 'update', showCondition: !isNewId(projectTagId) && authStore.hasPermission([0, 1, 2]), loading: projectTagsStore.projectTagEdition[projectTagId]?.loading },
+				{ type: 'delete', showCondition: !isNewId(projectTagId) && authStore.hasPermission([0, 1, 2]) },
+				{ type: 'back' }
+			]"
 			@button-create="projectTagSave" @button-update="projectTagSave" @button-delete="projectTagDeleteModalShow = true"/>
 	</div>
 	<div v-if="projectTagsStore.projectTags[projectTagId] || isNewId(projectTagId)" class="w-full">

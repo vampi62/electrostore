@@ -533,11 +533,13 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('equipement.Title') }}</h2>
 		<TopButtonEditElement
-			:main-config="{ path: '/equipements',
-				create: { showCondition: isNewId(equipementId) && authStore.hasPermission([1, 2]), loading: equipementsStore.equipementEdition[equipementId]?.loading },
-				update: { showCondition: !isNewId(equipementId) && authStore.hasPermission([1, 2]), loading: equipementsStore.equipementEdition[equipementId]?.loading },
-				delete: { showCondition: !isNewId(equipementId) && authStore.hasPermission([1, 2]) }
-			}"
+			path="/equipements"
+			:buttons="[
+				{ type: 'create', showCondition: isNewId(equipementId) && authStore.hasPermission([1, 2]), loading: equipementsStore.equipementEdition[equipementId]?.loading },
+				{ type: 'update', showCondition: !isNewId(equipementId) && authStore.hasPermission([1, 2]), loading: equipementsStore.equipementEdition[equipementId]?.loading },
+				{ type: 'delete', showCondition: !isNewId(equipementId) && authStore.hasPermission([1, 2]) },
+				{ type: 'back' }
+			]"
 			@button-create="equipementSave" @button-update="equipementSave" @button-delete="equipementDeleteModalShow = true"/>
 	</div>
 	<div v-if="equipementsStore.equipements[equipementId] || isNewId(equipementId)" class="w-full">

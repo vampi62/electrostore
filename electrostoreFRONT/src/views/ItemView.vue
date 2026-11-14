@@ -567,11 +567,13 @@ useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items", [
 			<i class="fa-solid fa-boxes-stacked mr-1"></i>{{ $t('item.StockOperationButton') }}
 		</button>
 		<TopButtonEditElement
-			:main-config="{ path: '/inventory',
-				create: { showCondition: isNewId(itemId) && authStore.hasPermission([0, 1, 2]), loading: itemsStore.itemEdition[itemId]?.loading },
-				update: { showCondition: !isNewId(itemId) && authStore.hasPermission([0, 1, 2]), loading: itemsStore.itemEdition[itemId]?.loading },
-				delete: { showCondition: !isNewId(itemId) && authStore.hasPermission([0, 1, 2]) }
-			}"
+			path="/inventory"
+			:buttons="[
+				{ type: 'create', showCondition: isNewId(itemId) && authStore.hasPermission([0, 1, 2]), loading: itemsStore.itemEdition[itemId]?.loading },
+				{ type: 'update', showCondition: !isNewId(itemId) && authStore.hasPermission([0, 1, 2]), loading: itemsStore.itemEdition[itemId]?.loading },
+				{ type: 'delete', showCondition: !isNewId(itemId) && authStore.hasPermission([0, 1, 2]) },
+				{ type: 'back' }
+			]"
 			@button-create="itemSave" @button-update="itemSave" @button-delete="itemDeleteModalShow = true"/>
 	</div>
 	<div v-if="itemsStore.items[itemId] || isNewId(itemId)" class="w-full">

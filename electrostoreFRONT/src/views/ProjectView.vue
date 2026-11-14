@@ -546,11 +546,13 @@ useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects", 
 			{{ $t('project.ListTag') }}
 		</RouterLink>
 		<TopButtonEditElement
-			:main-config="{ path: '/projects',
-				create: { showCondition: isNewId(projectId) && authStore.hasPermission([0, 1, 2]), loading: projectsStore.projectEdition[projectId]?.loading },
-				update: { showCondition: !isNewId(projectId) && authStore.hasPermission([0, 1, 2]), loading: projectsStore.projectEdition[projectId]?.loading },
-				delete: { showCondition: !isNewId(projectId) && authStore.hasPermission([0, 1, 2]) }
-			}"
+			path="/projects"
+			:buttons="[
+				{ type: 'create', showCondition: isNewId(projectId) && authStore.hasPermission([0, 1, 2]), loading: projectsStore.projectEdition[projectId]?.loading },
+				{ type: 'update', showCondition: !isNewId(projectId) && authStore.hasPermission([0, 1, 2]), loading: projectsStore.projectEdition[projectId]?.loading },
+				{ type: 'delete', showCondition: !isNewId(projectId) && authStore.hasPermission([0, 1, 2]) },
+				{ type: 'back' }
+			]"
 			@button-create="projectSave" @button-update="projectSave" @button-delete="projectDeleteModalShow = true"/>
 	</div>
 	<div v-if="projectsStore.projects[projectId] || isNewId(projectId)" class="w-full">
