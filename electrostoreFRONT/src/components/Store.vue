@@ -152,7 +152,9 @@
 			</div>
 		</template>
 		<template v-else>
-			<!-- TODO : add loading animation -->
+			<div class="flex justify-center items-center h-full">
+				<span>{{ $t('store.Loading') }}</span>
+			</div>
 		</template>
 	</div>
 </template>

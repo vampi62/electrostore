@@ -347,12 +347,12 @@ export default {
 	watch: {
 		// a proposal saved from its tab is done: the tab now displays the created record
 		tabPaths(paths: string[]) {
-			this.rows.forEach((row, index) => {
+			for (const [index, row] of this.rows.entries()) {
 				if (!row.applied && paths[index] && isAiActionSaved(row.action, paths[index])) {
 					row.applied = true;
 					row.createdPath = paths[index].split("?")[0];
 				}
-			});
+			}
 		},
 		showModal(value: boolean) {
 			if (value) {
@@ -478,10 +478,10 @@ export default {
 		requestBody(text: string, withHistory: boolean): FormData {
 			const formData = new FormData();
 			const history = withHistory ? this.historyToSend() : [];
-			history.forEach((entry, index) => {
+			for (const [index, entry] of history.entries()) {
 				formData.append(`history[${index}].role`, entry.role);
 				formData.append(`history[${index}].content`, entry.content);
-			});
+			}
 			// the api uses the text first, the audio is only transcribed when there is no text
 			if (text !== "") {
 				formData.append("content_ai_chat_message", withHistory ? text + REWORK_INSTRUCTION : text);
@@ -526,9 +526,12 @@ export default {
 			Promise.allSettled(loads);
 		},
 		refLabel(ref: { kind: AiRefKind, id: string }): string {
-			const name = ref.kind === "item" ? this.itemsStore.items[ref.id]?.friendly_name_item
-				: ref.kind === "tag" ? this.tagsStore.tags[ref.id]?.name_tag
-					: undefined;
+			let name: string | null = null;
+			if (ref.kind === "item") {
+				name = this.itemsStore.items[ref.id]?.friendly_name_item;
+			} else if (ref.kind === "tag") {
+				name = this.tagsStore.tags[ref.id]?.name_tag;
+			}
 			return name ? `${name} (#${ref.id})` : `#${ref.id}`;
 		},
 		actionLabel(row: PlanRow): string {
