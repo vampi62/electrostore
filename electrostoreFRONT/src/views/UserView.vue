@@ -479,7 +479,7 @@ onMounted(() => {
 				<Tableau :labels="labelTableauSession" :meta="{ key: 'session_id' }"
 					:store-data="[userSessionsStore.userSessionsByUser(userId)]"
 					:filters="filterSession"
-					:total-count="userSessionsStore.userSessionsCountByUser(userId)"
+					:total-count="userSessionsStore.userSessionsCountByUser(userId, filterSession)"
 					:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => userSessionsStore.getUserSessionByInterval({ id_user: userId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'min-h-64 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>

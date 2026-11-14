@@ -73,7 +73,7 @@ useViewScroll(false);
 	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[cronJobsStore.cronJobs]"
 		:filters="filter"
-		:total-count="Number(cronJobsStore.cronJobsTotalCount) || 0"
+		:total-count="cronJobsStore.cronJobsCount(filter)"
 		:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => cronJobsStore.getCronJobByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>

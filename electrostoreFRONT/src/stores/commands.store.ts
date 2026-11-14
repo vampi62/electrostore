@@ -5,6 +5,7 @@ import { isNewId } from "@/utils";
 
 import { useCarriersStore, useCommandsCommentsStore, useCommandsDocumentsStore, useCommandsHistoryStore, useItemsCommandsStore } from "@/stores";
 
+import type { RSQLFilter } from "@/types/rsql";
 import type { StoreGeneric } from "pinia";
 import type { Edition } from "@/types/resource";
 import type { components } from "@/types/api";
@@ -61,11 +62,13 @@ function clearNestedEdition(idCommand: string) {
 
 export const useCommandsStore = defineStore("commands", {
 	state: () => ({
-		commandsTotalCount: 0,
+		commandsTotalCount: {} as Record<string, number>,
 		commands: {} as Record<string, ReadCommandDto>,
 		commandEdition: {} as Record<string, Edition<{ create: CreateCommandDto, update: UpdateCommandDto }>>,
 	}),
 	getters: {
+		// number of records of the list read with these filters
+		commandsCount: (state) => (filters?: RSQLFilter[]) => state.commandsTotalCount[commandResource.toCountKey({}, filters)] ?? 0,
 		// for lookups by id: the saved records, else the ones being created / edited
 		commandsWithDraft: (state) => withDraft(state.commands, state.commandEdition),
 	},

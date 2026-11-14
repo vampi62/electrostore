@@ -5,6 +5,7 @@ import { isNewId } from "@/utils";
 
 import { useProjectsTagsStore } from "@/stores";
 
+import type { RSQLFilter } from "@/types/rsql";
 import type { StoreGeneric } from "pinia";
 import type { Edition } from "@/types/resource";
 import type { components } from "@/types/api";
@@ -40,11 +41,13 @@ const projectTagResource = createResource<{ readExtended: ReadExtendedProjectTag
 
 export const useProjectTagsStore = defineStore("projectTags", {
 	state: () => ({
-		projectTagsTotalCount: 0,
+		projectTagsTotalCount: {} as Record<string, number>,
 		projectTags: {} as Record<string, ReadProjectTagDto>,
 		projectTagEdition: {} as Record<string, Edition<{ create: CreateProjectTagDto, update: UpdateProjectTagDto }>>,
 	}),
 	getters: {
+		// number of records of the list read with these filters
+		projectTagsCount: (state) => (filters?: RSQLFilter[]) => state.projectTagsTotalCount[projectTagResource.toCountKey({}, filters)] ?? 0,
 		// for lookups by id: the saved records, else the ones being created / edited
 		projectTagsWithDraft: (state) => withDraft(state.projectTags, state.projectTagEdition),
 	},

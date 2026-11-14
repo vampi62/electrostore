@@ -27,7 +27,7 @@ export interface ResourceRoute<T extends EntityTypes> {
 }
 
 // Resource identified by several fields (junction table): records are stored under the joined key, e.g. "3:12" for { id_item: 3, id_tag: 12 }.
-// countKey is indexed by scope ("id_item=3"), the others (stateKey, editionKey, readyKey) by composite key.
+// countKey is a Record<string, number> indexed by scope and filters ("id_item=3?name_tag==abc", see toCountKey), the others (stateKey, editionKey, readyKey) by composite key.
 export interface ResourceOptions<T extends EntityTypes> {
 	compositeKey: Array<IdKey<T>>;
 	// Fields only the urls need (e.g. id_store to reach a box): they are not part of the scope of the records and of their count

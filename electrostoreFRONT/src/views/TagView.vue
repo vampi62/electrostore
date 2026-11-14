@@ -123,7 +123,7 @@ async function fetchAllItems() {
 	do {
 		await itemsStore.getItemByInterval(limit, offset);
 		offset += limit;
-	} while (offset < itemsStore.itemsTotalCount);
+	} while (offset < itemsStore.itemsCount());
 	itemLoaded.value = true;
 }
 function itemSave(row: TableauRowData) {
@@ -181,7 +181,7 @@ async function fetchAllStores() {
 	do {
 		await storesStore.getStoreByInterval(limit, offset);
 		offset += limit;
-	} while (offset < storesStore.storesTotalCount);
+	} while (offset < storesStore.storesCount());
 	storeitemLoaded.value = true;
 }
 function storeSave(row: TableauRowData) {
@@ -267,7 +267,7 @@ async function fetchAllEquipements() {
 	do {
 		await equipementsStore.getEquipementByInterval(limit, offset);
 		offset += limit;
-	} while (offset < equipementsStore.equipementsTotalCount);
+	} while (offset < equipementsStore.equipementsCount());
 	equipementLoaded.value = true;
 }
 function equipementSave(row: TableauRowData) {
@@ -617,8 +617,8 @@ useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags", [
 				:store-data="[itemsStore.items, itemsTagsStore.itemTagsByTag(tagId)]"
 				:store-ready="itemsTagsStore.itemTagReadyByTag(tagId)"
 				:filters="filterItem"
-				:total-count="Number(itemsStore.itemsTotalCount || 0)"
 				:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:total-count="itemsStore.itemsCount(filterItem)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
@@ -641,8 +641,8 @@ useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags", [
 				:store-data="[storesStore.stores, storesTagsStore.storeTagsByTag(tagId)]"
 				:store-ready="storesTagsStore.storeTagReadyByTag(tagId)"
 				:filters="filterStore"
-				:total-count="Number(storesStore.storesTotalCount || 0)"
 				:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => storesStore.getStoreByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:total-count="storesStore.storesCount(filterStore)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
@@ -665,8 +665,8 @@ useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags", [
 				:store-data="[equipementsStore.equipements, equipementsTagsStore.equipementTagsByTag(tagId)]"
 				:store-ready="equipementsTagsStore.equipementTagReadyByTag(tagId)"
 				:filters="filterEquipement"
-				:total-count="Number(equipementsStore.equipementsTotalCount || 0)"
 				:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:total-count="equipementsStore.equipementsCount(filterEquipement)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

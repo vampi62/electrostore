@@ -577,7 +577,7 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
 								, 'fetchFunction': (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)
-								, 'totalCount': Number(tagsStore.tagsTotalCount || 0) }"
+								, 'totalCount': tagsStore.tagsCount(filterTag) }"
 				:meta ="{ 'keyPoids': 'weight_tag', 'keyName': 'name_tag' }"
 				/>
 		</div>

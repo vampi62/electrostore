@@ -117,7 +117,7 @@ async function fetchAllProjects() {
 	do {
 		await projectsStore.getProjectByInterval(limit, offset);
 		offset += limit;
-	} while (offset < projectsStore.projectsTotalCount);
+	} while (offset < projectsStore.projectsCount());
 	projectLoaded.value = true;
 }
 function projectSave(row: TableauRowData) {
@@ -296,8 +296,8 @@ useTabGuard(projectTagsStore, () => projectTagId.value, "projectTagEdition", "pr
 				:store-data="[projectsStore.projects, projectsTagsStore.projectProjectTagsByProjectTag(projectTagId)]"
 				:store-ready="projectsTagsStore.projectProjectTagReadyByProjectTag(projectTagId)"
 				:filters="filterProject"
-				:total-count="Number(projectsStore.projectsTotalCount || 0)"
 				:fetch-function="!isNewId(projectTagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectsStore.getProjectByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:total-count="projectsStore.projectsCount(filterProject)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
