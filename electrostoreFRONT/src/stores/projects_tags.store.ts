@@ -24,7 +24,6 @@ const projectProjectTagResource = createResource<{ readExtended: ReadExtendedPro
 	],
 	stateKey: "projectProjectTags",
 	countKey: "projectProjectTagsTotalCount",
-	loadingKey: "projectProjectTagsLoading",
 	editionKey: "projectProjectTagEdition",
 	readyKey: "projectProjectTagReady",
 	onHydrate: (store, entity: ReadExtendedProjectProjectTagDto, expand) => {
@@ -40,7 +39,6 @@ const projectProjectTagResource = createResource<{ readExtended: ReadExtendedPro
 // Records are indexed by the composite key "<id_project>:<id_project_tag>"
 export const useProjectsTagsStore = defineStore("projectsTags", {
 	state: () => ({
-		projectProjectTagsLoading: false,
 		// indexed by scope: "id_project=3"
 		projectProjectTagsTotalCount: {} as Record<string, number>,
 		projectProjectTags: {} as Record<string, ReadProjectProjectTagDto>,

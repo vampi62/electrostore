@@ -79,7 +79,6 @@ useViewScroll(false);
 	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[itemsStore.items,itemTagsStore.itemTagsGroupedByItem,tagsStore.tags,itemsStore.thumbnailsURL]"
 		:filters="filter"
-		:loading="itemsStore.itemsLoading"
 		:total-count="Number(itemsStore.itemsTotalCount) || 0"
 		:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear)"
 		:list-fetch-function="[(minOffset: number, maxOffset: number) => fetchTagData(minOffset, maxOffset)]"

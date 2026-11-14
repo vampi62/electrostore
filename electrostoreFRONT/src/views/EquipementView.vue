@@ -576,7 +576,7 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 				:restore-function="(value: string) => tagRestore(value)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
-								, 'loading': tagsStore.tagsLoading, 'fetchFunction': (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)
+								, 'fetchFunction': (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)
 								, 'totalCount': Number(tagsStore.tagsTotalCount || 0) }"
 				:meta ="{ 'keyPoids': 'weight_tag', 'keyName': 'name_tag' }"
 				/>
@@ -588,7 +588,6 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box' }"
 					:store-data="[equipementBoxsStore.equipementBoxsByEquipement(equipementId), storesStore.storesWithDraft]"
 					:store-ready="equipementBoxsStore.equipementBoxReadyByEquipement(equipementId)"
-					:loading="equipementBoxsStore.equipementBoxsLoading"
 					:total-count="equipementBoxsStore.equipementBoxsCountByEquipement(equipementId)"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
@@ -606,7 +605,6 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 					:store-edition="equipementDocumentsStore.equipementDocumentEditionByEquipement(equipementId)"
 					:store-ready="equipementDocumentsStore.equipementDocumentReadyByEquipement(equipementId)"
 					:schema="schemaEditDocument"
-					:loading="equipementDocumentsStore.equipementDocumentsLoading"
 					:total-count="equipementDocumentsStore.equipementDocumentsCountByEquipement(equipementId)"
 					:fetch-function="!isNewId(equipementId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementDocumentsStore.getEquipementDocumentByInterval({ id_equipement: equipementId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
@@ -638,7 +636,6 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 				<Tableau :labels="labelTableauMaintenance" :meta="{ key: 'id_equipement_maintenance' }"
 					:store-data="[equipementMaintenancesStore.equipementMaintenancesByEquipement(equipementId)]"
 					:store-ready="equipementMaintenancesStore.equipementMaintenanceReadyByEquipement(equipementId)"
-					:loading="equipementMaintenancesStore.equipementMaintenancesLoading"
 					:total-count="equipementMaintenancesStore.equipementMaintenancesCountByEquipement(equipementId)"
 					:fetch-function="!isNewId(equipementId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementMaintenancesStore.getEquipementMaintenanceByInterval({ id_equipement: equipementId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
@@ -657,7 +654,6 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 						update: (id: string, data: Record<string, string>) => equipementCommentsStore.updateEquipementComment({ id_equipement: equipementId, id_equipement_comment: id }, { content_equipement_comment: data.content_equipement_comment }),
 						delete: (id: string) => equipementCommentsStore.deleteEquipementComment({ id_equipement: equipementId, id_equipement_comment: id }),
 					}"
-					:loading="equipementCommentsStore.equipementCommentsLoading"
 					:total-count="equipementCommentsStore.equipementCommentsCountByEquipement(equipementId)"
 					:fetch-function="!isNewId(equipementId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementCommentsStore.getEquipementCommentByInterval({ id_equipement: equipementId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:texte-modal-delete="{ textTitle: 'equipement.CommentDeleteTitle', textP: 'equipement.CommentDeleteText' }"
@@ -669,7 +665,6 @@ useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "eq
 			<template #append-row>
 				<Tableau :labels="labelTableauStatusHistory" :meta="{ key: 'id_equipement_status' }"
 					:store-data="[equipementStatusStore.equipementStatusByEquipement(equipementId)]"
-					:loading="equipementStatusStore.equipementStatusLoading"
 					:total-count="equipementStatusStore.equipementStatusCountByEquipement(equipementId)"
 					:fetch-function="!isNewId(equipementId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementStatusStore.getEquipementStatusByInterval({ id_equipement: equipementId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"

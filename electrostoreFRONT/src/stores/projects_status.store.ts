@@ -16,13 +16,11 @@ const projectStatusResource = createResource<{ readBasic: ReadProjectStatusDto }
 	],
 	stateKey: "projectStatus",
 	countKey: "projectStatusTotalCount",
-	loadingKey: "projectStatusLoading",
 });
 
 // Records are indexed by the composite key "<id_project>:<id_project_status>"
 export const useProjectsStatusStore = defineStore("projectsStatus", {
 	state: () => ({
-		projectStatusLoading: false,
 		// indexed by scope: "id_project=3"
 		projectStatusTotalCount: {} as Record<string, number>,
 		projectStatus: {} as Record<string, ReadProjectStatusDto>,

@@ -48,7 +48,6 @@ const itemResource = createResource<{ readExtended: ReadExtendedItemDto, readBas
 	entityPath: [{ keys: ["id_item"], url: ({ id_item }) => `/item/${id_item}` }],
 	stateKey: "items",
 	countKey: "itemsTotalCount",
-	loadingKey: "itemsLoading",
 	editionKey: "itemEdition",
 	onHydrate: (store, entity: ReadExtendedItemDto, expand) => {
 		if (entity.id_item === undefined) {
@@ -70,7 +69,6 @@ function clearNestedEdition(idItem: string) {
 
 export const useItemsStore = defineStore("items", {
 	state: () => ({
-		itemsLoading: false,
 		itemsTotalCount: 0,
 		items: {} as Record<string, ReadItemDto>,
 		itemEdition: {} as Record<string, Edition<{ create: CreateItemDto, update: UpdateItemDto }>>,

@@ -38,7 +38,6 @@ export interface ResourceOptions<T extends EntityTypes> {
 	entityPath: Array<ResourceRoute<T>>;
 	countKey: string;
 	stateKey: string;
-	loadingKey: string;
 	editionKey?: string;
 	readyKey?: string;
 	onHydrate?: (store: StoreGeneric, entity: T["readExtended"], expand: string[]) => void;

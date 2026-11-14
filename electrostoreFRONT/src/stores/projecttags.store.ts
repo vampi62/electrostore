@@ -29,7 +29,6 @@ const projectTagResource = createResource<{ readExtended: ReadExtendedProjectTag
 	entityPath: [{ keys: ["id_project_tag"], url: ({ id_project_tag }) => `/project-tag/${id_project_tag}` }],
 	stateKey: "projectTags",
 	countKey: "projectTagsTotalCount",
-	loadingKey: "projectTagsLoading",
 	editionKey: "projectTagEdition",
 	onHydrate: (store: StoreGeneric, entity: ReadExtendedProjectTagDto, expand) => {
 		if (entity.id_project_tag === undefined) {
@@ -41,7 +40,6 @@ const projectTagResource = createResource<{ readExtended: ReadExtendedProjectTag
 
 export const useProjectTagsStore = defineStore("projectTags", {
 	state: () => ({
-		projectTagsLoading: false,
 		projectTagsTotalCount: 0,
 		projectTags: {} as Record<string, ReadProjectTagDto>,
 		projectTagEdition: {} as Record<string, Edition<{ create: CreateProjectTagDto, update: UpdateProjectTagDto }>>,

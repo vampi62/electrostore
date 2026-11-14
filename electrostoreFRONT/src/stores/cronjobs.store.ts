@@ -20,13 +20,11 @@ const cronJobResource = createResource<{ readExtended: ReadCronJobDto, create: C
 	entityPath: [{ keys: ["id_cronjob"], url: ({ id_cronjob }) => `/cronjob/${id_cronjob}` }],
 	stateKey: "cronJobs",
 	countKey: "cronJobsTotalCount",
-	loadingKey: "cronJobsLoading",
 	editionKey: "cronJobEdition",
 });
 
 export const useCronJobsStore = defineStore("cronJobs", {
 	state: () => ({
-		cronJobsLoading: false,
 		cronJobsTotalCount: 0,
 		cronJobs: {} as Record<string, ReadCronJobDto>,
 		cronJobEdition: {} as Record<string, Edition<{ create: CreateCronJobDto, update: UpdateCronJobDto }>>,

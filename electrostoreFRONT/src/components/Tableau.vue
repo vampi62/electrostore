@@ -153,11 +153,6 @@ export default {
 			// e.g. { key: 'name', value: '', type: 'text', typeData: 'string', compareMethod: 'contain', placeholder: 'Search by name', class: 'mb-2' }
 			default: () => [],
 		},
-		loading: {
-			type: Boolean,
-			default: false,
-			// loading state for the table, used to show a loading spinner or message
-		},
 		totalCount: {
 			type: Number,
 			default: 0,
@@ -200,6 +195,9 @@ export default {
 		TableauCard: defineAsyncComponent(() => import("@/components/TableauCard.vue")),
 	},
 	computed: {
+		loading() {
+			return this.pendingFetches > 0;
+		},
 		isCardView() {
 			return Boolean(this.meta?.cardView) && this.viewMode === "card";
 		},
@@ -292,6 +290,7 @@ export default {
 			},
 			nextOffset: 0,
 			hasMore: true,
+			pendingFetches: 0,
 			isInitializing: true,
 			debouncedRefetchData: null as (() => void) | null,
 			viewMode: "table" as TableauViewMode,
@@ -324,9 +323,7 @@ export default {
 				savedScrollTop = state.scrollTop || 0;
 			}
 		}
-		let intervalOffset = this.nextOffset;
-		[this.nextOffset, this.hasMore] = await this.fetchFunction(100, this.nextOffset, this.meta?.expand || [], this.filters, { key: this.sort.key ?? undefined, order: this.sort.order }, false);
-		await this.refetchListData(intervalOffset, this.nextOffset);
+		await this.fetchPage(this.nextOffset, false);
 		this.isInitializing = false;
 		if (this.meta?.saveState && savedScrollTop > 0) {
 			await this.$nextTick();
@@ -571,18 +568,25 @@ export default {
 				if (this.totalCount === this.nextOffset) {
 					return;
 				}
-				let intervalOffset = this.nextOffset;
-				[this.nextOffset, this.hasMore] = await this.fetchFunction(100, this.nextOffset, this.meta?.expand || [], this.filters, { key: this.sort.key ?? undefined, order: this.sort.order }, false);
-				await this.refetchListData(intervalOffset, this.nextOffset);
+				await this.fetchPage(this.nextOffset, false);
 			}
 		},
 		async refetchData() {
-			// Reset to initial state before refetching
+			// The rows already in the store stay displayed (they are filtered and sorted here anyway), the store replaces them when the answer arrives
 			this.nextOffset = 0;
 			this.hasMore = true;
-			let intervalOffset = this.nextOffset;
-			[this.nextOffset, this.hasMore] = await this.fetchFunction(100, 0, this.meta?.expand || [], this.filters, { key: this.sort.key ?? undefined, order: this.sort.order }, !this.meta?.preventClear);
-			await this.refetchListData(intervalOffset, this.nextOffset);
+			await this.fetchPage(0, !this.meta?.preventClear);
+		},
+		async fetchPage(offset: number, clear: boolean) {
+			this.pendingFetches++;
+			try {
+				const [nextOffset, hasMore] = await this.fetchFunction(100, offset, this.meta?.expand || [], this.filters, { key: this.sort.key ?? undefined, order: this.sort.order }, clear);
+				this.nextOffset = nextOffset;
+				this.hasMore = hasMore;
+				await this.refetchListData(offset, nextOffset);
+			} finally {
+				this.pendingFetches--;
+			}
 		},
 		async refetchListData(minOffset: number, maxOffset: number) {
 			for (const fetchFn of this.listFetchFunction) {

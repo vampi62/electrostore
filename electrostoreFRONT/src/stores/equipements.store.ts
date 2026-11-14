@@ -45,7 +45,6 @@ const equipementResource = createResource<{ readExtended: ReadExtendedEquipement
 	entityPath: [{ keys: ["id_equipement"], url: ({ id_equipement }) => `/equipement/${id_equipement}` }],
 	stateKey: "equipements",
 	countKey: "equipementsTotalCount",
-	loadingKey: "equipementsLoading",
 	editionKey: "equipementEdition",
 	onHydrate: (store: StoreGeneric, entity: ReadExtendedEquipementDto, expand) => {
 		hydrateEquipement(store, String(entity.id_equipement), entity, expand);
@@ -63,7 +62,6 @@ function clearNestedEdition(idEquipement: string) {
 
 export const useEquipementsStore = defineStore("equipements", {
 	state: () => ({
-		equipementsLoading: false,
 		equipementsTotalCount: 0,
 		equipements: {} as Record<string, ReadEquipementDto>,
 		equipementEdition: {} as Record<string, Edition<{ create: CreateEquipementDto, update: UpdateEquipementDto }>>,

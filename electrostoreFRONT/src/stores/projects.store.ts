@@ -41,7 +41,6 @@ const projectResource = createResource<{ readExtended: ReadExtendedProjectDto, r
 	entityPath: [{ keys: ["id_project"], url: ({ id_project }) => `/project/${id_project}` }],
 	stateKey: "projects",
 	countKey: "projectsTotalCount",
-	loadingKey: "projectsLoading",
 	editionKey: "projectEdition",
 	onHydrate: (store: StoreGeneric, entity: ReadExtendedProjectDto, expand) => {
 		if (entity.id_project === undefined) {
@@ -61,7 +60,6 @@ function clearNestedEdition(idProject: string) {
 
 export const useProjectsStore = defineStore("projects", {
 	state: () => ({
-		projectsLoading: false,
 		projectsTotalCount: 0,
 		projects: {} as Record<string, ReadProjectDto>,
 		projectEdition: {} as Record<string, Edition<{ create: CreateProjectDto, update: UpdateProjectDto }>>,

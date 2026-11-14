@@ -17,13 +17,11 @@ const userSessionResource = createResource<{ readBasic: SessionDto, update: Upda
 	],
 	stateKey: "userSessions",
 	countKey: "userSessionsTotalCount",
-	loadingKey: "userSessionsLoading",
 });
 
 // Records are indexed by the composite key "<id_user>:<session_id>"
 export const useUsersSessionsStore = defineStore("usersSessions", {
 	state: () => ({
-		userSessionsLoading: false,
 		// indexed by scope: "id_user=3"
 		userSessionsTotalCount: {} as Record<string, number>,
 		userSessions: {} as Record<string, SessionDto>,

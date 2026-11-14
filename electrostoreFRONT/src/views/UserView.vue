@@ -443,7 +443,6 @@ onMounted(() => {
 						<Comment :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'content_command_comment', key: 'id_command_comment', canEdit: false, roleRequired: false, expand: ['command'] }"
 							:store-data="[commandCommentsStore.commandCommentsByUser(userId), usersStore.users]"
 							:store-user="authStore.user" :store-config="configsStore"
-							:loading="commandCommentsStore.commandCommentsLoading"
 							:total-count="commandCommentsStore.commandCommentsCountByUser(userId)"
 							:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => commandCommentsStore.getCommandCommentByInterval({ id_user: userId }, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
@@ -455,7 +454,6 @@ onMounted(() => {
 						<Comment :meta="{ link: '/projects/', idRessource: 'id_project', contenu: 'content_project_comment', key: 'id_project_comment', canEdit: false, roleRequired: false, expand: ['project'] }"
 							:store-data="[projectCommentsStore.projectCommentsByUser(userId), usersStore.users]"
 							:store-user="authStore.user" :store-config="configsStore"
-							:loading="projectCommentsStore.projectCommentsLoading"
 							:total-count="projectCommentsStore.projectCommentsCountByUser(userId)"
 							:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectCommentsStore.getProjectCommentByInterval({ id_user: userId }, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
@@ -467,7 +465,6 @@ onMounted(() => {
 						<Comment :meta="{ link: '/equipements/', idRessource: 'id_equipement', contenu: 'content_equipement_comment', key: 'id_equipement_comment', canEdit: false, roleRequired: false, expand: ['equipement'] }"
 							:store-data="[equipementCommentsStore.equipementCommentsByUser(userId), equipementsStore.equipementsWithDraft]"
 							:store-user="authStore.user" :store-config="configsStore"
-							:loading="equipementCommentsStore.equipementCommentsLoading"
 							:total-count="equipementCommentsStore.equipementCommentsCountByUser(userId)"
 							:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementCommentsStore.getEquipementCommentByInterval({ id_user: userId }, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
@@ -482,7 +479,6 @@ onMounted(() => {
 				<Tableau :labels="labelTableauSession" :meta="{ key: 'session_id' }"
 					:store-data="[userSessionsStore.userSessionsByUser(userId)]"
 					:filters="filterSession"
-					:loading="userSessionsStore.userSessionsLoading"
 					:total-count="userSessionsStore.userSessionsCountByUser(userId)"
 					:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => userSessionsStore.getUserSessionByInterval({ id_user: userId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'min-h-64 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
@@ -552,7 +548,6 @@ onMounted(() => {
 				</div>
 				<Tableau :labels="labelTableauPushSubscriptions" :meta="{ key: 'id_user_push_subscription' }"
 					:store-data="[userPushStore.userPushSubscriptionsByUser(userId)]"
-					:loading="userPushStore.userPushSubscriptionsLoading"
 					:total-count="userPushStore.userPushSubscriptionsCountByUser(userId)"
 					:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => userPushStore.getUserPushSubscriptionByInterval({ id_user: userId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'min-h-32 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"

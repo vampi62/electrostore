@@ -165,11 +165,6 @@ export default {
 				roleRequired: false,
 			}),
 		},
-		loading: {
-			type: Boolean,
-			default: true,
-			// Indicates if the component is loading data
-		},
 		totalCount: {
 			type: Number,
 			default: 0,
@@ -220,9 +215,13 @@ export default {
 			nextOffset: 0,
 			hasMore: true,
 			isInitializing: true,
+			pendingFetches: 0,
 		};
 	},
 	computed: {
+		loading() {
+			return this.pendingFetches > 0;
+		},
 		schemaComment() {
 			return Yup.object().shape({
 				[this.meta.contenu]: Yup.string()
@@ -310,16 +309,25 @@ export default {
 				if (this.totalCount === this.nextOffset) {
 					return;
 				}
-				[this.nextOffset, this.hasMore] = await this.fetchFunction(100, this.nextOffset, this.meta?.expand || [], [], {}, false);
+				this.pendingFetches++;
+				try {
+					[this.nextOffset, this.hasMore] = await this.fetchFunction(100, this.nextOffset, this.meta?.expand || [], [], {}, false);
+				} finally {
+					this.pendingFetches--;
+				}
 			}
 		},
 		async refetchData() {
 			// Reset l'état et refetch les données depuis le début
 			this.nextOffset = 0;
 			this.hasMore = true;
-			let intervalOffset = this.nextOffset;
-			[this.nextOffset, this.hasMore] = await this.fetchFunction(100, 0, this.meta?.expand || [], [], {}, false);
-			await this.refetchListData(intervalOffset, this.nextOffset);
+			this.pendingFetches++;
+			try {
+				[this.nextOffset, this.hasMore] = await this.fetchFunction(100, 0, this.meta?.expand || [], [], {}, false);
+				await this.refetchListData(0, this.nextOffset);
+			} finally {
+				this.pendingFetches--;
+			}
 		},
 		async refetchListData(minOffset: number, maxOffset: number) {
 			for (const fetchFunction of this.listFetchFunction) {

@@ -23,7 +23,6 @@ const itemDocumentResource = createResource<{ readBasic: ReadItemDocumentDto, cr
 	],
 	stateKey: "itemDocuments",
 	countKey: "itemDocumentsTotalCount",
-	loadingKey: "itemDocumentsLoading",
 	editionKey: "itemDocumentEdition",
 	readyKey: "itemDocumentReady",
 });
@@ -31,7 +30,6 @@ const itemDocumentResource = createResource<{ readBasic: ReadItemDocumentDto, cr
 // Records are indexed by the composite key "<id_item>:<id_item_document>"
 export const useItemsDocumentsStore = defineStore("itemsDocuments", {
 	state: () => ({
-		itemDocumentsLoading: false,
 		// indexed by scope: "id_item=3"
 		itemDocumentsTotalCount: {} as Record<string, number>,
 		itemDocuments: {} as Record<string, ReadItemDocumentDto>,

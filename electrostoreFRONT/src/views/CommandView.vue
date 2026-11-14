@@ -768,7 +768,6 @@ useTabGuard(commandsStore, () => commandId.value, "commandEdition", "commands", 
 					:store-edition="commandDocumentsStore.commandDocumentEditionByCommand(commandId)"
 					:store-ready="commandDocumentsStore.commandDocumentReadyByCommand(commandId)"
 					:schema="schemaEditDocument"
-					:loading="commandDocumentsStore.commandDocumentsLoading"
 					:total-count="commandDocumentsStore.commandDocumentsCountByCommand(commandId)"
 					:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => commandDocumentsStore.getCommandDocumentByInterval({ id_command: commandId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
@@ -787,7 +786,6 @@ useTabGuard(commandsStore, () => commandId.value, "commandEdition", "commands", 
 					:store-edition="itemCommandsStore.itemCommandEditionByCommand(commandId)"
 					:store-ready="itemCommandsStore.itemCommandReadyByCommand(commandId)"
 					:schema="schemaItem"
-					:loading="itemCommandsStore.itemCommandsLoading"
 					:total-count="itemCommandsStore.itemCommandsCountByCommand(commandId)"
 					:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemCommandsStore.getItemCommandByInterval({ id_command: commandId }, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
@@ -806,7 +804,7 @@ useTabGuard(commandsStore, () => commandId.value, "commandEdition", "commands", 
 						update: (id: string, data: Record<string, string>) => commandCommentsStore.updateCommandComment({ id_command: commandId, id_command_comment: id }, { content_command_comment: data.content_command_comment }),
 						delete: (id: string) => commandCommentsStore.deleteCommandComment({ id_command: commandId, id_command_comment: id }),
 					}"
-					:loading="commandCommentsStore.commandCommentsLoading" :texte-modal-delete="{ textTitle: 'command.CommentDeleteTitle', textP: 'command.CommentDeleteText' }"
+					:texte-modal-delete="{ textTitle: 'command.CommentDeleteTitle', textP: 'command.CommentDeleteText' }"
 					:total-count="commandCommentsStore.commandCommentsCountByCommand(commandId)"
 					:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => commandCommentsStore.getCommandCommentByInterval({ id_command: commandId }, limit, offset, expand, filter, sort, clear) : undefined"
 				/>
@@ -844,7 +842,7 @@ useTabGuard(commandsStore, () => commandId.value, "commandEdition", "commands", 
 				:store-edition="itemCommandsStore.itemCommandEditionByCommand(commandId)"
 				:store-ready="itemCommandsStore.itemCommandReadyByCommand(commandId)"
 				:filters="filterItem"
-				:loading="itemCommandsStore.itemCommandsLoading" :schema="schemaItem"
+ :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
 				:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"

@@ -24,7 +24,6 @@ const commandCommentResource = createResource<{ readExtended: ReadExtendedComman
 	],
 	stateKey: "commandComments",
 	countKey: "commandCommentsTotalCount",
-	loadingKey: "commandCommentsLoading",
 	editionKey: "commandCommentEdition",
 	onHydrate: (store, entity: ReadExtendedCommandCommentDto, expand) => {
 		if (expand.includes("user") && entity.user && entity.id_user) {
@@ -39,7 +38,6 @@ const commandCommentResource = createResource<{ readExtended: ReadExtendedComman
 // Records are indexed by the composite key "<id_command>:<id_command_comment>"
 export const useCommandsCommentsStore = defineStore("commandsComments", {
 	state: () => ({
-		commandCommentsLoading: false,
 		// indexed by scope: "id_command=3"
 		commandCommentsTotalCount: {} as Record<string, number>,
 		commandComments: {} as Record<string, ReadCommandCommentDto>,
