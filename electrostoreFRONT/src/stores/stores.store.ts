@@ -7,6 +7,7 @@ import { StorePositionMode } from "@/enums";
 
 import { useStoresBoxsStore, useStoresLedsStore, useStoresTagsStore } from "@/stores";
 
+import type { RSQLFilter } from "@/types/rsql";
 import type { StoreGeneric } from "pinia";
 import type { Edition } from "@/types/resource";
 import type { ShowParams } from "@/types/store";
@@ -81,11 +82,13 @@ function clearNestedEdition(idStore: string) {
 
 export const useStoresStore = defineStore("stores", {
 	state: () => ({
-		storesTotalCount: 0,
+		storesTotalCount: {} as Record<string, number>,
 		stores: {} as Record<string, ReadStoreDto>,
 		storeEdition: {} as Record<string, Edition<{ create: CreateStoreDto, update: UpdateStoreDto }>>,
 	}),
 	getters: {
+		// number of records of the list read with these filters
+		storesCount: (state) => (filters?: RSQLFilter[]) => state.storesTotalCount[storeResource.toCountKey({}, filters)] ?? 0,
 		// for lookups by id: the saved records, else the ones being created / edited
 		storesWithDraft: (state) => withDraft(state.stores, state.storeEdition),
 	},

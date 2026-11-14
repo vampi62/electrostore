@@ -569,7 +569,7 @@ useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects", 
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_project_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
 								, 'fetchFunction': (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectTagsStore.getProjectTagByInterval(limit, offset, expand, filter, sort, clear)
-								, 'totalCount': Number(projectTagsStore.projectTagsTotalCount || 0) }"
+								, 'totalCount': projectTagsStore.projectTagsCount(filterTag) }"
 				:meta ="{ 'keyPoids': 'weight_project_tag', 'keyName': 'name_project_tag' }"
 				/>
 		</div>
@@ -670,9 +670,9 @@ useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects", 
 				:store-edition="itemProjectsStore.itemProjectEditionByProject(projectId)"
 				:store-ready="itemProjectsStore.itemProjectReadyByProject(projectId)"
 				:filters="filterItem"
- :schema="schemaItem"
-				:total-count="Number(itemsStore.itemsTotalCount || 0)"
 				:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:schema="schemaItem"
+				:total-count="itemsStore.itemsCount(filterItem)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

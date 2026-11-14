@@ -6,6 +6,7 @@ import { isNewId } from "@/utils";
 
 import { useCommandsCommentsStore, useProjectsCommentsStore, useUsersSessionsStore, useUsersPushStore } from "@/stores";
 
+import type { RSQLFilter } from "@/types/rsql";
 import type { StoreGeneric } from "pinia";
 import type { Edition } from "@/types/resource";
 import type { components } from "@/types/api";
@@ -64,11 +65,13 @@ const userResource = createResource<{ readExtended: ExpandedUserDto, readBasic: 
 
 export const useUsersStore = defineStore("users", {
 	state: () => ({
-		usersTotalCount: 0,
+		usersTotalCount: {} as Record<string, number>,
 		users: {} as Record<string, ReadUserDto>,
 		userEdition: {} as Record<string, UserEdition>,
 	}),
 	getters: {
+		// number of records of the list read with these filters
+		usersCount: (state) => (filters?: RSQLFilter[]) => state.usersTotalCount[userResource.toCountKey({}, filters)] ?? 0,
 		// for lookups by id: the saved records, else the ones being created / edited
 		usersWithDraft: (state) => withDraft(state.users, state.userEdition),
 	},

@@ -1,4 +1,4 @@
-import { buildFormData, fetchWrapper, buildQuery } from "@/helpers";
+import { buildFormData, fetchWrapper, buildQuery, buildRSQLFilter } from "@/helpers";
 import { API_URL } from "@/helpers/appConfig";
 
 import type { RSQLFilter, RSQLSort } from "@/types/rsql";
@@ -9,6 +9,7 @@ import type { FetchPage, PaginatedResponseDto, ReadBulkDto } from "@/types/fetch
 const baseUrl = `${API_URL}`;
 const KEY_SEPARATOR = ":";
 const NEW_ID_PREFIX = "new-";
+const COUNT_FILTER_SEPARATOR = "?";
 
 function isSaved(parts: Record<string, string | number>): boolean {
 	return !Object.values(parts).some((value) => String(value).startsWith(NEW_ID_PREFIX));
@@ -172,39 +173,33 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 		return isSaved(checked);
 	}
 
-	// A resource without scope (e.g. /item) keeps its count as a number, the others one per scope
-	function setCount(store: StoreGeneric, scope: Parts, total: number) {
-		const scopeKey = toScopeKey(scope);
-		if (scopeKey === "") {
-			store[countKey] = total;
-			return;
-		}
-		store[countKey] ??= {};
-		store[countKey][scopeKey] = total;
+	// Key of a count: the scope, then "?" and the filters as the api receives them ("id_item=3?name_tag==abc;id_tag=ge=2").
+	// Without scope and filters it is "". The same list read with other filters has its own count, so tabs on the same resource do not overwrite each other.
+	function toCountKey(scope: Parts = {}, filter: RSQLFilter[] = []): string {
+		const rsql = buildRSQLFilter(filter);
+		return rsql === "" ? toScopeKey(scope) : `${toScopeKey(scope)}${COUNT_FILTER_SEPARATOR}${rsql}`;
 	}
 
-	function ensureCount(store: StoreGeneric, scope: Parts) {
-		const scopeKey = toScopeKey(scope);
-		if (scopeKey === "") {
-			store[countKey] ??= 0;
-			return;
-		}
+	function setCount(store: StoreGeneric, scope: Parts, filter: RSQLFilter[], total: number) {
 		store[countKey] ??= {};
-		store[countKey][scopeKey] ??= 0;
+		store[countKey][toCountKey(scope, filter)] = total;
+	}
+
+	// Only the count without filters is guaranteed to exist: it is what a created record is added to
+	function ensureCount(store: StoreGeneric, scope: Parts) {
+		store[countKey] ??= {};
+		store[countKey][toCountKey(scope)] ??= 0;
 	}
 
 	function bumpCounts(store: StoreGeneric, parts: Parts, delta: number) {
-		if (typeof store[countKey] === "number") {
-			store[countKey] = Math.max(store[countKey] + delta, 0);
-			return;
-		}
-		for (const scope of Object.keys(store[countKey] ?? {})) {
-			const inScope = scope.split("&").every((pair) => {
+		for (const countId of Object.keys(store[countKey] ?? {})) {
+			const scopeKey = countId.split(COUNT_FILTER_SEPARATOR)[0];
+			const inScope = scopeKey === "" || scopeKey.split("&").every((pair) => {
 				const [field, value] = pair.split("=");
 				return String(parts[field as IdKey<T>]) === value;
 			});
 			if (inScope) {
-				store[countKey][scope] = Math.max((store[countKey][scope] ?? 0) + delta, 0);
+				store[countKey][countId] = Math.max((store[countKey][countId] ?? 0) + delta, 0);
 			}
 		}
 	}
@@ -214,6 +209,7 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 		toKey,
 		toParts,
 		toScopeKey,
+		toCountKey,
 		pick,
 		slice,
 		live,
@@ -231,7 +227,7 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 				this[stateKey][toKey(entity as Parts)] = entity;
 				onHydrate?.(this, entity, expand);
 			}
-			setCount(this, scope, res.pagination?.total ?? 0);
+			setCount(this, scope, filter, res.pagination?.total ?? 0);
 			return [res.pagination?.next_offset ?? 0, res.pagination?.has_more ?? false];
 		},
 		async getById(this: StoreGeneric, key: Parts, expand: string[] = []) {
@@ -311,7 +307,7 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 				}
 			}
 			if (total !== undefined) {
-				setCount(this, scope, total);
+				setCount(this, scope, [], total);
 			}
 		},
 		// Sets records without touching the others, e.g. the box brought along by a link

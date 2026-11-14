@@ -6,6 +6,7 @@ import { isNewId } from "@/utils";
 
 import { useStoresStore } from "@/stores";
 
+import type { RSQLFilter } from "@/types/rsql";
 import type { StoreGeneric } from "pinia";
 import type { Edition, WithFile } from "@/types/resource";
 import type { components, paths } from "@/types/api";
@@ -49,7 +50,7 @@ const zoneResource = createResource<{ readExtended: ReadExtendedZoneDto, readBas
 
 export const useZonesStore = defineStore("zones", {
 	state: () => ({
-		zonesTotalCount: 0,
+		zonesTotalCount: {} as Record<string, number>,
 		zones: {} as Record<string, ReadZoneDto>,
 		zoneEdition: {} as Record<string, Edition<{ create: CreateZoneDto, update: UpdateZoneDto }>>,
 
@@ -59,6 +60,8 @@ export const useZonesStore = defineStore("zones", {
 		thumbnailsURL: {} as Record<string, string>,
 	}),
 	getters: {
+		// number of records of the list read with these filters
+		zonesCount: (state) => (filters?: RSQLFilter[]) => state.zonesTotalCount[zoneResource.toCountKey({}, filters)] ?? 0,
 		// the stores of a zone are the stores loaded with its id_zone, indexed by id_store
 		zoneStoresByZone: () => (idZone: string) => {
 			const storesStore = useStoresStore();

@@ -45,7 +45,7 @@ useViewScroll(false);
 	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[projectTagsStore.projectTags]"
 		:filters="filter"
-		:total-count="Number(projectTagsStore.projectTagsTotalCount) || 0"
+		:total-count="projectTagsStore.projectTagsCount(filter)"
 		:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectTagsStore.getProjectTagByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>

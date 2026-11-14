@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 
 import { createResource } from "@/helpers";
 
+import type { RSQLFilter } from "@/types/rsql";
 import type { components } from "@/types/api";
 import { isNewId } from "@/utils/newId";
 type ReadCarrierDto = components["schemas"]["ReadCarrierDto"];
@@ -17,10 +18,14 @@ const carrierResource = createResource<{ readExtended: ReadCarrierDto }>({
 
 export const useCarriersStore = defineStore("carriers", {
 	state: () => ({
-		carriersTotalCount: 0,
+		carriersTotalCount: {} as Record<string, number>,
 		carriers: {} as Record<string, ReadCarrierDto>,
 		carrierEdition: {} as Record<string, Partial<ReadCarrierDto> & { loading?: boolean }>,
 	}),
+	getters: {
+		// number of records of the list read with these filters
+		carriersCount: (state) => (filters?: RSQLFilter[]) => state.carriersTotalCount[carrierResource.toCountKey({}, filters)] ?? 0,
+	},
 	actions: {
 		getCarrierByInterval: carrierResource.single.getByInterval,
 		getCarrierById: carrierResource.single.getById,

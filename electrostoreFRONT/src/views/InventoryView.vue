@@ -79,7 +79,7 @@ useViewScroll(false);
 	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[itemsStore.items,itemTagsStore.itemTagsGroupedByItem,tagsStore.tags,itemsStore.thumbnailsURL]"
 		:filters="filter"
-		:total-count="Number(itemsStore.itemsTotalCount) || 0"
+		:total-count="itemsStore.itemsCount(filter)"
 		:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear)"
 		:list-fetch-function="[(minOffset: number, maxOffset: number) => fetchTagData(minOffset, maxOffset)]"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"

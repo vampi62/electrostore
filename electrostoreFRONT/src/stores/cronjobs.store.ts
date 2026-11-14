@@ -4,6 +4,7 @@ import { fetchWrapper, createResource } from "@/helpers";
 import { API_URL } from "@/helpers/appConfig";
 import { isNewId } from "@/utils";
 
+import type { RSQLFilter } from "@/types/rsql";
 import type { Edition } from "@/types/resource";
 import type { components } from "@/types/api";
 type ReadCronJobDto = components["schemas"]["ReadCronJobDto"];
@@ -25,10 +26,14 @@ const cronJobResource = createResource<{ readExtended: ReadCronJobDto, create: C
 
 export const useCronJobsStore = defineStore("cronJobs", {
 	state: () => ({
-		cronJobsTotalCount: 0,
+		cronJobsTotalCount: {} as Record<string, number>,
 		cronJobs: {} as Record<string, ReadCronJobDto>,
 		cronJobEdition: {} as Record<string, Edition<{ create: CreateCronJobDto, update: UpdateCronJobDto }>>,
 	}),
+	getters: {
+		// number of records of the list read with these filters
+		cronJobsCount: (state) => (filters?: RSQLFilter[]) => state.cronJobsTotalCount[cronJobResource.toCountKey({}, filters)] ?? 0,
+	},
 	actions: {
 		getCronJobByInterval: cronJobResource.single.getByInterval,
 		getCronJobById: cronJobResource.single.getById,

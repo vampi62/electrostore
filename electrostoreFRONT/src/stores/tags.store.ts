@@ -5,6 +5,7 @@ import { isNewId } from "@/utils";
 
 import { useStoresTagsStore, useBoxsTagsStore, useItemsTagsStore, useEquipementsTagsStore } from "@/stores";
 
+import type { RSQLFilter } from "@/types/rsql";
 import type { StoreGeneric } from "pinia";
 import type { Edition } from "@/types/resource";
 import type { components } from "@/types/api";
@@ -59,11 +60,13 @@ function clearNestedEdition(idTag: string) {
 
 export const useTagsStore = defineStore("tags", {
 	state: () => ({
-		tagsTotalCount: 0,
+		tagsTotalCount: {} as Record<string, number>,
 		tags: {} as Record<string, ReadTagDto>,
 		tagEdition: {} as Record<string, Edition<{ create: CreateTagDto, update: UpdateTagDto }>>,
 	}),
 	getters: {
+		// number of records of the list read with these filters
+		tagsCount: (state) => (filters?: RSQLFilter[]) => state.tagsTotalCount[tagResource.toCountKey({}, filters)] ?? 0,
 		// for lookups by id: the saved records, else the ones being created / edited
 		tagsWithDraft: (state) => withDraft(state.tags, state.tagEdition),
 	},

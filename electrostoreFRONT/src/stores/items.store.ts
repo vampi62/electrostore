@@ -6,6 +6,7 @@ import { isNewId } from "@/utils";
 
 import { useItemsDocumentsStore, useItemsBoxsStore, useItemsTagsStore, useItemsCommandsStore, useItemsProjectsStore, useItemsHistoryStore } from "@/stores";
 
+import type { RSQLFilter } from "@/types/rsql";
 import type { StoreGeneric } from "pinia";
 import type { Edition, WithFile } from "@/types/resource";
 import type { components, paths } from "@/types/api";
@@ -69,7 +70,7 @@ function clearNestedEdition(idItem: string) {
 
 export const useItemsStore = defineStore("items", {
 	state: () => ({
-		itemsTotalCount: 0,
+		itemsTotalCount: {} as Record<string, number>,
 		items: {} as Record<string, ReadItemDto>,
 		itemEdition: {} as Record<string, Edition<{ create: CreateItemDto, update: UpdateItemDto }>>,
 
@@ -77,6 +78,8 @@ export const useItemsStore = defineStore("items", {
 		thumbnailsURL: {} as Record<string, string>,
 	}),
 	getters: {
+		// number of records of the list read with these filters
+		itemsCount: (state) => (filters?: RSQLFilter[]) => state.itemsTotalCount[itemResource.toCountKey({}, filters)] ?? 0,
 		// for lookups by id: the saved items, else the ones being created / edited
 		itemsWithDraft: (state) => withDraft(state.items, state.itemEdition),
 	},

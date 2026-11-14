@@ -536,7 +536,7 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores", [
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
 								, 'fetchFunction': (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)
-								, 'totalCount': Number(tagsStore.tagsTotalCount || 0) }"
+								, 'totalCount': tagsStore.tagsCount(filterTag) }"
 				:meta ="{ 'keyPoids': 'weight_tag', 'keyName': 'name_tag' }"
 				/>
 		</div>
@@ -615,9 +615,9 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores", [
 				:store-data="[itemsStore.items, itemBoxsStore.itemBoxsByBox(boxId), itemsStore.thumbnailsURL]"
 				:store-edition="itemBoxsStore.itemBoxEditionByBox(boxId)"
 				:filters="filterItem"
- :schema="schemaItem"
-				:total-count="Number(itemsStore.itemsTotalCount || 0)"
 				:fetch-function="!isNewId(storeId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:schema="schemaItem"
+				:total-count="itemsStore.itemsCount(filterItem)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
@@ -637,8 +637,8 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores", [
 			<Tableau :labels="labelTableauModalEquipement" :meta="{ key: 'id_equipement' }"
 				:store-data="[equipementsStore.equipements, equipementBoxsStore.equipementBoxsByBox(boxId), equipementsStore.thumbnailsURL]"
 				:filters="filterEquipement"
-				:total-count="Number(equipementsStore.equipementsTotalCount || 0)"
 				:fetch-function="!isNewId(storeId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:total-count="equipementsStore.equipementsCount(filterEquipement)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 
 import { createResource } from "@/helpers";
 
+import type { RSQLFilter } from "@/types/rsql";
 import type { components } from "@/types/api";
 
 type SessionDto = components["schemas"]["SessionDto"];
@@ -22,14 +23,14 @@ const userSessionResource = createResource<{ readBasic: SessionDto, update: Upda
 // Records are indexed by the composite key "<id_user>:<session_id>"
 export const useUsersSessionsStore = defineStore("usersSessions", {
 	state: () => ({
-		// indexed by scope: "id_user=3"
+		// indexed by scope and filters (see toCountKey): "id_user=3" is the list of a user without filter
 		userSessionsTotalCount: {} as Record<string, number>,
 		userSessions: {} as Record<string, SessionDto>,
 	}),
 	getters: {
 		// the records of a user, indexed by the rest of the key
 		userSessionsByUser: (state) => (id: string) => userSessionResource.slice(state.userSessions, { id_user: id }),
-		userSessionsCountByUser: (state) => (id: string) => state.userSessionsTotalCount[userSessionResource.toScopeKey({ id_user: id })] ?? 0,
+		userSessionsCountByUser: (state) => (id: string, filters?: RSQLFilter[]) => state.userSessionsTotalCount[userSessionResource.toCountKey({ id_user: id }, filters)] ?? 0,
 	},
 	actions: {
 		getUserSessionByInterval: userSessionResource.getByInterval,

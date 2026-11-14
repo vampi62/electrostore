@@ -842,9 +842,9 @@ useTabGuard(commandsStore, () => commandId.value, "commandEdition", "commands", 
 				:store-edition="itemCommandsStore.itemCommandEditionByCommand(commandId)"
 				:store-ready="itemCommandsStore.itemCommandReadyByCommand(commandId)"
 				:filters="filterItem"
- :schema="schemaItem"
-				:total-count="Number(itemsStore.itemsTotalCount || 0)"
 				:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:schema="schemaItem"
+				:total-count="itemsStore.itemsCount(filterItem)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
