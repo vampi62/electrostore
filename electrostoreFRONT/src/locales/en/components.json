@@ -23,6 +23,8 @@
 	"VModalTopButtonAdd": "Add",
 	"VModalTopButtonUpdate": "Update",
 	"VModalTopButtonDelete": "Delete",
+	"VModalTopButtonRestore": "Restore",
+	"VModalTopButtonHardDelete": "Delete permanently",
 	"VModalTopButtonBack": "Back",
 	"VModalTopButtonMenu": "Menu",
 

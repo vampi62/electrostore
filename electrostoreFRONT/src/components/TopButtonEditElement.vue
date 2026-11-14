@@ -1,62 +1,18 @@
 <template>
+	<!-- Desktop -->
 	<div class="hidden md:flex flex-wrap gap-2 justify-end">
-		<!-- Desktop -->
-		<template v-for="(button, index) in optionalConfig" :key="index">
-			<div v-if="button.showCondition" class="relative">
-				<button type="button" @click="() => button.action?.()"
-					:disabled="button.enableCondition === false"
-					:class="['text-white px-4 py-2 rounded flex items-center',
-					button.bgColor ? button.bgColor : 'bg-gray-500',
-					button.enableCondition === false ? 'opacity-50 cursor-not-allowed' : (button.hoverColor ? button.hoverColor : 'hover:bg-gray-600')]">
-					{{ $t(button.label) }}
-				</button>
-				<div v-show="button.loading" 
-					:class="['absolute inset-0 bg-opacity-90 rounded flex items-center justify-center',
-					button.bgColor ? button.bgColor : 'bg-gray-500']">
-					<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-				</div>
-			</div>
-		</template>
-		<div v-if="mainConfig.create.showCondition" class="relative">
-			<button type="button" @click="$emit('buttonCreate')"
-				:disabled="mainConfig.create.enableCondition === false"
-				:class="['bg-blue-500 text-white px-4 py-2 rounded flex items-center',
-				mainConfig.create.enableCondition === false ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600']">
-				{{ $t('components.VModalTopButtonAdd') }}
+		<div v-for="(button, index) in visibleButtons" :key="index" class="relative">
+			<button type="button" @click="onClick(button)"
+				:disabled="button.disabled"
+				:class="['px-4 py-2 rounded flex items-center', button.textColor, button.bgColor,
+				button.disabled ? 'opacity-50 cursor-not-allowed' : button.hoverColor]">
+				{{ $t(button.label) }}
 			</button>
-			<div v-show="mainConfig.create.loading" 
-				class="absolute inset-0 bg-blue-500 bg-opacity-90 rounded flex items-center justify-center">
+			<div v-show="button.loading"
+				:class="['absolute inset-0 bg-opacity-90 rounded flex items-center justify-center', button.bgColor]">
 				<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 			</div>
 		</div>
-		<div v-if="mainConfig.update.showCondition" class="relative">
-			<button type="button" @click="$emit('buttonUpdate')"
-				:disabled="mainConfig.update.enableCondition === false"
-				:class="['bg-blue-500 text-white px-4 py-2 rounded flex items-center',
-				mainConfig.update.enableCondition === false ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600']">
-				{{ $t('components.VModalTopButtonUpdate') }}
-			</button>
-			<div v-show="mainConfig.update.loading" 
-				class="absolute inset-0 bg-blue-500 bg-opacity-90 rounded flex items-center justify-center">
-				<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-			</div>
-		</div>
-		<div v-if="mainConfig.delete.showCondition" class="relative">
-			<button type="button" @click="$emit('buttonDelete')"
-				:disabled="mainConfig.delete.enableCondition === false"
-				:class="['bg-red-500 text-white px-4 py-2 rounded',
-				mainConfig.delete.enableCondition === false ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600']">
-				{{ $t('components.VModalTopButtonDelete') }}
-			</button>
-			<div v-show="mainConfig.delete.loading" 
-				class="absolute inset-0 bg-red-500 bg-opacity-90 rounded flex items-center justify-center">
-				<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-			</div>
-		</div>
-		<button @click="goBack()"
-			class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
-			{{ $t('components.VModalTopButtonBack') }}
-		</button>
 	</div>
 	<!-- Mobile -->
 	<div class="md:hidden relative z-50">
@@ -77,57 +33,19 @@
 		<!-- Menu -->
 		<div v-if="showMobileMenu"
 			class="absolute right-0 mt-2 w-48 rounded-md shadow-lg border border-gray-200">
-			<template v-for="(button, index) in optionalConfig" :key="index">
-				<div v-if="button.showCondition" class="relative">
-					<button @click="() => button.action?.()"
-						:disabled="button.enableCondition === false"
-						:class="['relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white text-gray-700 border-b border-gray-200',
-						button.bgColor ? button.bgColor : 'bg-gray-500',
-						button.enableCondition === false ? 'opacity-50 cursor-not-allowed' : (button.hoverColor ? button.hoverColor : 'hover:bg-gray-600')]">
-						{{ $t(button.label) }}
-					</button>
-					<div v-show="button.loading" 
-						:class="['absolute inset-0 bg-opacity-90 flex items-center justify-center',
-						button.bgColor ? button.bgColor : 'bg-gray-500']">
-						<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-					</div>
-				</div>
-			</template>
-			<div v-if="mainConfig.create.showCondition" class="relative">
-				<button @click="$emit('buttonCreate')"
-					:disabled="mainConfig.create.enableCondition === false"
-					:class="['relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white bg-blue-500 border-b border-gray-200',
-					mainConfig.create.enableCondition === false ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600']">
-					{{ $t('components.VModalTopButtonAdd') }}
+			<div v-for="(button, index) in visibleButtons" :key="index" class="relative">
+				<button type="button" @click="onClick(button)"
+					:disabled="button.disabled"
+					:class="['relative flex items-center justify-center w-full text-left px-4 py-2 text-sm border-b border-gray-200 last:border-b-0',
+					button.textColor, button.bgColor,
+					button.disabled ? 'opacity-50 cursor-not-allowed' : button.hoverColor]">
+					{{ $t(button.label) }}
 				</button>
-				<div v-show="mainConfig.create.loading" 
-					class="absolute inset-0 bg-blue-500 bg-opacity-90 flex items-center justify-center">
+				<div v-show="button.loading"
+					:class="['absolute inset-0 bg-opacity-90 flex items-center justify-center', button.bgColor]">
 					<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 				</div>
 			</div>
-			<div v-if="mainConfig.update.showCondition" class="relative">
-				<button @click="$emit('buttonUpdate')"
-					:disabled="mainConfig.update.enableCondition === false"
-					:class="['relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white bg-blue-500 border-b border-gray-200',
-					mainConfig.update.enableCondition === false ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600']">
-					{{ $t('components.VModalTopButtonUpdate') }}
-				</button>
-				<div v-show="mainConfig.update.loading" 
-					class="absolute inset-0 bg-blue-500 bg-opacity-90 flex items-center justify-center">
-					<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-				</div>
-			</div>
-			<button v-if="mainConfig.delete.showCondition"
-				@click="$emit('buttonDelete')"
-				:disabled="mainConfig.delete.enableCondition === false"
-				:class="['relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white bg-red-500 border-b border-gray-200',
-				mainConfig.delete.enableCondition === false ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600']">
-				{{ $t('components.VModalTopButtonDelete') }}
-			</button>
-			<button @click="goBack()"
-				class="relative flex items-center justify-center w-full text-left px-4 py-2 bg-white text-sm text-gray-700 hover:bg-gray-100">
-				{{ $t('components.VModalTopButtonBack') }}
-			</button>
 		</div>
 	</div>
 </template>
@@ -135,37 +53,128 @@
 <script lang="ts">
 import { useRouter } from "vue-router";
 import type { PropType } from "vue";
-import type { TopButton, TopButtonMainConfig } from "@/types/button";
+import type { TopButton, TopButtonType, TopButtonVisibleWhen } from "@/types/button";
+
+interface TopButtonPreset {
+	label: string;
+	bgColor: string;
+	hoverColor: string;
+	textColor: string;
+	visibleWhen: TopButtonVisibleWhen;
+	event?: "buttonCreate" | "buttonUpdate" | "buttonDelete" | "buttonRestore" | "buttonHardDelete";
+}
+
+// look and behavior of the preset buttons, any of these can be overridden by the properties of the button
+const PRESETS: Record<TopButtonType, TopButtonPreset> = {
+	create: { label: "components.VModalTopButtonAdd", bgColor: "bg-blue-500", hoverColor: "hover:bg-blue-600", textColor: "text-white", visibleWhen: "active", event: "buttonCreate" },
+	update: { label: "components.VModalTopButtonUpdate", bgColor: "bg-blue-500", hoverColor: "hover:bg-blue-600", textColor: "text-white", visibleWhen: "active", event: "buttonUpdate" },
+	delete: { label: "components.VModalTopButtonDelete", bgColor: "bg-red-500", hoverColor: "hover:bg-red-600", textColor: "text-white", visibleWhen: "active", event: "buttonDelete" },
+	restore: { label: "components.VModalTopButtonRestore", bgColor: "bg-green-500", hoverColor: "hover:bg-green-600", textColor: "text-white", visibleWhen: "deleted", event: "buttonRestore" },
+	hardDelete: { label: "components.VModalTopButtonHardDelete", bgColor: "bg-red-700", hoverColor: "hover:bg-red-800", textColor: "text-white", visibleWhen: "deleted", event: "buttonHardDelete" },
+	back: { label: "components.VModalTopButtonBack", bgColor: "bg-gray-300", hoverColor: "hover:bg-gray-400", textColor: "text-gray-800", visibleWhen: "always" },
+};
+
+const CUSTOM_PRESET: TopButtonPreset = {
+	label: "",
+	bgColor: "bg-gray-500",
+	hoverColor: "hover:bg-gray-600",
+	textColor: "text-white",
+	visibleWhen: "always",
+};
+
 export default {
 	name: "TopButtonEditElement",
 	props: {
-		mainConfig: {
-			type: Object as PropType<TopButtonMainConfig>,
-			required: true,
-			// main configuration object with properties:
-			// path: string (default "/"),
-			// create: { showCondition: boolean, enableCondition: boolean, loading: boolean } // configuration for create button
-			// update: { showCondition: boolean, enableCondition: boolean, loading: boolean } // configuration for update button
-			// delete: { showCondition: boolean, enableCondition: boolean, loading: boolean } // configuration for delete button
-			// showCondition: boolean (if true, the button is only visible if the user has the required role, this should be handled in the parent component by checking the user's roles and passing the appropriate value)
-			// loading: boolean (if true, the button shows a loading spinner) must be linked to a boolean that indicates if the function is currently processing
+		// path to go back to when there is no history
+		path: {
+			type: String,
+			default: "/",
 		},
-		optionalConfig: {
+		// buttons displayed in the given order, the position of each button is chosen by the view
+		// Example: [
+		//   { type: "create", showCondition: isNew && canEdit, loading: edition.loading },
+		//   { type: "update", showCondition: !isNew && canEdit, loading: edition.loading },
+		//   { type: "restore", showCondition: canEdit },
+		//   { type: "delete", showCondition: canEdit },
+		//   { type: "hardDelete", showCondition: canEdit },
+		//   { label: "command.TrackingStop", action: trackingStop, bgColor: "bg-orange-500", hoverColor: "hover:bg-orange-600", loading: trackingLoading },
+		//   { type: "back" },
+		// ]
+		// - type: preset (create, update, delete, restore, hardDelete, back), without type the button is a custom one and needs a label and an action
+		// - showCondition: false hides the button, this is where the permissions of the user are checked
+		// - enableCondition: false disables the button and grays it out
+		// - loading: shows a spinner on the button, must be linked to a boolean that indicates if the function is currently processing
+		// - action: called on click, without it a preset emits its event (buttonCreate, buttonUpdate, buttonDelete, buttonRestore, buttonHardDelete)
+		// - visibleWhen: active | deleted | always, the default depends on the preset (restore and hardDelete only on a soft deleted ressource, create, update and delete only on an active one)
+		buttons: {
 			type: Array as PropType<TopButton[]>,
-			required: false,
-			// array of optional buttons with properties: label, action, showCondition, enableCondition, bgColor, hoverColor, loading
-			// Example: [{ label: 'components.VModalTopButtonCustom', action: customFucntionCall, showCondition: false, enableCondition: true, bgColor: 'bg-green-500', hoverColor: 'hover:bg-green-600', loading: false }]
-			// enableCondition: boolean (if false, the button is disabled and grayed out)
-			// loading is a link to a boolean that indicates if the function is currently processing
-			default: () => [],
+			required: true,
+		},
+		// value of the soft delete field of the ressource (e.g. deleted_at), if it is not null the ressource is soft deleted
+		// leave it undefined for a ressource without soft delete
+		deletedAt: {
+			type: [String, Date] as PropType<string | Date | null>,
+			default: null,
 		},
 	},
+	emits: [
+		"buttonCreate",
+		"buttonUpdate",
+		"buttonDelete",
+		"buttonRestore",
+		"buttonHardDelete",
+	],
 	setup() {
 		// router of the tab displaying the element
 		const router = useRouter();
 		return { router };
 	},
+	data() {
+		return {
+			showMobileMenu: false,
+		};
+	},
+	computed: {
+		isSoftDeleted(): boolean {
+			return this.deletedAt !== null && this.deletedAt !== undefined;
+		},
+		visibleButtons() {
+			return this.buttons
+				.map((button) => {
+					const preset = button.type ? PRESETS[button.type] : CUSTOM_PRESET;
+					return {
+						source: button,
+						label: button.label ?? preset.label,
+						bgColor: button.bgColor ?? preset.bgColor,
+						hoverColor: button.hoverColor ?? preset.hoverColor,
+						textColor: button.textColor ?? preset.textColor,
+						visibleWhen: button.visibleWhen ?? preset.visibleWhen,
+						loading: !!button.loading,
+						disabled: button.enableCondition === false,
+					};
+				})
+				.filter((button) => {
+					if (button.source.showCondition === false) {
+						return false;
+					}
+					return button.visibleWhen === "always" || (button.visibleWhen === "deleted") === this.isSoftDeleted;
+				});
+		},
+	},
 	methods: {
+		onClick(button: { source: TopButton }) {
+			const { source } = button;
+			if (source.action) {
+				source.action();
+			} else if (source.type === "back") {
+				this.goBack();
+			} else if (source.type) {
+				const event = PRESETS[source.type].event;
+				if (event) {
+					this.$emit(event);
+				}
+			}
+		},
 		hasHistory() {
 			return !!this.router.options.history.state?.back;
 		},
@@ -177,19 +186,9 @@ export default {
 			if (this.hasHistory() && !this.previousPageIsNew()) {
 				this.router.go(-1);
 			} else {
-				this.router.push({ path: this.mainConfig.path });
+				this.router.push({ path: this.path });
 			}
 		},
-	},
-	emits: [
-		"buttonCreate",
-		"buttonUpdate",
-		"buttonDelete",
-	],
-	data() {
-		return {
-			showMobileMenu: false,
-		};
 	},
 };
 </script>

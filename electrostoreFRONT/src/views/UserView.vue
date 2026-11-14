@@ -414,17 +414,20 @@ const labelTableauPushSubscriptions = ref<TableauLabel[]>([
 
 onMounted(() => {
 	fetchAllData().then(() => checkExistingSubscription());
-});</script>
+});
+</script>
 
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('user.Title') }}</h2>
 		<TopButtonEditElement
-			:main-config="{ path: '/users',
-				create: { showCondition: isNewId(userId) && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
-				update: { showCondition: !isNewId(userId) && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
-				delete: { showCondition: !isNewId(userId) && authStore.hasPermission([1, 2]) }
-			}"
+			path="/users"
+			:buttons="[
+				{ type: 'create', showCondition: isNewId(userId) && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
+				{ type: 'update', showCondition: !isNewId(userId) && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
+				{ type: 'delete', showCondition: !isNewId(userId) && authStore.hasPermission([1, 2]) },
+				{ type: 'back' }
+			]"
 			@button-create="userSave" @button-update="userSave" @button-delete="userDeleteModalShow = true"/>
 	</div>
 	<div v-if="usersStore.users[userId] || isNewId(userId)" class="w-full">

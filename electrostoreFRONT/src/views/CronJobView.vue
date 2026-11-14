@@ -184,11 +184,13 @@ useTabGuard(cronJobsStore, () => cronJobId.value, "cronJobEdition", "cronJobs");
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('cronJob.Title') }}</h2>
 		<TopButtonEditElement
-			:main-config="{ path: '/cronjobs',
-				create: { showCondition: isNewId(cronJobId) && authStore.hasPermission([2]), loading: cronJobsStore.cronJobEdition[cronJobId]?.loading },
-				update: { showCondition: !isNewId(cronJobId) && authStore.hasPermission([2]), loading: cronJobsStore.cronJobEdition[cronJobId]?.loading },
-				delete: { showCondition: !isNewId(cronJobId) && authStore.hasPermission([2]) }
-			}"
+			path="/cronjobs"
+			:buttons="[
+				{ type: 'create', showCondition: isNewId(cronJobId) && authStore.hasPermission([2]), loading: cronJobsStore.cronJobEdition[cronJobId]?.loading },
+				{ type: 'update', showCondition: !isNewId(cronJobId) && authStore.hasPermission([2]), loading: cronJobsStore.cronJobEdition[cronJobId]?.loading },
+				{ type: 'delete', showCondition: !isNewId(cronJobId) && authStore.hasPermission([2]) },
+				{ type: 'back' }
+			]"
 			@button-create="cronJobSave" @button-update="cronJobSave" @button-delete="cronJobDeleteModalShow = true"/>
 	</div>
 	<div v-if="cronJobsStore.cronJobs[cronJobId] || isNewId(cronJobId)" class="w-full">
