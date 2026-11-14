@@ -215,7 +215,6 @@ export default {
 			nextOffset: 0,
 			hasMore: true,
 			isInitializing: true,
-			// number of fetches of this component in flight: the loading state belongs to the component, not to the store it reads from
 			pendingFetches: 0,
 		};
 	},
