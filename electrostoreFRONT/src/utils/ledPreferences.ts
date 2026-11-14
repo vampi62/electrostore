@@ -1,6 +1,7 @@
 export type LedShowParams = { color: string; timeshow: number; animation: number };
 export type LedPreferences = { add: LedShowParams; remove: LedShowParams };
 export type LedOperation = keyof LedPreferences;
+type UserId = number | string | undefined;
 
 export const LED_ANIMATIONS = [1, 2, 3, 4, 5];
 
@@ -10,9 +11,9 @@ const defaultPreferences = (): LedPreferences => ({
 });
 
 // preferences are stored per user in the localStorage of the browser
-const storageKey = (idUser: number | string | undefined) => `ledPreferences_${idUser ?? "anonymous"}`;
+const storageKey = (idUser: UserId) => `ledPreferences_${idUser ?? "anonymous"}`;
 
-export function loadLedPreferences(idUser: number | string | undefined): LedPreferences {
+export function loadLedPreferences(idUser: UserId): LedPreferences {
 	const defaults = defaultPreferences();
 	try {
 		const saved = JSON.parse(localStorage.getItem(storageKey(idUser)) ?? "{}") ?? {};
@@ -22,7 +23,7 @@ export function loadLedPreferences(idUser: number | string | undefined): LedPref
 	}
 }
 
-export function saveLedPreferences(idUser: number | string | undefined, preferences: LedPreferences) {
+export function saveLedPreferences(idUser: UserId, preferences: LedPreferences) {
 	localStorage.setItem(storageKey(idUser), JSON.stringify(preferences));
 }
 

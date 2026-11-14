@@ -257,7 +257,7 @@ const pushSupported = typeof window !== "undefined" && "PushManager" in window &
 const pushSubscriptionId = ref<number | null>(null); // id de l'abonnement actuel dans l'API
 const pushLoading = ref(false);
 const pushDeviceName = ref("");
-const notificationPermission = ref(typeof Notification !== "undefined" ? Notification.permission : "default");
+const notificationPermission = ref(typeof Notification === "undefined" ? "default" : Notification.permission);
 
 function urlBase64ToUint8Array(base64String: string) {
 	const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
