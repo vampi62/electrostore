@@ -296,8 +296,8 @@ useTabGuard(projectTagsStore, () => projectTagId.value, "projectTagEdition", "pr
 				:store-data="[projectsStore.projects, projectsTagsStore.projectProjectTagsByProjectTag(projectTagId)]"
 				:store-ready="projectsTagsStore.projectProjectTagReadyByProjectTag(projectTagId)"
 				:filters="filterProject"
-				:fetch-function="!isNewId(projectTagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectsStore.getProjectByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:total-count="projectsStore.projectsCount(filterProject)"
+				:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectsStore.getProjectByInterval(limit, offset, expand, filter, sort, clear)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

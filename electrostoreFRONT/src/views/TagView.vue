@@ -617,8 +617,8 @@ useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags", [
 				:store-data="[itemsStore.items, itemsTagsStore.itemTagsByTag(tagId)]"
 				:store-ready="itemsTagsStore.itemTagReadyByTag(tagId)"
 				:filters="filterItem"
-				:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:total-count="itemsStore.itemsCount(filterItem)"
+				:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
@@ -641,8 +641,8 @@ useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags", [
 				:store-data="[storesStore.stores, storesTagsStore.storeTagsByTag(tagId)]"
 				:store-ready="storesTagsStore.storeTagReadyByTag(tagId)"
 				:filters="filterStore"
-				:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => storesStore.getStoreByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:total-count="storesStore.storesCount(filterStore)"
+				:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => storesStore.getStoreByInterval(limit, offset, expand, filter, sort, clear)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
@@ -665,8 +665,8 @@ useTabGuard(tagsStore, () => tagId.value, "tagEdition", "tags", [
 				:store-data="[equipementsStore.equipements, equipementsTagsStore.equipementTagsByTag(tagId)]"
 				:store-ready="equipementsTagsStore.equipementTagReadyByTag(tagId)"
 				:filters="filterEquipement"
-				:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:total-count="equipementsStore.equipementsCount(filterEquipement)"
+				:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
