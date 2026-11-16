@@ -233,7 +233,7 @@ const labelTableauModalProject = ref<TableauLabel[]>([
 	] },
 ]);
 useViewScroll(true);
-useTabGuard(projectTagsStore, () => projectTagId.value, "projectTagEdition", "projectTags", [
+useTabGuard(projectTagsStore, () => projectTagId.value, "projectTagEdition", [
 	{ key: "projectTagProjectReady", get: (id) => projectsTagsStore.projectProjectTagReadyByProjectTag(id), set: (id, entries) => projectsTagsStore.setProjectProjectTagStagedSlice("ready", { id_project_tag: id }, entries) },
 ]);
 </script>

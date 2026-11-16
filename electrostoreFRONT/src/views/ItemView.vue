@@ -550,7 +550,7 @@ const labelTableauProject = ref<TableauLabel[]>([
 	{ label: "item.ProjectQuantity", sortable: true, key: "quantity_project_item", valueKey: "quantity_project_item", type: "number" },
 ]);
 useViewScroll(true);
-useTabGuard(itemsStore, () => itemId.value, "itemEdition", "items", [
+useTabGuard(itemsStore, () => itemId.value, "itemEdition", [
 	{ key: "documentReady", get: (id) => itemDocumentsStore.itemDocumentReadyByItem(id), set: (id, entries) => itemDocumentsStore.setItemDocumentStagedSlice("ready", { id_item: id }, entries) },
 	{ key: "itemBoxReady", get: (id) => itemBoxsStore.itemBoxReadyByItem(id), set: (id, entries) => itemBoxsStore.setItemBoxStagedSlice("ready", { id_item: id }, entries) },
 	{ key: "itemTagReady", get: (id) => itemTagsStore.itemTagReadyByItem(id), set: (id, entries) => itemTagsStore.setItemTagStagedSlice("ready", { id_item: id }, entries) },

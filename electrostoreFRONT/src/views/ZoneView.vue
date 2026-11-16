@@ -187,7 +187,7 @@ const labelTableauStore = ref<TableauLabel[]>([
 	{ label: "zone.StoreYMax", sortable: false, key: "ymax_store", valueKey: "ymax_store", type: "number" },
 ]);
 useViewScroll(true);
-useTabGuard(zonesStore, () => zoneId.value, "zoneEdition", "zones");
+useTabGuard(zonesStore, () => zoneId.value, "zoneEdition");
 </script>
 
 <template>

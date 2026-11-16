@@ -509,7 +509,7 @@ const labelTableauModalTag = ref<TableauLabel[]>([
 	] },
 ]);
 useViewScroll(true);
-useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores", [
+useTabGuard(storesStore, () => storeId.value, "storeEdition", [
 	{ key: "storeTagReady", get: (id) => storesTagsStore.storeTagReadyByStore(id), set: (id, entries) => storesTagsStore.setStoreTagStagedSlice("ready", { id_store: id }, entries) },
 ]);
 </script>

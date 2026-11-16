@@ -238,7 +238,7 @@ const labelTableauSession = ref<TableauLabel[]>([
 	] },
 ]);
 useViewScroll(true);
-useTabGuard(usersStore, () => userId.value, "userEdition", "users");
+useTabGuard(usersStore, () => userId.value, "userEdition");
 
 // --- LED preferences (stored in the browser, only editable on the own profile) ---
 const ledPreferences = ref(loadLedPreferences(authStore.user?.id_user));

@@ -719,7 +719,7 @@ const labelTableauModalItem = ref<TableauLabel[]>([
 	] },
 ]);
 useViewScroll(true);
-useTabGuard(commandsStore, () => commandId.value, "commandEdition", "commands", [
+useTabGuard(commandsStore, () => commandId.value, "commandEdition", [
 	{ key: "documentReady", get: (id) => commandDocumentsStore.commandDocumentReadyByCommand(id), set: (id, entries) => commandDocumentsStore.setCommandDocumentStagedSlice("ready", { id_command: id }, entries) },
 	{ key: "itemReady", get: (id) => itemCommandsStore.itemCommandReadyByCommand(id), set: (id, entries) => itemCommandsStore.setItemCommandStagedSlice("ready", { id_command: id }, entries) },
 ]);

@@ -177,7 +177,7 @@ const labelForm = [
 	{ key: "last_error_cronjob", label: "cronJob.LastError", type: "computed", value: cronJobLastError, showCondition: "edition?.last_error_cronjob" },
 ];
 useViewScroll(true);
-useTabGuard(cronJobsStore, () => cronJobId.value, "cronJobEdition", "cronJobs");
+useTabGuard(cronJobsStore, () => cronJobId.value, "cronJobEdition");
 </script>
 
 <template>
