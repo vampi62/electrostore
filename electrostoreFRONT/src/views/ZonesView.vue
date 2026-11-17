@@ -6,7 +6,7 @@ import { useZonesStore } from "@/stores";
 
 import type { FilterLabel } from "@/types/filter";
 import type { TableauLabel, TableauMeta } from "@/types/tableau";
-import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql"; // NOSONAR
 const zonesStore = useZonesStore();
 
 const filter = ref<FilterLabel[]>([

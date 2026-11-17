@@ -26,7 +26,8 @@ export interface AiFileLike {
 }
 
 export function fileExtension(name: string): string {
-	return name.includes(".") ? "." + name.split(".").pop()!.toLowerCase() : "";
+	const dot = name.lastIndexOf(".");
+	return dot === -1 ? "" : name.slice(dot).toLowerCase();
 }
 
 export function checkAiFile(file: AiFileLike, limits: AiFileLimits): AiFileCheck {

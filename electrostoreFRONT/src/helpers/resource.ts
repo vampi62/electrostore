@@ -68,7 +68,7 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 
 	function matches(key: string, part: Parts): boolean {
 		const parts = toParts(key);
-		return (Object.entries(part) as Array<[string, string | undefined]>).every(([field, value]) => value === undefined || value === null || parts[field] === String(value));
+		return Object.entries(part).every(([field, value]) => value === undefined || value === null || parts[field] === String(value));
 	}
 
 	// Keeps the records whose key matches every given part
@@ -80,7 +80,7 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 	function inScope(records: Record<string, unknown> | undefined, scope: Parts): string[] {
 		return Object.entries(records ?? {}).filter(([key, record]) => {
 			const parts = toParts(key);
-			return (Object.entries(scope) as Array<[string, string | undefined]>).every(([field, value]) => {
+			return Object.entries(scope).every(([field, value]) => {
 				if (value === undefined || value === null || routeOnlyFields.includes(field)) {
 					return true;
 				}

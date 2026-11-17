@@ -15,9 +15,9 @@ import { useConfigsStore, useStoresStore, useStoresTagsStore, useStoresBoxsStore
 import type { FilterLabel } from "@/types/filter";
 import type { FormLabel } from "@/types/form";
 import type { TableauLabel, TableauMeta, TableauRowData } from "@/types/tableau";
-import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql"; // NOSONAR
 import type { components } from "@/types/api";
-import type { ShowParams } from "@/types/store";
+import type { ShowParams } from "@/types/store"; // NOSONAR
 
 type CreateStoreDto = components["schemas"]["CreateStoreDto"];
 type UpdateStoreDto = components["schemas"]["UpdateStoreDto"];

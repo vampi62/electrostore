@@ -15,7 +15,7 @@ import { useConfigsStore, useUsersStore, useCommandsCommentsStore, useProjectsCo
 import type { FilterLabel } from "@/types/filter";
 import type { FormLabel } from "@/types/form";
 import type { TableauLabel, TableauRowData } from "@/types/tableau";
-import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql"; // NOSONAR
 import type { components } from "@/types/api";
 
 type CreateUserDto = components["schemas"]["CreateUserDto"];
@@ -253,16 +253,16 @@ const ledPreferencesSave = () => {
 };
 
 // --- Push Notifications ---
-const pushSupported = typeof window !== "undefined" && "PushManager" in window && "serviceWorker" in navigator && typeof Notification !== "undefined";
+const pushSupported = typeof globalThis !== "undefined" && "PushManager" in globalThis && "serviceWorker" in navigator && typeof Notification !== "undefined";
 const pushSubscriptionId = ref<number | null>(null); // id de l'abonnement actuel dans l'API
 const pushLoading = ref(false);
 const pushDeviceName = ref("");
-const notificationPermission = ref(typeof Notification !== "undefined" ? Notification.permission : "default");
+const notificationPermission = ref(typeof Notification === "undefined" ? "default" : Notification.permission);
 
 function urlBase64ToUint8Array(base64String: string) {
 	const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
 	const base64 = (base64String + padding).replaceAll("-","+").replaceAll("_", "/");
-	const rawData = window.atob(base64);
+	const rawData = globalThis.atob(base64);
 	const outputArray = new Uint8Array(rawData.length);
 	for (let i = 0; i < rawData.length; ++i) {
 		outputArray[i] = rawData.codePointAt(i) || 0;
@@ -292,7 +292,7 @@ async function checkExistingSubscription() {
 		const subs = userPushStore.userPushSubscriptionsByUser(userId.value);
 		const match = Object.values(subs).find((s) => s.endpoint === sub.endpoint);
 		pushSubscriptionId.value = match?.id_user_push_subscription ?? null;
-	} catch (e) {
+	} catch {
 		pushSubscriptionId.value = null;
 	}
 }
@@ -335,6 +335,7 @@ async function subscribePush() {
 		addNotification({ message: t("user.PushSubscribed"), type: "success" });
 	} catch (e) {
 		addNotification({ message: t("user.PushSubscribeError"), type: "error" });
+		addNotification({ message: e, type: "error" });
 	} finally {
 		pushLoading.value = false;
 	}
@@ -356,6 +357,7 @@ async function unsubscribePush() {
 		pushSubscriptionId.value = null;
 	} catch (e) {
 		addNotification({ message: t("user.PushDeleteError"), type: "error" });
+		addNotification({ message: e, type: "error" });
 	} finally {
 		pushLoading.value = false;
 	}
@@ -367,6 +369,7 @@ const sendTestNotification = async() => {
 		addNotification({ message: t("user.PushTestSent"), type: "success" });
 	} catch (e) {
 		addNotification({ message: t("user.PushTestError"), type: "error" });
+		addNotification({ message: e, type: "error" });
 	}
 };
 const sendTestEmailNotification = async() => {
@@ -375,6 +378,7 @@ const sendTestEmailNotification = async() => {
 		addNotification({ message: t("user.PushTestSent"), type: "success" });
 	} catch (e) {
 		addNotification({ message: t("user.PushTestError"), type: "error" });
+		addNotification({ message: e, type: "error" });
 	}
 };
 
@@ -394,6 +398,7 @@ const deletePushSubscriptionFromTable = async(subscriptionId: number) => {
 		addNotification({ message: t("user.PushDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: t("user.PushDeleteError"), type: "error" });
+		addNotification({ message: e, type: "error" });
 	}
 };
 
@@ -412,8 +417,8 @@ const labelTableauPushSubscriptions = ref<TableauLabel[]>([
 	] },
 ]);
 
-onMounted(() => {
-	fetchAllData().then(() => checkExistingSubscription());
+onMounted(async() => {
+	await fetchAllData().then(() => checkExistingSubscription());
 });
 </script>
 

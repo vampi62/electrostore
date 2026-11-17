@@ -42,10 +42,10 @@ export interface SpeechRecognitionStatic {
 export type LocalSpeechStatus = "available" | "downloadable" | "downloading" | "unavailable" | "unknown";
 
 export function getSpeechRecognition(): SpeechRecognitionStatic | null {
-	if (typeof window === "undefined") {
+	if (typeof globalThis === "undefined") {
 		return null;
 	}
-	const scope = window as unknown as { SpeechRecognition?: SpeechRecognitionStatic; webkitSpeechRecognition?: SpeechRecognitionStatic };
+	const scope = globalThis as unknown as { SpeechRecognition?: SpeechRecognitionStatic; webkitSpeechRecognition?: SpeechRecognitionStatic };
 	return scope.SpeechRecognition ?? scope.webkitSpeechRecognition ?? null;
 }
 

@@ -42,7 +42,7 @@ watch((): [boolean, string] => [isTabsView.value, route.fullPath], ([tabsView, f
 	}
 }, { immediate: true });
 // the unsaved changes of the tabs are kept in a draft when the page is closed (or hidden, the only reliable event on mobile)
-window.addEventListener("pagehide", () => tabsStore.saveDrafts());
+globalThis.addEventListener("pagehide", () => tabsStore.saveDrafts());
 document.addEventListener("visibilitychange", () => {
 	if (document.visibilityState === "hidden") {
 		tabsStore.saveDrafts();

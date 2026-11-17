@@ -14,7 +14,7 @@ import { useConfigsStore, useProjectsStore, useProjectsCommentsStore, useProject
 import type { FilterLabel } from "@/types/filter";
 import type { FormLabel } from "@/types/form";
 import type { TableauLabel, TableauRowData } from "@/types/tableau";
-import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql"; // NOSONAR
 
 const { addNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 const { t } = useI18n();
@@ -670,9 +670,9 @@ useTabGuard(projectsStore, () => projectId.value, "projectEdition", "projects", 
 				:store-edition="itemProjectsStore.itemProjectEditionByProject(projectId)"
 				:store-ready="itemProjectsStore.itemProjectReadyByProject(projectId)"
 				:filters="filterItem"
-				:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:schema="schemaItem"
 				:total-count="itemsStore.itemsCount(filterItem)"
+				:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

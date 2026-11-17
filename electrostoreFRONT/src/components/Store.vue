@@ -152,7 +152,9 @@
 			</div>
 		</template>
 		<template v-else>
-			<!-- TODO : add loading animation -->
+			<div class="flex justify-center items-center h-full">
+				<span>{{ $t('store.Loading') }}</span>
+			</div>
 		</template>
 	</div>
 </template>
@@ -504,12 +506,12 @@ export default {
 				return;
 			}
 			const gridBoxPos = grid.getBoundingClientRect();
-			const left = gridBoxPos.left + window.scrollX;
-			const top = gridBoxPos.top + window.scrollY;
+			const left = gridBoxPos.left + globalThis.scrollX;
+			const top = gridBoxPos.top + globalThis.scrollY;
 			this.gridSize.cellSizeX = Math.floor(gridBoxPos.width / this.storeData.xlength_store);
 			this.gridSize.cellSizeY = Math.floor(gridBoxPos.height / this.storeData.ylength_store);
-			const x = Math.floor((event.clientX - left + window.scrollX) / this.gridSize.cellSizeX);
-			const y = this.storeData.ylength_store - Math.floor((event.clientY - top + window.scrollY) / this.gridSize.cellSizeY) - 1;
+			const x = Math.floor((event.clientX - left + globalThis.scrollX) / this.gridSize.cellSizeX);
+			const y = this.storeData.ylength_store - Math.floor((event.clientY - top + globalThis.scrollY) / this.gridSize.cellSizeY) - 1;
 			// if a value is out of the grid, don't update the mousePos
 			if (x < 0 || y < 0 || x >= this.storeData.xlength_store || y >= this.storeData.ylength_store) {
 				return;

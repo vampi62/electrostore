@@ -15,7 +15,7 @@ onMounted(async() => {
 		error.value = err;
 		loading.value = false;
 		setTimeout(() => {
-			window.location.href = "/login";
+			globalThis.location.href = "/login";
 		}, 3000);
 	}
 });

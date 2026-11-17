@@ -372,8 +372,8 @@ export default {
 
 			const rect = button.getBoundingClientRect();
 			this.dropdownPositions[key] = {
-				top: rect.bottom + window.scrollY,
-				left: rect.left + window.scrollX,
+				top: rect.bottom + globalThis.scrollY,
+				left: rect.left + globalThis.scrollX,
 				width: rect.width,
 			};
 		},
@@ -496,8 +496,8 @@ export default {
 			}
 			const rect = inputEl.getBoundingClientRect();
 			this.fetchSelectState[key].position = {
-				top: rect.bottom + window.scrollY,
-				left: rect.left + window.scrollX,
+				top: rect.bottom + globalThis.scrollY,
+				left: rect.left + globalThis.scrollX,
 				width: rect.width,
 			};
 		},
@@ -603,13 +603,13 @@ export default {
 		};
 	},
 	mounted() {
-		window.addEventListener("scroll", this.handleScrollResize, true);
-		window.addEventListener("resize", this.handleScrollResize);
+		globalThis.addEventListener("scroll", this.handleScrollResize, true);
+		globalThis.addEventListener("resize", this.handleScrollResize);
 		document.addEventListener("click", this.handleClickOutside);
 	},
 	unmounted() {
-		window.removeEventListener("scroll", this.handleScrollResize, true);
-		window.removeEventListener("resize", this.handleScrollResize);
+		globalThis.removeEventListener("scroll", this.handleScrollResize, true);
+		globalThis.removeEventListener("resize", this.handleScrollResize);
 		document.removeEventListener("click", this.handleClickOutside);
 	},
 	directives: {},

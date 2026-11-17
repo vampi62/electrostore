@@ -259,8 +259,8 @@ export default {
 	methods: {
 		showHistory(step: RoadMapStep, index: number) {
 			this.hoveredStep = index;
-			window.addEventListener("scroll", this.updatePosition, true);
-			window.addEventListener("resize", this.updatePosition);
+			globalThis.addEventListener("scroll", this.updatePosition, true);
+			globalThis.addEventListener("resize", this.updatePosition);
 			this.$nextTick(() => {
 				this.updatePosition();
 			});
@@ -290,8 +290,8 @@ export default {
 				return;
 			}
 			this.hoveredStep = null;
-			window.removeEventListener("scroll", this.updatePosition, true);
-			window.removeEventListener("resize", this.updatePosition);
+			globalThis.removeEventListener("scroll", this.updatePosition, true);
+			globalThis.removeEventListener("resize", this.updatePosition);
 		},
 		isPointInsideElementWithMargin(targetX: number | undefined, targetY: number | undefined, element: HTMLElement | null, marginTop = 0, marginBottom = 0, marginLeft = 0, marginRight = 0) {
 			if (!element) {
@@ -330,24 +330,24 @@ export default {
 
 				switch (this.tooltipDirection) {
 				case "bottom":
-					top = rect.bottom + window.scrollY + gap;
-					left = rect.left + window.scrollX + rect.width / 2 - tipRect.width / 2;
+					top = rect.bottom + globalThis.scrollY + gap;
+					left = rect.left + globalThis.scrollX + rect.width / 2 - tipRect.width / 2;
 					break;
 				case "top":
-					top = rect.top + window.scrollY - tipRect.height - gap;
-					left = rect.left + window.scrollX + rect.width / 2 - tipRect.width / 2;
+					top = rect.top + globalThis.scrollY - tipRect.height - gap;
+					left = rect.left + globalThis.scrollX + rect.width / 2 - tipRect.width / 2;
 					break;
 				case "left":
-					top = rect.top + window.scrollY + rect.height / 2 - tipRect.height / 2;
-					left = rect.left + window.scrollX - tipRect.width - gap;
+					top = rect.top + globalThis.scrollY + rect.height / 2 - tipRect.height / 2;
+					left = rect.left + globalThis.scrollX - tipRect.width - gap;
 					break;
 				case "right":
-					top = rect.top + window.scrollY + rect.height / 2 - tipRect.height / 2;
-					left = rect.right + window.scrollX + gap;
+					top = rect.top + globalThis.scrollY + rect.height / 2 - tipRect.height / 2;
+					left = rect.right + globalThis.scrollX + gap;
 					break;
 				default:
-					top = rect.bottom + window.scrollY + gap;
-					left = rect.left + window.scrollX;
+					top = rect.bottom + globalThis.scrollY + gap;
+					left = rect.left + globalThis.scrollX;
 				}
 
 				listElement.style.top = `${top}px`;
