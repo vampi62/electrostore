@@ -28,7 +28,7 @@ const schema = Yup.object().shape({
 function onSubmit(values: Record<string, unknown>, { setErrors }: { setErrors: (errors: Record<string, string | undefined>) => void }) {
 	const { email, firstName, lastName, password } = values as Record<string, string>;
 	return authStore.register(email, password, firstName, lastName)
-		.catch((errors) => setErrors({ apiError: errors }))
+		.catch((error) => setErrors({ apiError: error }))
 		.then(() => setErrors({ apiConfirm: t("common.VRegisterSuccess") }));
 }
 </script>

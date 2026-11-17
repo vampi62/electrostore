@@ -292,7 +292,7 @@ async function checkExistingSubscription() {
 		const subs = userPushStore.userPushSubscriptionsByUser(userId.value);
 		const match = Object.values(subs).find((s) => s.endpoint === sub.endpoint);
 		pushSubscriptionId.value = match?.id_user_push_subscription ?? null;
-	} catch (e) {
+	} catch {
 		pushSubscriptionId.value = null;
 	}
 }
@@ -356,6 +356,7 @@ async function unsubscribePush() {
 		pushSubscriptionId.value = null;
 	} catch (e) {
 		addNotification({ message: t("user.PushDeleteError"), type: "error" });
+		addNotification({ message: e, type: "error" });
 	} finally {
 		pushLoading.value = false;
 	}
@@ -367,6 +368,7 @@ const sendTestNotification = async() => {
 		addNotification({ message: t("user.PushTestSent"), type: "success" });
 	} catch (e) {
 		addNotification({ message: t("user.PushTestError"), type: "error" });
+		addNotification({ message: e, type: "error" });
 	}
 };
 const sendTestEmailNotification = async() => {
@@ -375,6 +377,7 @@ const sendTestEmailNotification = async() => {
 		addNotification({ message: t("user.PushTestSent"), type: "success" });
 	} catch (e) {
 		addNotification({ message: t("user.PushTestError"), type: "error" });
+		addNotification({ message: e, type: "error" });
 	}
 };
 
@@ -394,6 +397,7 @@ const deletePushSubscriptionFromTable = async(subscriptionId: number) => {
 		addNotification({ message: t("user.PushDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: t("user.PushDeleteError"), type: "error" });
+		addNotification({ message: e, type: "error" });
 	}
 };
 
@@ -412,8 +416,8 @@ const labelTableauPushSubscriptions = ref<TableauLabel[]>([
 	] },
 ]);
 
-onMounted(() => {
-	fetchAllData().then(() => checkExistingSubscription());
+onMounted(async() => {
+	await fetchAllData().then(() => checkExistingSubscription());
 });
 </script>
 
