@@ -288,8 +288,8 @@ export default {
 			this.chosen = false;
 			// the whole list of options is displayed, the filter is cleared if the user leaves without choosing an option
 			this.query = "";
-			window.addEventListener("scroll", this.updatePosition, true);
-			window.addEventListener("resize", this.updatePosition);
+			globalThis.addEventListener("scroll", this.updatePosition, true);
+			globalThis.addEventListener("resize", this.updatePosition);
 			void nextTick(() => this.updatePosition());
 		},
 		onInput() {
@@ -301,8 +301,8 @@ export default {
 		},
 		onBlur() {
 			this.isOpen = false;
-			window.removeEventListener("scroll", this.updatePosition, true);
-			window.removeEventListener("resize", this.updatePosition);
+			globalThis.removeEventListener("scroll", this.updatePosition, true);
+			globalThis.removeEventListener("resize", this.updatePosition);
 			this.commitQuery();
 		},
 		onEnter(event: Event) {
@@ -391,8 +391,8 @@ export default {
 				return;
 			}
 			const rect = box.getBoundingClientRect();
-			list.style.top = `${rect.bottom + window.scrollY}px`;
-			list.style.left = `${rect.left + window.scrollX}px`;
+			list.style.top = `${rect.bottom + globalThis.scrollY}px`;
+			list.style.left = `${rect.left + globalThis.scrollX}px`;
 			list.style.width = `${rect.width}px`;
 		},
 		async refetchData() {

@@ -112,12 +112,12 @@ export default {
 			}
 		},
 		async forceReload() {
-			if ("caches" in window) {
+			if ("caches" in globalThis) {
 				const names = await caches.keys();
 				await Promise.all(names.map((name) => caches.delete(name)));
 			}
 			sessionStorage.removeItem(this._sessionStateKey());
-			window.location.reload();
+			globalThis.location.reload();
 		},
 	},
 };

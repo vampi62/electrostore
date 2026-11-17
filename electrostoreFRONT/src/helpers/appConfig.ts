@@ -7,12 +7,10 @@ interface AppConfig {
 }
 
 declare global {
-	interface Window {
-		__APP_CONFIG__?: AppConfig;
-	}
+	var __APP_CONFIG__: AppConfig | undefined;
 }
 
-const runtime: AppConfig = (typeof window !== "undefined" && window.__APP_CONFIG__) || {};
+const runtime: AppConfig = (typeof globalThis !== "undefined" && globalThis.__APP_CONFIG__) || {};
 
 export const API_URL: string = runtime.API_URL || import.meta.env.VITE_API_URL;
 

@@ -96,11 +96,11 @@ export const useAuthStore = defineStore("auth",{
 			localStorage.setItem("selectedProvider", JSON.stringify(provider));
 			// open small window to the url
 			if (request.auth_url) {
-				window.open(request.auth_url, "SSO Login", "width=600,height=600");
+				globalThis.open(request.auth_url, "SSO Login", "width=600,height=600");
 			}
 		},
 		async handleSSOCallback() {
-			const params = new URLSearchParams(window.location.search);
+			const params = new URLSearchParams(globalThis.location.search);
 			const token = params.get("code");
 			const state = params.get("state");
 			if (token && state) {
@@ -116,8 +116,8 @@ export const useAuthStore = defineStore("auth",{
 				);
 				localStorage.removeItem("selectedProvider");
 				// close small window and refresh parent window
-				window.opener.location.reload();
-				window.close();
+				globalThis.opener.location.reload();
+				globalThis.close();
 			}
 		},
 		async register(email: string, password: string, prenom: string, nom: string) {

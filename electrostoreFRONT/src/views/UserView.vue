@@ -253,7 +253,7 @@ const ledPreferencesSave = () => {
 };
 
 // --- Push Notifications ---
-const pushSupported = typeof window !== "undefined" && "PushManager" in window && "serviceWorker" in navigator && typeof Notification !== "undefined";
+const pushSupported = typeof globalThis !== "undefined" && "PushManager" in globalThis && "serviceWorker" in navigator && typeof Notification !== "undefined";
 const pushSubscriptionId = ref<number | null>(null); // id de l'abonnement actuel dans l'API
 const pushLoading = ref(false);
 const pushDeviceName = ref("");
@@ -262,7 +262,7 @@ const notificationPermission = ref(typeof Notification === "undefined" ? "defaul
 function urlBase64ToUint8Array(base64String: string) {
 	const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
 	const base64 = (base64String + padding).replaceAll("-","+").replaceAll("_", "/");
-	const rawData = window.atob(base64);
+	const rawData = globalThis.atob(base64);
 	const outputArray = new Uint8Array(rawData.length);
 	for (let i = 0; i < rawData.length; ++i) {
 		outputArray[i] = rawData.codePointAt(i) || 0;

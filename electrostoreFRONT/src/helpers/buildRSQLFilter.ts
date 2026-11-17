@@ -7,7 +7,8 @@ function quote(value: RSQLValue): string {
 	if (!/[;,()'"]|^\s|\s$/.test(text)) {
 		return text;
 	}
-	return `'${text.replaceAll("\\", "\\\\").replaceAll("'", "\\'")}'`;
+	const escaped = text.replaceAll(/[\\']/g, String.raw`\$&`);
+	return `'${escaped}'`;
 }
 
 // RSQL conditions of a filter: none if it has no value, one per value if every value must match.

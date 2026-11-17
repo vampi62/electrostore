@@ -28,7 +28,7 @@ export function viewFile(fileData: Blob | string, fileInfo: FileInfo) {
 		url = fileData;
 	}
 	if (["pdf", "png", "jpg", "jpeg", "gif", "bmp"].includes(getExtension(fileInfo["keyType"]))) {
-		window.open(url, "_blank");
+		globalThis.open(url, "_blank");
 	} else if (["doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt"].includes(getExtension(fileInfo["keyType"]))) {
 		const a = document.createElement("a");
 		a.href = url;

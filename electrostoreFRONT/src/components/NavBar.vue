@@ -221,12 +221,12 @@ export default {
 	},
 	emits: ["update:reduceLeftSideBar", "showAboutModal", "showAiModal"],
 	mounted() {
-		window.addEventListener("beforeinstallprompt", this.onBeforeInstallPrompt);
-		window.addEventListener("appinstalled", this.onAppInstalled);
+		globalThis.addEventListener("beforeinstallprompt", this.onBeforeInstallPrompt);
+		globalThis.addEventListener("appinstalled", this.onAppInstalled);
 	},
 	beforeUnmount() {
-		window.removeEventListener("beforeinstallprompt", this.onBeforeInstallPrompt);
-		window.removeEventListener("appinstalled", this.onAppInstalled);
+		globalThis.removeEventListener("beforeinstallprompt", this.onBeforeInstallPrompt);
+		globalThis.removeEventListener("appinstalled", this.onAppInstalled);
 	},
 	methods: {
 		// bare eval() in a template resolves to the (nonexistent) this.eval, not the global eval — must go through a method

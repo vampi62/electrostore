@@ -57,7 +57,7 @@ export function handleRouterError(error: Error, to: RouteLocationNormalized) {
 		const now = Date.now();
 		if (!lastReload || (now - Number.parseInt(lastReload)) > 10000) {
 			sessionStorage.setItem("lastChunkReload", now.toString());
-			window.location.href = to.fullPath;
+			globalThis.location.href = to.fullPath;
 		} else {
 			console.error("Persistent error after reload, check your connection or contact support.");
 		}
