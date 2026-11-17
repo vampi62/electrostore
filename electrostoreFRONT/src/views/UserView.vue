@@ -335,6 +335,7 @@ async function subscribePush() {
 		addNotification({ message: t("user.PushSubscribed"), type: "success" });
 	} catch (e) {
 		addNotification({ message: t("user.PushSubscribeError"), type: "error" });
+		addNotification({ message: e, type: "error" });
 	} finally {
 		pushLoading.value = false;
 	}
