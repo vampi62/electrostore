@@ -13,7 +13,7 @@ import { useConfigsStore, useItemsStore, useItemsDocumentsStore, useItemsBoxsSto
 
 import type { FilterLabel } from "@/types/filter";
 import type { TableauLabel, TableauRowData } from "@/types/tableau";
-import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql"; // NOSONAR
 
 const { addNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 const { t } = useI18n();

@@ -15,9 +15,9 @@ import { useConfigsStore, useStoresStore, useStoresTagsStore, useStoresBoxsStore
 import type { FilterLabel } from "@/types/filter";
 import type { FormLabel } from "@/types/form";
 import type { TableauLabel, TableauMeta, TableauRowData } from "@/types/tableau";
-import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql"; // NOSONAR
 import type { components } from "@/types/api";
-import type { ShowParams } from "@/types/store";
+import type { ShowParams } from "@/types/store"; // NOSONAR
 
 type CreateStoreDto = components["schemas"]["CreateStoreDto"];
 type UpdateStoreDto = components["schemas"]["UpdateStoreDto"];
@@ -509,8 +509,10 @@ const labelTableauModalTag = ref<TableauLabel[]>([
 	] },
 ]);
 useViewScroll(true);
-useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores", [
+useTabGuard(storesStore, () => storeId.value, "storeEdition", [
 	{ key: "storeTagReady", get: (id) => storesTagsStore.storeTagReadyByStore(id), set: (id, entries) => storesTagsStore.setStoreTagStagedSlice("ready", { id_store: id }, entries) },
+	{ key: "ledEdition", get: (id) => storesLedsStore.ledEditionByStore(id), set: (id, entries) => storesLedsStore.setLedStagedSlice("edition", { id_store: id }, entries) },
+	{ key: "boxEdition", get: (id) => storesBoxsStore.boxEditionByStore(id), set: (id, entries) => storesBoxsStore.setBoxStagedSlice("edition", { id_store: id }, entries) },
 ]);
 </script>
 <template>
@@ -615,9 +617,9 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores", [
 				:store-data="[itemsStore.items, itemBoxsStore.itemBoxsByBox(boxId), itemsStore.thumbnailsURL]"
 				:store-edition="itemBoxsStore.itemBoxEditionByBox(boxId)"
 				:filters="filterItem"
+				:fetch-function="!isNewId(storeId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:schema="schemaItem"
 				:total-count="itemsStore.itemsCount(filterItem)"
-				:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
@@ -637,8 +639,8 @@ useTabGuard(storesStore, () => storeId.value, "storeEdition", "stores", [
 			<Tableau :labels="labelTableauModalEquipement" :meta="{ key: 'id_equipement' }"
 				:store-data="[equipementsStore.equipements, equipementBoxsStore.equipementBoxsByBox(boxId), equipementsStore.thumbnailsURL]"
 				:filters="filterEquipement"
+				:fetch-function="!isNewId(storeId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:total-count="equipementsStore.equipementsCount(filterEquipement)"
-				:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

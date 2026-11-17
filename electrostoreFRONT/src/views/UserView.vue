@@ -15,7 +15,7 @@ import { useConfigsStore, useUsersStore, useCommandsCommentsStore, useProjectsCo
 import type { FilterLabel } from "@/types/filter";
 import type { FormLabel } from "@/types/form";
 import type { TableauLabel, TableauRowData } from "@/types/tableau";
-import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql"; // NOSONAR
 import type { components } from "@/types/api";
 
 type CreateUserDto = components["schemas"]["CreateUserDto"];

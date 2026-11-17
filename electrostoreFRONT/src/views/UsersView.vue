@@ -10,7 +10,7 @@ import { useUsersStore, useAuthStore } from "@/stores";
 
 import type { FilterLabel } from "@/types/filter";
 import type { TableauLabel, TableauMeta } from "@/types/tableau";
-import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql"; // NOSONAR
 
 const { addNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 const { t } = useI18n();

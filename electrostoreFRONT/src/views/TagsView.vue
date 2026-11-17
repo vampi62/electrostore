@@ -6,7 +6,7 @@ import { useTagsStore } from "@/stores";
 
 import type { FilterLabel } from "@/types/filter";
 import type { TableauLabel, TableauMeta } from "@/types/tableau";
-import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql"; // NOSONAR
 const tagsStore = useTagsStore();
 
 const filter = ref<FilterLabel[]>([
