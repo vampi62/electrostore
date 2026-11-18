@@ -1,12 +1,20 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { inject, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
 import { useTabsStore, resolveTab } from "@/stores";
+import { maxTabs } from "@/stores/tabs.store";
 import type { Tab } from "@/stores/tabs.store";
+import type { useNotification } from "@/composables";
 
 const { t } = useI18n();
 const tabsStore = useTabsStore();
+const notification = inject<ReturnType<typeof useNotification> | null>("useNotification", null);
+
+// an opening refused by the limit of tabs was redirected to the selected tab: tell the user why
+watch(() => tabsStore.limitReached, () => {
+	notification?.addNotification({ message: t("common.VAppTabLimit", { max: maxTabs }), type: "warning" });
+});
 
 const showTabList = ref(false);
 
@@ -91,8 +99,9 @@ function selectTab(tabId: string) {
 				</ul>
 			</template>
 		</div>
-		<button type="button" :aria-label="$t('common.VAppTabAdd')" :title="$t('common.VAppTabAdd')"
-			class="flex items-center justify-center w-9 h-9 rounded flex-shrink-0 text-white hover:bg-gray-700 hover:text-blue-400"
+		<button type="button" :aria-label="$t('common.VAppTabAdd')" :disabled="!tabsStore.canOpenTab"
+			:title="tabsStore.canOpenTab ? $t('common.VAppTabAdd') : $t('common.VAppTabLimit', { max: maxTabs })"
+			class="flex items-center justify-center w-9 h-9 rounded flex-shrink-0 text-white hover:bg-gray-700 hover:text-blue-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-white"
 			@click="tabsStore.openBlank()">
 			<font-awesome-icon icon="fa-solid fa-plus" />
 		</button>
@@ -102,7 +111,7 @@ function selectTab(tabId: string) {
 				<h2 class="text-xl mb-4">{{ $t('common.VAppTabLeaveTitle') }}</h2>
 				<p>{{ $t('common.VAppTabLeaveText') }}</p>
 				<div class="flex flex-col gap-2 mt-4">
-					<button type="button" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+					<button v-if="tabsStore.canOpenTab" type="button" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
 						@click="tabsStore.answerLeave('newTab')">
 						{{ $t('common.VAppTabLeaveNewTab') }}
 					</button>

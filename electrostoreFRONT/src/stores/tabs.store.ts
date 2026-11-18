@@ -10,6 +10,9 @@ export interface Tab {
 	fullPath: string;
 }
 
+// opening a view beyond this number of tabs displays it in the selected tab instead
+export const maxTabs = 10;
+
 const storageKey = "tabs";
 const draftsKey = "tabDrafts";
 
@@ -53,6 +56,7 @@ function writeDrafts(drafts: Record<string, TabDraft>) {
 }
 
 interface TabRouterStore {
+	canOpenTab: boolean;
 	isDirty(tabId: string): boolean;
 	askLeave(tabId: string, path: string): Promise<LeaveChoice>;
 	open(path?: string): void;
@@ -78,7 +82,8 @@ function createTabRouter(tabs: TabRouterStore, tabId: string, fullPath: string) 
 		// leaving a view that holds unsaved changes: stay, leave anyway or open the destination in a new tab
 		if (to.path !== from.path && tabs.isDirty(tabId)) {
 			const choice = await tabs.askLeave(tabId, to.fullPath);
-			if (choice === "newTab") {
+			// no room for a new tab: the choice is not offered, it is a cancellation
+			if (choice === "newTab" && tabs.canOpenTab) {
 				tabs.open(to.fullPath);
 			}
 			if (choice !== "leave") {
@@ -155,8 +160,11 @@ export const useTabsStore = defineStore("tabs", {
 		guarded: {} as Record<string, boolean>,
 		// navigation waiting for the user's answer (see askLeave)
 		pendingLeave: null as { tabId: string; path: string } | null,
+		// incremented each time an opening is refused because of the limit (the interface tells the user)
+		limitReached: 0,
 	}),
 	getters: {
+		canOpenTab: (state) => state.tabs.length < maxTabs,
 		activeTab: (state) => state.tabs.find((tab) => tab.id === state.activeId),
 	},
 	actions: {
@@ -183,19 +191,29 @@ export const useTabsStore = defineStore("tabs", {
 				this.save();
 			}
 		},
-		// open a view in a tab, if it is already displayed in a tab this one is selected
+		// open a view in a tab, if it is already displayed in a tab this one is selected,
+		// when the limit of tabs is reached the view is displayed in the selected tab instead.
+		// Returns true when the view has its own tab, false when it was only redirected (or nothing was done for an empty tab)
 		open(path: string = defaultPath) {
 			const fullPath = resolveTab(path).fullPath;
 			let tab = fullPath === blankPath ? undefined : this.tabs.find((t) => t.fullPath === fullPath);
 			if (!tab) {
+				if (!this.canOpenTab) {
+					this.limitReached++;
+					if (fullPath !== blankPath) {
+						void this.navigate(fullPath);
+					}
+					return false;
+				}
 				tab = { id: newTabId(), fullPath };
 				this.tabs.push(tab);
 			}
 			this.activate(tab.id);
+			return true;
 		},
 		// open an empty tab
 		openBlank() {
-			this.open(blankPath);
+			return this.open(blankPath);
 		},
 		activate(tabId: string) {
 			this.activeId = tabId;

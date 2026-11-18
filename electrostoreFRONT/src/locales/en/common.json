@@ -167,6 +167,7 @@
 	"VAppHealth": "Health",
 	"VAppTabNew": "New",
 	"VAppTabAdd": "New tab",
+	"VAppTabLimit": "Limit of {max} tabs reached: close a tab to open a new one. The view was displayed in the selected tab.",
 	"VAppTabClose": "Close tab",
 	"VAppTabList": "Tab list",
 	"VAppTabBlankHint": "Choose a view in the menu to display it in this tab",
