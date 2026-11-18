@@ -70,6 +70,11 @@ function createTabRouter(tabs: TabRouterStore, tabId: string, fullPath: string) 
 		if (to.path === "/" || !to.matched.length) {
 			return defaultPath;
 		}
+		// a string location (<RouterLink to="/a?b=c d">) keeps its raw encoding (space, accents...) in fullPath, which then
+		// differs from the one of the browser url and opens a second tab: restart the navigation with the normalized location
+		if (resolveTab(to.fullPath).fullPath !== to.fullPath) {
+			return normalizedLocation(to.fullPath);
+		}
 		// leaving a view that holds unsaved changes: stay, leave anyway or open the destination in a new tab
 		if (to.path !== from.path && tabs.isDirty(tabId)) {
 			const choice = await tabs.askLeave(tabId, to.fullPath);
@@ -94,12 +99,16 @@ function createTabRouter(tabs: TabRouterStore, tabId: string, fullPath: string) 
 // used only to resolve titles and to normalize paths, it never navigates
 const resolver = createRouter({ history: createMemoryHistory(), routes: appRoutes });
 
-export function resolveTab(fullPath: string) {
+// resolving a string keeps its encoding as is (a space stays a space), a location made of parts is normalized (space => "+"):
+// always go through the parts to get the same fullPath as the one the browser url ends up with, otherwise the url
+// looks like a page opened from outside (a second tab)
+function normalizedLocation(fullPath: string) {
 	const parsed = resolver.resolve(fullPath);
-	// resolving a string keeps its encoding as is, while a navigation normalizes the query (":" and ";" are not encoded):
-	// resolve the parts to get the same fullPath as the one the tab ends up with, otherwise it is changed after the opening
-	// and the url of the browser looks like a page opened from outside (a second tab)
-	const resolved = resolver.resolve({ path: parsed.path, query: parsed.query, hash: parsed.hash });
+	return { path: parsed.path, query: parsed.query, hash: parsed.hash };
+}
+
+export function resolveTab(fullPath: string) {
+	const resolved = resolver.resolve(normalizedLocation(fullPath));
 	return {
 		path: resolved.path,
 		fullPath: resolved.matched.length && resolved.path !== "/" ? resolved.fullPath : defaultPath,
