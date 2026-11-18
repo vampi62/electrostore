@@ -11,7 +11,7 @@ export interface Tab {
 }
 
 // opening a view beyond this number of tabs displays it in the selected tab instead
-export const maxTabs = 10;
+export const maxTabs = 20;
 
 const storageKey = "tabs";
 const draftsKey = "tabDrafts";
