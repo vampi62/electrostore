@@ -574,8 +574,9 @@ export default {
 			if (this.tabOf(row)) {
 				this.tabsStore.activate(row.tabId!);
 			} else {
-				this.tabsStore.open(path);
-				row.tabId = this.tabsStore.activeId ?? null;
+				// at the limit of tabs the view replaces the one of the selected tab, the row is not tied to it
+				const hasOwnTab = this.tabsStore.open(path);
+				row.tabId = hasOwnTab ? this.tabsStore.activeId ?? null : null;
 			}
 			this.close();
 		},

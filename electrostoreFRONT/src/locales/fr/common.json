@@ -167,6 +167,7 @@
 	"VAppHealth": "Santé",
 	"VAppTabNew": "Nouveau",
 	"VAppTabAdd": "Nouvel onglet",
+	"VAppTabLimit": "Limite de {max} onglets atteinte : fermez un onglet pour en ouvrir un nouveau. La vue a été affichée dans l'onglet actif.",
 	"VAppTabClose": "Fermer l'onglet",
 	"VAppTabList": "Liste des onglets",
 	"VAppTabBlankHint": "Choisissez une vue dans le menu pour l'afficher dans cet onglet",

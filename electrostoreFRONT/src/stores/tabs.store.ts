@@ -10,6 +10,9 @@ export interface Tab {
 	fullPath: string;
 }
 
+// opening a view beyond this number of tabs displays it in the selected tab instead
+export const maxTabs = 20;
+
 const storageKey = "tabs";
 const draftsKey = "tabDrafts";
 
@@ -53,6 +56,7 @@ function writeDrafts(drafts: Record<string, TabDraft>) {
 }
 
 interface TabRouterStore {
+	canOpenTab: boolean;
 	isDirty(tabId: string): boolean;
 	askLeave(tabId: string, path: string): Promise<LeaveChoice>;
 	open(path?: string): void;
@@ -70,10 +74,16 @@ function createTabRouter(tabs: TabRouterStore, tabId: string, fullPath: string) 
 		if (to.path === "/" || !to.matched.length) {
 			return defaultPath;
 		}
+		// a string location (<RouterLink to="/a?b=c d">) keeps its raw encoding (space, accents...) in fullPath, which then
+		// differs from the one of the browser url and opens a second tab: restart the navigation with the normalized location
+		if (resolveTab(to.fullPath).fullPath !== to.fullPath) {
+			return normalizedLocation(to.fullPath);
+		}
 		// leaving a view that holds unsaved changes: stay, leave anyway or open the destination in a new tab
 		if (to.path !== from.path && tabs.isDirty(tabId)) {
 			const choice = await tabs.askLeave(tabId, to.fullPath);
-			if (choice === "newTab") {
+			// no room for a new tab: the choice is not offered, it is a cancellation
+			if (choice === "newTab" && tabs.canOpenTab) {
 				tabs.open(to.fullPath);
 			}
 			if (choice !== "leave") {
@@ -94,12 +104,16 @@ function createTabRouter(tabs: TabRouterStore, tabId: string, fullPath: string) 
 // used only to resolve titles and to normalize paths, it never navigates
 const resolver = createRouter({ history: createMemoryHistory(), routes: appRoutes });
 
-export function resolveTab(fullPath: string) {
+// resolving a string keeps its encoding as is (a space stays a space), a location made of parts is normalized (space => "+"):
+// always go through the parts to get the same fullPath as the one the browser url ends up with, otherwise the url
+// looks like a page opened from outside (a second tab)
+function normalizedLocation(fullPath: string) {
 	const parsed = resolver.resolve(fullPath);
-	// resolving a string keeps its encoding as is, while a navigation normalizes the query (":" and ";" are not encoded):
-	// resolve the parts to get the same fullPath as the one the tab ends up with, otherwise it is changed after the opening
-	// and the url of the browser looks like a page opened from outside (a second tab)
-	const resolved = resolver.resolve({ path: parsed.path, query: parsed.query, hash: parsed.hash });
+	return { path: parsed.path, query: parsed.query, hash: parsed.hash };
+}
+
+export function resolveTab(fullPath: string) {
+	const resolved = resolver.resolve(normalizedLocation(fullPath));
 	return {
 		path: resolved.path,
 		fullPath: resolved.matched.length && resolved.path !== "/" ? resolved.fullPath : defaultPath,
@@ -146,8 +160,11 @@ export const useTabsStore = defineStore("tabs", {
 		guarded: {} as Record<string, boolean>,
 		// navigation waiting for the user's answer (see askLeave)
 		pendingLeave: null as { tabId: string; path: string } | null,
+		// incremented each time an opening is refused because of the limit (the interface tells the user)
+		limitReached: 0,
 	}),
 	getters: {
+		canOpenTab: (state) => state.tabs.length < maxTabs,
 		activeTab: (state) => state.tabs.find((tab) => tab.id === state.activeId),
 	},
 	actions: {
@@ -174,19 +191,29 @@ export const useTabsStore = defineStore("tabs", {
 				this.save();
 			}
 		},
-		// open a view in a tab, if it is already displayed in a tab this one is selected
+		// open a view in a tab, if it is already displayed in a tab this one is selected,
+		// when the limit of tabs is reached the view is displayed in the selected tab instead.
+		// Returns true when the view has its own tab, false when it was only redirected (or nothing was done for an empty tab)
 		open(path: string = defaultPath) {
 			const fullPath = resolveTab(path).fullPath;
 			let tab = fullPath === blankPath ? undefined : this.tabs.find((t) => t.fullPath === fullPath);
 			if (!tab) {
+				if (!this.canOpenTab) {
+					this.limitReached++;
+					if (fullPath !== blankPath) {
+						this.navigate(fullPath)?.catch((error) => console.error("Navigation failed:", error));
+					}
+					return false;
+				}
 				tab = { id: newTabId(), fullPath };
 				this.tabs.push(tab);
 			}
 			this.activate(tab.id);
+			return true;
 		},
 		// open an empty tab
 		openBlank() {
-			this.open(blankPath);
+			return this.open(blankPath);
 		},
 		activate(tabId: string) {
 			this.activeId = tabId;
