@@ -201,7 +201,7 @@ export const useTabsStore = defineStore("tabs", {
 				if (!this.canOpenTab) {
 					this.limitReached++;
 					if (fullPath !== blankPath) {
-						void this.navigate(fullPath);
+						this.navigate(fullPath)?.catch((error) => console.error("Navigation failed:", error));
 					}
 					return false;
 				}
