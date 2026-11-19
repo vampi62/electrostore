@@ -1,4 +1,5 @@
 import type { StoreGeneric } from "pinia";
+import type { ReadBulkDto } from "@/types/fetch";
 
 export interface EntityTypes {
 	readExtended?: unknown;
@@ -26,6 +27,15 @@ export interface ResourceRoute<T extends EntityTypes> {
 	url: (parts: KeyParts<T>) => string;
 }
 
+export type ReadOf<T extends EntityTypes> = "readBasic" extends keyof T ? T["readBasic"] : T["readExtended"];
+
+export interface OverrideAction<T extends EntityTypes> {
+	create?: (this: StoreGeneric, scope: KeyParts<T>, params: Body<T, "create">, isFormData: boolean) => Promise<ReadOf<T>>;
+	update?: (this: StoreGeneric, key: KeyParts<T>, params: Body<T, "update">, isFormData: boolean) => Promise<ReadOf<T>>;
+	createBulk?: (this: StoreGeneric, scope: KeyParts<T>, params: Body<T, "createBulk">) => Promise<ReadBulkDto<ReadOf<T>>>;
+	updateBulk?: (this: StoreGeneric, scope: KeyParts<T>, params: Body<T, "updateBulk">) => Promise<ReadBulkDto<ReadOf<T>>>;
+}
+
 // Resource identified by several fields (junction table): records are stored under the joined key, e.g. "3:12" for { id_item: 3, id_tag: 12 }.
 // countKey is a Record<string, number> indexed by scope and filters ("id_item=3?name_tag==abc", see toCountKey), the others (stateKey, editionKey, readyKey) by composite key.
 export interface ResourceOptions<T extends EntityTypes> {
@@ -41,6 +51,7 @@ export interface ResourceOptions<T extends EntityTypes> {
 	editionKey?: string;
 	readyKey?: string;
 	onHydrate?: (store: StoreGeneric, entity: T["readExtended"], expand: string[]) => void;
+	override?: OverrideAction<T>;
 }
 
 type PartialBody<B> = [B] extends [object] ? Partial<B> : unknown;

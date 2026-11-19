@@ -37,7 +37,7 @@ export function withDraft<R>(records: Record<string, R> | undefined, ...drafts: 
 	});
 }
 
-export function createResource<T extends EntityTypes>({ compositeKey, generatedField, routeOnlyFields = [], path, entityPath, countKey, stateKey, editionKey, readyKey, onHydrate }: ResourceOptions<T>) {
+export function createResource<T extends EntityTypes>({ compositeKey, generatedField, routeOnlyFields = [], path, entityPath, countKey, stateKey, editionKey, readyKey, onHydrate, override }: ResourceOptions<T>) {
 	type ReadExtended = "readExtended" extends keyof T ? T["readExtended"] : T["readBasic"];
 	type Read = "readBasic" extends keyof T ? T["readBasic"] : T["readExtended"];
 	type Parts = KeyParts<T>;
@@ -68,7 +68,7 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 
 	function matches(key: string, part: Parts): boolean {
 		const parts = toParts(key);
-		return Object.entries(part).every(([field, value]) => value === undefined || value === null || parts[field] === String(value));
+		return (Object.entries(part) as Array<[string, string | undefined]>).every(([field, value]) => value === undefined || value === null || parts[field] === String(value));
 	}
 
 	// Keeps the records whose key matches every given part
@@ -80,7 +80,7 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 	function inScope(records: Record<string, unknown> | undefined, scope: Parts): string[] {
 		return Object.entries(records ?? {}).filter(([key, record]) => {
 			const parts = toParts(key);
-			return Object.entries(scope).every(([field, value]) => {
+			return (Object.entries(scope) as Array<[string, string | undefined]>).every(([field, value]) => {
 				if (value === undefined || value === null || routeOnlyFields.includes(field)) {
 					return true;
 				}
@@ -246,9 +246,14 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 		},
 		async create(this: StoreGeneric, scope: Parts, params: Body<T, "create">, isFormData = false): Promise<string> {
 			this[stateKey] ??= {};
-			// if isFormData, params is converted to FormData and sent as multipart/form-data
-			const body = isFormData ? buildFormData(params as Record<string, string | Blob>) : params;
-			const data = await fetchWrapper.post<Read>({ url: `${baseUrl}${collectionUrl(scope)}`, useToken: "access", body, contentFile: isFormData });
+			let data: Read;
+			if (override?.create) {
+				data = await override.create.call(this, scope, params, isFormData);
+			} else {
+				// if isFormData, params is converted to FormData and sent as multipart/form-data
+				const body = isFormData ? buildFormData(params as Record<string, string | Blob>) : params;
+				data = await fetchWrapper.post<Read>({ url: `${baseUrl}${collectionUrl(scope)}`, useToken: "access", body, contentFile: isFormData });
+			}
 			const key = toKey(data as Parts);
 			this[stateKey][key] = data;
 			ensureCount(this, scope);
@@ -257,8 +262,14 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 		},
 		async update(this: StoreGeneric, key: Parts, params: Body<T, "update">, isFormData = false) {
 			this[stateKey] ??= {};
-			const body = isFormData ? buildFormData(params as Record<string, string | Blob>) : params;
-			this[stateKey][toKey(key)] = await fetchWrapper.put<Read>({ url: `${baseUrl}${entityUrl(key)}`, useToken: "access", body, contentFile: isFormData });
+			let data: Read;
+			if (override?.update) {
+				data = await override.update.call(this, key, params, isFormData);
+			} else {
+				const body = isFormData ? buildFormData(params as Record<string, string | Blob>) : params;
+				data = await fetchWrapper.put<Read>({ url: `${baseUrl}${entityUrl(key)}`, useToken: "access", body, contentFile: isFormData });
+			}
+			this[stateKey][toKey(key)] = data;
 		},
 		async remove(this: StoreGeneric, key: Parts) {
 			await fetchWrapper.delete({ url: `${baseUrl}${entityUrl(key)}`, useToken: "access" });
@@ -268,7 +279,9 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 		},
 		async createBulk(this: StoreGeneric, scope: Parts, params: Body<T, "createBulk">): Promise<ReadBulkDto<Read>> {
 			this[stateKey] ??= {};
-			const res = await fetchWrapper.post<ReadBulkDto<Read>>({ url: `${baseUrl}${collectionUrl(scope)}/bulk`, useToken: "access", body: params });
+			const res = override?.createBulk
+				? await override.createBulk.call(this, scope, params) as ReadBulkDto<Read>
+				: await fetchWrapper.post<ReadBulkDto<Read>>({ url: `${baseUrl}${collectionUrl(scope)}/bulk`, useToken: "access", body: params });
 			ensureCount(this, scope);
 			for (const entity of res.valide) {
 				this[stateKey][toKey(entity as Parts)] = entity;
@@ -278,7 +291,9 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 		},
 		async updateBulk(this: StoreGeneric, scope: Parts, params: Body<T, "updateBulk">) {
 			this[stateKey] ??= {};
-			const res = await fetchWrapper.put<ReadBulkDto<Read>>({ url: `${baseUrl}${collectionUrl(scope)}/bulk`, useToken: "access", body: params });
+			const res = override?.updateBulk
+				? await override.updateBulk.call(this, scope, params) as ReadBulkDto<Read>
+				: await fetchWrapper.put<ReadBulkDto<Read>>({ url: `${baseUrl}${collectionUrl(scope)}/bulk`, useToken: "access", body: params });
 			for (const entity of res.valide) {
 				this[stateKey][toKey(entity as Parts)] = entity;
 			}
@@ -449,7 +464,7 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 					} else if (status === "deleted") {
 						await resource.remove.call(this, key);
 					}
-					entry.pushChange = true;
+					resource.removeReady.call(this, scope);
 				});
 			}
 			await pendingChanges;
