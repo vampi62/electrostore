@@ -1,225 +1,38 @@
 <template>
 	<div class="relative w-full sm:w-[560px]">
-		<Form ref="formRef" :validation-schema="schema" v-slot="{ errors }" @submit.prevent="">
+		<Form ref="formRef" v-slot="{ errors }" :validation-schema="schema" @submit.prevent="">
 			<div class="flex flex-col text-gray-700 space-y-2">
-				<div v-for="field in labelsShown" :key="field.key + field.label + field.text" class="flex flex-col sm:flex-col sm:items-start sm:space-x-2 w-full">
-					<template v-if="field.type === 'section'">
-						<h2 class="text-lg font-bold w-full pt-4">{{ $t(field.label) }}</h2>
-						<hr class="w-full border-gray-300 mb-2" />
-						<div class="w-full"></div>
-						<!-- Utiliser une div vide pour forcer la ligne suivante à prendre toute la largeur -->
-						<!-- Les champs suivants seront sur une nouvelle ligne -->
-					</template>
-					<template v-else-if="field.type === 'fixed'">
-						<span v-if="field.label" class="font-semibold sm:min-w-[150px]" :for="`form-input-${$.uid}-${field.key}`">{{ $t(field.label) }}</span>
-						<span v-else class="font-semibold sm:min-w-[150px]" :for="`form-input-${$.uid}-${field.key}`">{{ field.text }}</span>
-					</template>
-					<template v-else-if="field.type === 'readonly'">
-						<span v-if="field.label" class="font-semibold sm:min-w-[150px]" :for="`form-input-${$.uid}-${field.key}`">{{ $t(field.label) }}</span>
-						<span v-else class="font-semibold sm:min-w-[150px]" :for="`form-input-${$.uid}-${field.key}`">{{ formData[field.key] }}</span>
-					</template>
+				<div
+					v-for="field in labelsShown"
+					:key="field.key + field.label + field.text"
+					class="flex flex-col sm:flex-col sm:items-start sm:space-x-2 w-full"
+				>
+					<!-- Display-only fields -->
+					<FormFieldSection v-if="field.type === 'section'" :field="field" />
+					<FormFieldFixed v-else-if="field.type === 'fixed'" :field="field" />
+					<FormFieldReadonly v-else-if="field.type === 'readonly'" :field="field" :value="formData[field.key]" />
+
+					<!-- Input fields -->
 					<template v-else>
-						<label v-if="field.label" class="font-semibold sm:min-w-[150px]" :for="`form-input-${$.uid}-${field.key}`">{{ $t(field.label) }}</label>
-						<label v-else class="font-semibold sm:min-w-[150px]" :for="`form-input-${$.uid}-${field.key}`">{{ field.text }}</label>
+						<label class="font-semibold sm:min-w-[150px]" :for="getInputId(field)">
+							{{ field.label ? $t(field.label) : field.text }}
+						</label>
 						<div class="flex flex-col flex-1 w-full relative">
-							<template v-if="field.type === 'checkbox'">
-								<Field :id="`form-input-${$.uid}-${field.key}`" :name="field.key">
-									<input
-										v-model="formData[field.key]"
-										type="checkbox"
-										:value="formData[field.key]"
-										class="form-checkbox h-5 w-5 text-blue-600"
-										:disabled="(!permission) || (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading"
-									/>
-								</Field>
-							</template>
-							<template v-else-if="field.type === 'multi-checkbox'">
-								<div class="flex flex-col space-y-2">
-									<!-- Field caché pour la validation vee-validate -->
-									<Field :id="`form-input-${$.uid}-${field.key}`" :name="field.key" v-model="formData[field.key]" type="hidden" />
-									<div v-if="getSelectedOptions(field).length > 0" class="flex flex-wrap gap-1 p-2 bg-gray-50 border border-gray-300 rounded min-h-[32px]">
-										<span 
-											v-for="[index, label] in getSelectedOptions(field)" 
-											:key="index"
-											class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
-										>
-											{{ label }}
-											<button
-												type="button"
-												@click="removeSelection(field.key, index)"
-												class="ml-1.5 text-blue-600 hover:text-blue-800 focus:outline-none"
-												:disabled="(!permission) || (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading"
-											>
-												<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-													<path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-												</svg>
-											</button>
-										</span>
-									</div>
-									<div class="relative">
-										<button
-											type="button"
-											@click="toggleDropdown(field.key, $event)"
-											:ref="`dropdown-button-${field.key}`"
-											:id="`dropdown-button-${$.uid}-${field.key}`"
-											class="w-full border border-gray-300 rounded px-3 py-2 text-left bg-white focus:outline-none focus:ring focus:ring-blue-300 flex items-center justify-between"
-											:class="{ 'border-red-500': errors[field.key], 'bg-gray-100 cursor-not-allowed': (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading }"
-											:disabled="(!permission) || (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading"
-										>
-											<span class="text-gray-600 text-sm">
-												{{ getSelectedOptions(field).length > 0 ? `${getSelectedOptions(field).length} sélectionné(s)` : 'Sélectionner...' }}
-											</span>
-											<svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': dropdownOpen[field.key] }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-											</svg>
-										</button>
-										<Teleport to="body">
-											<div
-												v-show="dropdownOpen[field.key]"
-												:ref="`dropdown-menu-${field.key}`"
-												:style="getDropdownStyle(field.key)"
-												class="fixed z-[9999] bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto"
-											>
-												<div v-for="[index, option, disabled, hidden] in getSortedOptions(field)" :key="index" v-show="!hidden">
-													<label 
-														class="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"
-														:class="{ 'opacity-50 cursor-not-allowed': disabled }"
-													>
-														<input
-															v-model="formData[field.key]"
-															type="checkbox"
-															:value="index"
-															@focus="ensureArray(field.key)"
-															@change="recalculateDropdownPosition(field.key)"
-															class="form-checkbox h-4 w-4 text-blue-600 flex-shrink-0 rounded"
-															:disabled="disabled"
-														/>
-														<span class="ml-2 text-sm flex-1">{{ option }}</span>
-													</label>
-												</div>
-											</div>
-										</Teleport>
-									</div>
-								</div>
-								<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
-							</template>
-							<template v-else-if="field.type === 'select'">
-								<Field v-if="field?.typeData === 'number'" :id="`form-input-${$.uid}-${field.key}`" :name="field.key" as="select" v-model.number="formData[field.key]"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors[field.key] }"
-									:disabled="(!permission) || (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading">
-									<template v-for="[index, option, disabled, hidden] in getSortedOptions(field)" :key="index">
-										<option :value="index" :disabled="disabled" v-show="!hidden">{{ option }}</option>
-									</template>
-								</Field>
-								<Field v-else-if="field?.typeData === 'bool'" :id="`form-input-${$.uid}-${field.key}`" :name="field.key" as="select"
-									:model-value="formData[field.key]"
-									@update:model-value="formData[field.key] = $event === 'true' || $event === true"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors[field.key] }"
-									:disabled="(!permission) || (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading">
-									<template v-for="[index, option, disabled, hidden] in getSortedOptions(field)" :key="index">
-										<option :value="index" :disabled="disabled" v-show="!hidden">{{ option }}</option>
-									</template>
-								</Field>
-								<Field v-else :id="`form-input-${$.uid}-${field.key}`" :name="field.key" as="select" v-model="formData[field.key]"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors[field.key] }"
-									:disabled="(!permission) || (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading">
-									<template v-for="[index, option, disabled, hidden] in getSortedOptions(field)" :key="index">
-										<option :value="index" :disabled="disabled" v-show="!hidden">{{ option }}</option>
-									</template>
-								</Field>
-								<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
-							</template>
-							<template v-else-if="field.type === 'fetch-select'">
-								<Field :name="field.key" v-model="formData[field.key]" type="hidden" />
-								<div class="relative">
-									<input
-										:id="`form-input-${$.uid}-${field.key}`"
-										:ref="`fetch-select-input-${field.key}`"
-										type="text"
-										:value="getFetchSelectInputText(field)"
-										@input="handleFetchSelectInput(field, $event)"
-										@focus="openFetchSelect(field, $event)"
-										@blur="closeFetchSelect(field.key)"
-										class="border border-gray-300 rounded px-2 py-1 w-full pr-7 focus:outline-none focus:ring focus:ring-blue-300"
-										:class="{ 'border-red-500': errors[field.key] }"
-										:placeholder="field.placeholder ? $t(field.placeholder) : ''"
-										:disabled="(!permission) || (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading"
-									/>
-									<div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-										<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-										</svg>
-									</div>
-								</div>
-								<Teleport to="body">
-									<div
-										v-show="isFetchSelectOpen(field.key)"
-										:ref="`fetch-select-menu-${field.key}`"
-										:style="getFetchSelectStyle(field.key)"
-										class="fixed z-[9999] bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto"
-									>
-										<div
-											v-for="[value, label] in getFetchSelectOptions(field)"
-											:key="value"
-											@mousedown.prevent="selectFetchOption(field, value, label)"
-											class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
-										>
-											{{ label }}
-										</div>
-										<div v-if="getFetchSelectOptions(field).length === 0" class="px-3 py-2 text-sm text-gray-400 italic">
-											Aucun résultat
-										</div>
-									</div>
-								</Teleport>
-								<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
-							</template>
-							<template v-else-if="field.type === 'textarea'">
-								<Field :id="`form-input-${$.uid}-${field.key}`" :name="field.key" as="textarea" v-model="formData[field.key]" :rows="field.rows || 3"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors[field.key] }"
-									:placeholder="field.placeholder ? $t(field.placeholder) : ''"
-									:disabled="(!permission) || (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading" />
-								<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
-							</template>
-							<template v-else-if="field.type === 'computed'">
-								<div class="flex space x-2">
-									<span>{{ field.value }}</span>
-								</div>
-							</template>
-							<template v-else-if="field.type === 'custom'">
-								<Field :id="`form-input-${$.uid}-${field.key}`" :name="field.key" v-model="formData[field.key]" type="hidden" />
-								<slot :name="field.key"></slot>
-								<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
-							</template>
-							<template v-else-if="field.type === 'password'">
-								<div class="relative">
-									<Field :id="`form-input-${$.uid}-${field.key}`" :name="field.key" :type="showPassword ? 'text' : 'password'" v-model="formData[field.key]"
-										class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-										:class="{ 'border-red-500': errors[field.key] }"
-										:disabled="(!permission) || (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading" />
-									<button type="button" @mouseup="showPassword = false" @mousedown="showPassword = true"
-										class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800"
-										:disabled="(!permission) || (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading">
-										<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-										</svg>
-									</button>
-								</div>
-								<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
-							</template>
-							<template v-else>
-								<Field :id="`form-input-${$.uid}-${field.key}`" :name="field.key" :type="field.type" v-model="formData[field.key]"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors[field.key] }"
-									:placeholder="field.placeholder ? $t(field.placeholder) : ''"
-									:disabled="(!permission) || (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading" />
-								<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
-							</template>
-							<div v-if="field?.loading" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
+							<FormFieldComputed v-if="field.type === 'computed'" :field="field" />
+							<component
+								:is="getFieldComponent(field)"
+								v-else
+								:field="field"
+								:input-id="getInputId(field)"
+								:disabled="isFieldDisabled(field)"
+								:error="errors[field.key]"
+								:model-value="formData[field.key]"
+								@update:model-value="updateField(field.key, $event)"
+							>
+								<slot v-if="field.type === 'custom'" :name="field.key"></slot>
+							</component>
+
+							<div v-if="isFieldLoading(field)" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
 								<div class="loading-spinner">
 									<div class="spinner-ring-small"></div>
 								</div>
@@ -238,18 +51,46 @@
 </template>
 
 <script lang="ts">
-import { Form, Field } from "vee-validate";
-import type { PropType } from "vue";
+import { defineComponent, toValue } from "vue";
+import type { Component, PropType } from "vue";
+import { Form } from "vee-validate";
 import type { StateTree } from "pinia";
-import { debounce } from "lodash-es";
 import type { FormFunction, FormLabel, FormSchema } from "@/types/form";
-import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+import FormFieldSection from "@/components/form/FormFieldSection.vue";
+import FormFieldFixed from "@/components/form/FormFieldFixed.vue";
+import FormFieldReadonly from "@/components/form/FormFieldReadonly.vue";
+import FormFieldComputed from "@/components/form/FormFieldComputed.vue";
+import FormFieldInput from "@/components/form/FormFieldInput.vue";
+import FormFieldCheckbox from "@/components/form/FormFieldCheckbox.vue";
+import FormFieldMultiCheckbox from "@/components/form/FormFieldMultiCheckbox.vue";
+import FormFieldTable from "@/components/form/FormFieldTable.vue";
+import FormFieldSelect from "@/components/form/FormFieldSelect.vue";
+import FormFieldFetchSelect from "@/components/form/FormFieldFetchSelect.vue";
+import FormFieldTextarea from "@/components/form/FormFieldTextarea.vue";
+import FormFieldCustom from "@/components/form/FormFieldCustom.vue";
+import FormFieldPassword from "@/components/form/FormFieldPassword.vue";
 
-// [value, label, disabled, hidden] of an option
-type SortedOption = [string, string, boolean, boolean];
+// field type -> component, any other type is a classic <input :type="field.type">
+const fieldComponents: Record<string, Component | undefined> = {
+	"checkbox": FormFieldCheckbox,
+	"multi-checkbox": FormFieldMultiCheckbox,
+	"table": FormFieldTable,
+	"select": FormFieldSelect,
+	"fetch-select": FormFieldFetchSelect,
+	"textarea": FormFieldTextarea,
+	"custom": FormFieldCustom,
+	"password": FormFieldPassword,
+};
 
-export default {
+export default defineComponent({
 	name: "FormContainer",
+	components: {
+		Form,
+		FormFieldSection,
+		FormFieldFixed,
+		FormFieldReadonly,
+		FormFieldComputed,
+	},
 	props: {
 		schemaBuilder: {
 			type: Function as PropType<() => FormSchema>,
@@ -299,19 +140,12 @@ export default {
 				deleteProperty: (edition, key) => delete edition[key],
 			});
 		},
-		schema() {
+		schema(): FormSchema {
 			return this.schemaBuilder();
 		},
-		labelsShown() {
+		labelsShown(): FormLabel[] {
 			return this.labels.filter((field) => !field?.showCondition || this.evaluateCondition(field.showCondition));
 		},
-	},
-	created() {
-		this.fetchSelectDebouncers = {};
-	},
-	components: {
-		Form,
-		Field,
 	},
 	methods: {
 		async validate(): Promise<{ valid: boolean; errors: Partial<Record<string, string>> }> {
@@ -329,291 +163,25 @@ export default {
 				return false;
 			}
 		},
-		// element of a ref, a ref used in a v-for is an array
-		refElement(name: string): HTMLElement | null {
-			const ref = this.$refs[name];
-			const element = Array.isArray(ref) ? ref[0] : ref;
-			return element instanceof HTMLElement ? element : null;
+		isFieldLoading(field: FormLabel): boolean {
+			return !!toValue(field.loading);
 		},
-		ensureArray(key: string): unknown[] {
-			if (!Array.isArray(this.formData[key])) {
-				this.formData[key] = [];
-			}
-			return this.formData[key];
+		isFieldDisabled(field: FormLabel): boolean {
+			return !this.permission
+				|| (!!field.enableCondition && !this.evaluateCondition(field.enableCondition))
+				|| this.isFieldLoading(field);
 		},
-		toggleMultiCheckbox(key: string, value: unknown) {
-			if (!Array.isArray(this.formData[key])) {
-				this.formData[key] = [];
-			}
-
-			const index = this.formData[key].indexOf(value);
-			if (index > -1) {
-				this.formData[key].splice(index, 1);
-			} else {
-				this.formData[key].push(value);
-			}
+		getInputId(field: FormLabel): string {
+			return `form-input-${this.$.uid}-${field.key}`;
 		},
-		toggleDropdown(key: string, event?: Event) {
-			this.dropdownOpen[key] = !this.dropdownOpen[key];
-			if (this.dropdownOpen[key] && event && event.currentTarget instanceof HTMLElement) {
-				const target = event.currentTarget;
-				this.$nextTick(() => {
-					this.updateDropdownPosition(key, target);
-				});
-			}
+		getFieldComponent(field: FormLabel): Component {
+			return fieldComponents[field.type ?? ""] ?? FormFieldInput;
 		},
-		closeDropdown(key: string) {
-			this.dropdownOpen[key] = false;
-		},
-		updateDropdownPosition(key: string, button: HTMLElement) {
-			if (!button) {
-				return;
-			}
-
-			const rect = button.getBoundingClientRect();
-			this.dropdownPositions[key] = {
-				top: rect.bottom + globalThis.scrollY,
-				left: rect.left + globalThis.scrollX,
-				width: rect.width,
-			};
-		},
-		recalculateDropdownPosition(key: string) {
-			const button = this.refElement(`dropdown-button-${key}`);
-			if (button) {
-				this.updateDropdownPosition(key, button);
-			}
-		},
-		getDropdownStyle(key: string) {
-			const pos = this.dropdownPositions[key];
-			if (!pos) {
-				return {};
-			}
-
-			return {
-				top: `${pos.top + 4}px`,
-				left: `${pos.left}px`,
-				width: `${pos.width}px`,
-			};
-		},
-		handleScrollResize() {
-			// update the positions of all open dropdowns
-			for (const key of Object.keys(this.dropdownOpen)) {
-				if (this.dropdownOpen[key]) {
-					const button = this.refElement(`dropdown-button-${key}`);
-					if (button) {
-						this.updateDropdownPosition(key, button);
-					}
-				}
-			}
-			// update the positions of all open fetch-selects
-			for (const key of Object.keys(this.fetchSelectState)) {
-				if (this.fetchSelectState[key]?.isOpen) {
-					const input = this.refElement(`fetch-select-input-${key}`);
-					if (input) {
-						this.updateFetchSelectPosition(key, input);
-					}
-				}
-			}
-		},
-		handleClickOutside(event: MouseEvent) {
-			// Close dropdowns if clicking outside
-			const target = event.target instanceof Node ? event.target : null;
-			for (const key of Object.keys(this.dropdownOpen)) {
-				if (this.dropdownOpen[key]) {
-					const buttonEl = this.refElement(`dropdown-button-${key}`);
-					const menuEl = this.refElement(`dropdown-menu-${key}`);
-
-					const clickedInsideButton = buttonEl && buttonEl.contains(target);
-					const clickedInsideMenu = menuEl && menuEl.contains(target);
-
-					if (!clickedInsideButton && !clickedInsideMenu) {
-						this.closeDropdown(key);
-					}
-				}
-			}
-		},
-		getSelectedOptions(field: FormLabel): [string, string][] {
-			if (!this.formData[field.key] || !Array.isArray(this.formData[field.key])) {
-				return [];
-			}
-
-			const selectedValues: unknown[] = this.formData[field.key];
-			return this.getSortedOptions(field)
-				.filter(([index]) => selectedValues.includes(index))
-				.map(([index, label]): [string, string] => [index, label]);
-		},
-		removeSelection(key: string, value: string) {
-			if (!Array.isArray(this.formData[key])) {
-				return;
-			}
-
-			const index = this.formData[key].indexOf(value);
-			if (index > -1) {
-				this.formData[key].splice(index, 1);
-				// Recalculer la position après le retrait (attendre que le DOM soit mis à jour)
-				this.recalculateDropdownPosition(key);
-			}
-		},
-		initFetchSelectState(field: FormLabel) {
-			const key = field.key;
-			if (!this.fetchSelectState[key]) {
-				let initialText = "";
-				if (this.formData[key] !== undefined && this.formData[key] !== null && this.formData[key] !== "" && field.fetchStore) {
-					const fetchValueKey = field.fetchValueKey || (field.fetchStoreKey ?? "");
-					const found = Object.values(field.fetchStore).find((item) => String(item[fetchValueKey]) === String(this.formData[key]));
-					if (found) {
-						initialText = found[field.fetchStoreKey ?? ""];
-					}
-				}
-				this.fetchSelectState[key] = { inputText: initialText, isOpen: false, position: null };
-			}
-		},
-		getFetchSelectInputText(field: FormLabel): string {
-			if (!field.fetchStore) {
-				return "";
-			}
-			const fetchValueKey = field.fetchValueKey || (field.fetchStoreKey ?? "");
-			const found = Object.values(field.fetchStore).find((item) => String(item[fetchValueKey]) === String(this.formData[field.key]));
-			return found?.[field.fetchStoreKey ?? ""] || "";
-		},
-		isFetchSelectOpen(key: string): boolean {
-			return this.fetchSelectState[key]?.isOpen || false;
-		},
-		getFetchSelectStyle(key: string): Record<string, string> {
-			const pos = this.fetchSelectState[key]?.position;
-			if (!pos) {
-				return {};
-			}
-			return {
-				top: `${pos.top + 4}px`,
-				left: `${pos.left}px`,
-				width: `${pos.width}px`,
-			};
-		},
-		updateFetchSelectPosition(key: string, inputEl?: Element | null) {
-			if (!inputEl) {
-				return;
-			}
-			const rect = inputEl.getBoundingClientRect();
-			this.fetchSelectState[key].position = {
-				top: rect.bottom + globalThis.scrollY,
-				left: rect.left + globalThis.scrollX,
-				width: rect.width,
-			};
-		},
-		async openFetchSelect(field: FormLabel, event: Event) {
-			this.initFetchSelectState(field);
-			this.fetchSelectState[field.key].isOpen = true;
-			this.fetchSelectState[field.key].inputText = "";
-			await this.doFetchSelectSearch(field);
-			this.$nextTick(() => {
-				if (event.target instanceof Element) {
-					this.updateFetchSelectPosition(field.key, event.target);
-				}
-			});
-		},
-		closeFetchSelect(key: string) {
-			if (this.fetchSelectState[key]) {
-				this.fetchSelectState[key].isOpen = false;
-			}
-		},
-		selectFetchOption(field: FormLabel, value: string | number, label: string) {
-			this.formData[field.key] = value;
-			this.fetchSelectState[field.key].inputText = label;
-			this.fetchSelectState[field.key].isOpen = false;
-			this.$nextTick(() => {
-				this.refElement(`fetch-select-input-${field.key}`)?.blur();
-			});
-		},
-		handleFetchSelectInput(field: FormLabel, event: Event) {
-			this.initFetchSelectState(field);
-			const target = event.target as HTMLInputElement;
-			this.fetchSelectState[field.key].inputText = target.value;
-			this.fetchSelectState[field.key].isOpen = true;
-			if (!this.fetchSelectDebouncers[field.key]) {
-				this.fetchSelectDebouncers[field.key] = debounce(async(f: FormLabel) => {
-					await this.doFetchSelectSearch(f);
-					this.$nextTick(() => {
-						const input = this.refElement(`fetch-select-input-${f.key}`);
-						if (input) {
-							this.updateFetchSelectPosition(f.key, input);
-						}
-					});
-				}, 300);
-			}
-			this.fetchSelectDebouncers[field.key](field);
-		},
-		async doFetchSelectSearch(field: FormLabel) {
-			if (!field.fetchFunction) {
-				return;
-			}
-			const inputText = this.fetchSelectState[field.key]?.inputText || "";
-			const filter: RSQLFilter[] = [{ key: field.fetchStoreKey ?? "", compareMethod: "=like=", value: inputText }];
-			const sort: RSQLSort = { key: field.fetchStoreKey ?? "", order: "asc" };
-			await field.fetchFunction(10, 0, [], filter, sort, false);
-		},
-		getFetchSelectOptions(field: FormLabel): [string | number, string][] {
-			if (!field.fetchStore) {
-				return [];
-			}
-			const fetchValueKey = field.fetchValueKey || (field.fetchStoreKey ?? "");
-			return Object.values(field.fetchStore).filter((item) => {
-				const inputText = this.fetchSelectState[field.key]?.inputText || "";
-				return String(item[field.fetchStoreKey ?? ""]).toLowerCase().includes(inputText.toLowerCase());
-			}).map((item): [string | number, string] => [item[fetchValueKey], item[field.fetchStoreKey ?? ""]]);
-		},
-		getSortedOptions(field: FormLabel): SortedOption[] {
-			if (!field.options) {
-				return [];
-			}
-
-			const entries = Object.entries(field.options).map(([key, value]): SortedOption => {
-				// Supporter les deux formats
-				if (typeof value === "object" && value !== null) {
-					return [key, value.label || "", value.disabled || false, value.hidden || false];
-				}
-				return [key, String(value), false, false]; // [key, label, disabled, hidden]
-			});
-
-			if (!field?.sort) {
-				return entries;
-			}
-
-			return entries.sort((a, b) => {
-				const valueA = a[1]; // label
-				const valueB = b[1]; // label
-
-				if (field.sort === "asc") {
-					return String(valueA).localeCompare(String(valueB));
-				} else if (field.sort === "desc") {
-					return String(valueB).localeCompare(String(valueA));
-				}
-
-				return 0;
-			});
+		updateField(key: string, value: unknown) {
+			this.formData[key] = value;
 		},
 	},
-	data() {
-		return {
-			showPassword: false,
-			dropdownOpen: {} as Record<string, boolean>,
-			dropdownPositions: {} as Record<string, { top: number; left: number; width: number }>,
-			fetchSelectState: {} as Record<string, { inputText: string; isOpen: boolean; position: { top: number; left: number; width: number } | null }>,
-			fetchSelectDebouncers: {} as Record<string, (field: FormLabel) => void>,
-		};
-	},
-	mounted() {
-		globalThis.addEventListener("scroll", this.handleScrollResize, true);
-		globalThis.addEventListener("resize", this.handleScrollResize);
-		document.addEventListener("click", this.handleClickOutside);
-	},
-	unmounted() {
-		globalThis.removeEventListener("scroll", this.handleScrollResize, true);
-		globalThis.removeEventListener("resize", this.handleScrollResize);
-		document.removeEventListener("click", this.handleClickOutside);
-	},
-	directives: {},
-};
+});
 </script>
 
 <style scoped>
