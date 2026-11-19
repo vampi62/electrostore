@@ -7,6 +7,8 @@ const router = useRouter();
 
 import { useAiStore, useAuthStore, useConfigsStore, useTabsStore } from "@/stores";
 
+import type { NavLabel } from "@/types/nav";
+
 const aiStore = useAiStore();
 const configsStore = useConfigsStore();
 const authStore = useAuthStore();
@@ -57,7 +59,7 @@ watch(() => authStore.user, (user) => {
 });
 
 const reduceLeftSideBar = ref(false);
-const listNav = ref([
+const listNav = ref<NavLabel[]>([
 	{ name: "common.VAppInventory", path: "/inventory", faIcon: "fa-solid fa-box" },
 	{ name: "common.VAppProject", path: "/projects", faIcon: "fa-solid fa-project-diagram" },
 	{ name: "common.VAppCommand", path: "/commands", faIcon: "fa-solid fa-shopping-cart" },
