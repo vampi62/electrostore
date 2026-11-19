@@ -13,6 +13,7 @@
 			:fetch-options="filter.fetchOptions"
 			:store-data="filter.storeData"
 			:store-key="filter.storeKey"
+			:store-ressource="filter.storeRessource"
 			:multiple="filter.multiple"
 			:mode="filter.mode"
 			:partial-values="filter.partialValues"
