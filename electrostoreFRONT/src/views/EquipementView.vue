@@ -521,7 +521,7 @@ const labelTableauStatusHistory = ref<TableauLabel[]>([
 	{ label: "equipement.HistoryStatus", sortable: true, key: "status_equipement", valueKey: "status_equipement", type: "enum", options: equipementStatusOptions },
 ]);
 useViewScroll(true);
-useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", "equipements", [
+useTabGuard(equipementsStore, () => equipementId.value, "equipementEdition", [
 	{ key: "equipementTagReady", get: (id) => equipementTagsStore.equipementTagReadyByEquipement(id), set: (id, entries) => equipementTagsStore.setEquipementTagStagedSlice("ready", { id_equipement: id }, entries) },
 	{ key: "equipementBoxReady", get: (id) => equipementBoxsStore.equipementBoxReadyByEquipement(id), set: (id, entries) => equipementBoxsStore.setEquipementBoxStagedSlice("ready", { id_equipement: id }, entries) },
 	{ key: "equipementDocumentReady", get: (id) => equipementDocumentsStore.equipementDocumentReadyByEquipement(id), set: (id, entries) => equipementDocumentsStore.setEquipementDocumentStagedSlice("ready", { id_equipement: id }, entries) },

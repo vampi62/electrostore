@@ -1,4 +1,3 @@
-import { isNewId } from "@/utils";
 import type { StoreGeneric } from "pinia";
 
 // Unsaved changes of a view and their draft (serializable copy).
@@ -28,50 +27,51 @@ const SENSITIVE_FIELDS = /password/i;
 
 const isEmpty = (value: unknown) => value === undefined || value === null || value === "";
 
-function sameValue(a: unknown, b: unknown) {
-	if (isEmpty(a) && isEmpty(b)) {
-		return true;
+// Comparable form of a value: empty values are dropped, primitives are compared as strings (the API may return a number where the form holds a string),
+// the keys of the objects are sorted and a file is described by its metadata
+function normalize(value: unknown): unknown {
+	if (isEmpty(value)) {
+		return undefined;
 	}
-	// the API may return a number where the form holds a string
-	if (typeof a === "object" || typeof b === "object") {
-		return JSON.stringify(a) === JSON.stringify(b);
+	if (value instanceof Blob) {
+		const file = value as File;
+		return `blob:${file.name ?? ""}:${value.size}:${file.lastModified ?? 0}`;
 	}
-	return String(a as string | number | boolean) === String(b as string | number | boolean);
+	if (Array.isArray(value)) {
+		return value.map((item) => normalize(item) ?? null);
+	}
+	if (typeof value === "object") {
+		const result: Record<string, unknown> = {};
+		for (const key of Object.keys(value as object).sort((a, b) => a.localeCompare(b))) {
+			const normalized = normalize((value as Record<string, unknown>)[key]);
+			if (normalized !== undefined) {
+				result[key] = normalized;
+			}
+		}
+		return result;
+	}
+	return String(value);
 }
 
 const readyKeys = (store: StoreGeneric) => Object.keys(store.$state).filter((key) => key.endsWith("Ready"));
 
-export function isEditionDirty(store: StoreGeneric, id: string, mainKey: string, sourceKey: string, related: RelatedStaged[] = []): boolean {
-	if (!id) {
-		return false;
-	}
-	if (readyKeys(store).some((key) => Object.keys(store.$state[key]?.[id] ?? {}).length > 0)) {
-		return true;
-	}
-	if (related.some((staged) => Object.keys(staged.get(id)).length > 0)) {
-		return true;
-	}
-	const edition = store.$state[mainKey]?.[id];
-	if (!edition) {
-		return false;
-	}
-	// an element that is not loaded yet has nothing to compare with
-	const source = isNewId(id) ? {} : store.$state[sourceKey]?.[id];
-	if (!source) {
-		return false;
-	}
-	return Object.entries(edition).some(([key, value]) => {
-		if (IGNORED_FIELDS.has(key)) {
-			return false;
+// State of the edition of an element (edition + staged changes), as a string so two states can be compared.
+// The baseline of an element is its state right after loadToEdition (default values and preset included): only what differs from it is a change of the user.
+export function fingerprintEdition(store: StoreGeneric, id: string, mainKey: string, related: RelatedStaged[] = []): string {
+	const edition: Record<string, unknown> = {};
+	for (const [key, value] of Object.entries(store.$state[mainKey]?.[id] ?? {})) {
+		if (!IGNORED_FIELDS.has(key)) {
+			edition[key] = value;
 		}
-		if (value instanceof Blob) {
-			return true;
-		}
-		if (key.startsWith("unset_")) {
-			return false;
-		}
-		return !sameValue(value, source[key]);
-	});
+	}
+	const ready: Record<string, unknown> = {};
+	for (const key of readyKeys(store)) {
+		ready[key] = store.$state[key]?.[id] ?? {};
+	}
+	for (const staged of related) {
+		ready[staged.key] = staged.get(id);
+	}
+	return JSON.stringify(normalize({ edition, ready }) ?? {});
 }
 
 export function snapshotEdition(store: StoreGeneric, id: string, mainKey: string, related: RelatedStaged[] = []): EditionDraft {
