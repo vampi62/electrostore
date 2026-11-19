@@ -42,7 +42,7 @@ function normalize(value: unknown): unknown {
 	}
 	if (typeof value === "object") {
 		const result: Record<string, unknown> = {};
-		for (const key of Object.keys(value as object).sort()) {
+		for (const key of Object.keys(value as object).sort((a, b) => a.localeCompare(b))) {
 			const normalized = normalize((value as Record<string, unknown>)[key]);
 			if (normalized !== undefined) {
 				result[key] = normalized;
