@@ -11,6 +11,7 @@
 						class="flex items-center gap-1 rounded px-2 text-sm"
 						:class="item.partial ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'">
 						{{ item.partial ? `*${item.text}*` : item.text }}
+						<span v-if="item.sub" class="text-xs text-gray-500">({{ item.sub }})</span>
 						<button type="button" class="font-bold hover:text-blue-950" :disabled="disabled"
 							@mousedown.prevent="removeChip(item)">&times;</button>
 					</span>
@@ -44,6 +45,7 @@
 							class="flex flex-col p-2 hover:bg-gray-100 cursor-pointer"
 							@mousedown.prevent="selectOption(option)">
 							<span class="text-sm">{{ option.text }}</span>
+							<span class="text-xs text-gray-500" v-if="option.sub">{{ option.sub }}</span>
 						</div>
 					</div>
 				</teleport>
@@ -80,13 +82,14 @@ import { debounce } from "lodash-es";
 import { toLowerCaseWithoutAccents } from "@/utils";
 import { filledValues } from "@/helpers";
 import type { FetchFunction, FetchPage } from "@/types/fetch";
-import type { FilterOption, FilterValue } from "@/types/filter";
+import type { FilterOption, FilterValue, StoreRessource } from "@/types/filter";
 import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 
 // value sent to the filter and text displayed for an option of a datalist
 interface ListItem {
 	value: string | number | boolean;
 	text: string;
+	sub?: string;
 }
 
 // selected option, or text typed in permissive mode, displayed as a removable chip
@@ -169,6 +172,12 @@ export default {
 			// This should be the key in storeData of the value displayed and filtered, it is also the key sent to fetchOptions function
 			default: undefined,
 		},
+		storeRessource: {
+			type: Object as PropType<StoreRessource>,
+			required: false,
+			// This should be an object describing the store resource, with keys: store, valueKey, sourceKey
+			default: undefined,
+		},
 		multiple: {
 			type: Boolean,
 			required: false,
@@ -234,7 +243,10 @@ export default {
 		allOptions(): ListItem[] {
 			if (this.hasStore) {
 				const storeKey = this.storeKey ?? "";
-				return Object.values(this.storeData ?? {}).map((element) => ({ value: element[storeKey], text: String(element[storeKey]) }));
+				return Object.values(this.storeData ?? {}).map((element) => {
+					const subValue = this.storeRessource ? String(this.storeRessource.store[element[this.storeRessource.sourceKey]][this.storeRessource.valueKey]) : undefined;
+					return { value: element[storeKey], text: String(element[storeKey]), sub: subValue };
+				});
 			}
 			return this.options.map((option) => ({ value: option.id, text: option.value }));
 		},
@@ -242,7 +254,7 @@ export default {
 		selected(): ListItem[] {
 			return filledValues({ value: this.modelValue }).map((value) => {
 				const option = this.allOptions.find((o) => String(o.value) === String(value));
-				return { value: value as ListItem["value"], text: option?.text ?? String(value) };
+				return { value: value as ListItem["value"], text: option?.text ?? String(value), sub: option?.sub };
 			});
 		},
 		// the user can type a text that is not an option and keep it

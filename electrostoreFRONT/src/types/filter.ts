@@ -11,6 +11,12 @@ export interface FilterOption {
 	value: string;
 }
 
+export interface StoreRessource {
+	store: StateTree;
+	valueKey: string;
+	sourceKey: string;
+}
+
 // a filter is sent to the api as it is, so it extends RSQLFilter (key, compareMethod, value)
 export interface FilterLabel extends RSQLFilter {
 	// translation key for the label
@@ -28,6 +34,7 @@ export interface FilterLabel extends RSQLFilter {
 	// store whose data are the options of a datalist, storeKey is the field of an element used as the value and displayed
 	storeData?: StateTree;
 	storeKey?: string;
+	storeRessource?: StoreRessource;
 	// datalist only: several options can be selected, value is then an array.
 	// The options are matched exactly, at least one of them (the compareMethod of a multiple filter should be "=in=")
 	multiple?: boolean;
