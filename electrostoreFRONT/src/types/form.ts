@@ -12,6 +12,10 @@ export type FormFunction = Record<string, (...args: never[]) => unknown>;
 // option of a select / multi-checkbox: the label, or the label with its state
 export type FormOption = string | { label: string; disabled?: boolean; hidden?: boolean };
 
+export type FormOptions = Record<string | number, FormOption>;
+
+export type FormTableauColumn = { key: string; label: string; type: string, options?: MaybeRef<FormOptions> };
+
 export interface FormLabel {
 	// key in the storeData for the field
 	key: string;
@@ -27,9 +31,9 @@ export interface FormLabel {
 	placeholder?: string;
 	// displayed by type: "computed", a computed can be given
 	value?: MaybeRef<string | number | boolean | null>;
-	loading?: boolean;
+	loading?: MaybeRef<boolean>;
 	// select inputs: { [value]: option }
-	options?: Record<string | number, FormOption>;
+	options?: MaybeRef<FormOptions>;
 	sort?: "asc" | "desc";
 	// textarea inputs
 	rows?: number;
@@ -38,4 +42,7 @@ export interface FormLabel {
 	fetchStoreKey?: string;
 	fetchValueKey?: string;
 	fetchFunction?: FetchFunction;
+
+	columns?: FormTableauColumn[];
+	requiredFields?: number;
 }
