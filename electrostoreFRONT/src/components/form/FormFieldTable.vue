@@ -65,7 +65,7 @@ function onCellInput(rowIndex: number, column: FormTableauColumn, event: Event) 
 	const target = event.target as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 	let value: string | number = target.value;
 	if (column.type === "number") {
-		const parsed = parseFloat(value);
+		const parsed = Number.parseFloat(value);
 		value = Number.isNaN(parsed) ? value : parsed;
 	}
 	emit("update:modelValue", rows.value.map((row, index) => (index === rowIndex ? { ...row, [column.key]: value } : row)));

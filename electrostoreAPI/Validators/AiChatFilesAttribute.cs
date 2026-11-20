@@ -20,7 +20,7 @@ public static class AiChatFileClassifier
             return AiChatFileKind.Text;
         }
         var mimeType = (file.ContentType ?? string.Empty).ToLowerInvariant();
-        if (FieldLengths.AllowedImageMimeTypes.ContainsKey(mimeType) && FieldLengths.AllowedImageMimeTypes.Values.Contains(extension))
+        if (FieldLengths.AllowedImageMimeTypes.ContainsKey(mimeType) && FieldLengths.AllowedImageMimeTypes.ContainsValue(extension))
         {
             return AiChatFileKind.Image;
         }

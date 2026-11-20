@@ -30,7 +30,7 @@ const options = computed(() => getSortedOptions(props.field));
 
 function onUpdate(raw: unknown) {
 	if (props.field.typeData === "number") {
-		const parsed = parseFloat(String(raw));
+		const parsed = Number.parseFloat(String(raw));
 		emit("update:modelValue", Number.isNaN(parsed) ? raw : parsed);
 	} else if (props.field.typeData === "bool") {
 		emit("update:modelValue", raw === "true" || raw === true);
