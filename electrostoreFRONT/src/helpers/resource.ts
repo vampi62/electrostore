@@ -464,7 +464,7 @@ export function createResource<T extends EntityTypes>({ compositeKey, generatedF
 					} else if (status === "deleted") {
 						await resource.remove.call(this, key);
 					}
-					resource.removeReady.call(this, scope);
+					entry.pushChange = true;
 				});
 			}
 			await pendingChanges;

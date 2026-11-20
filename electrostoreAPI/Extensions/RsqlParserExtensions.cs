@@ -251,7 +251,7 @@ public static class RsqlParserExtensions
         return BuildComparison(left, searchType, value);
     }
 
-    private static Expression? BuildAggregateCondition(ParameterExpression param, string aggregateFunc, string innerField, string searchType, string? value)
+    private static BinaryExpression? BuildAggregateCondition(ParameterExpression param, string aggregateFunc, string innerField, string searchType, string? value)
     {
         var (aggregateExpr, resultType) = BuildAggregateExpression(param, aggregateFunc, innerField);
         if (aggregateExpr == null || resultType == null)
@@ -275,7 +275,7 @@ public static class RsqlParserExtensions
     /// <summary>
     /// Expression for collection properties using Any()
     /// </summary>
-    private static Expression? BuildCollectionCondition(Expression collection, Type elementType, string itemField, string searchType, string? value)
+    private static MethodCallExpression? BuildCollectionCondition(Expression collection, Type elementType, string itemField, string searchType, string? value)
     {
         var collectionParam = Expression.Parameter(elementType, "item");
         var itemProperty = BuildNestedPropertyAccess(collectionParam, itemField, out _, out _, out _);
@@ -298,7 +298,7 @@ public static class RsqlParserExtensions
         return Expression.Call(anyMethod, collection, lambda);
     }
 
-    private static Expression? BuildBinaryComparison(Expression left, Expression right, string searchType)
+    private static BinaryExpression? BuildBinaryComparison(Expression left, Expression right, string searchType)
     {
         return searchType switch
         {
